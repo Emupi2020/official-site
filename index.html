@@ -30,12 +30,11 @@
             overflow-x: hidden;
         }
 
-        /* 背景動画の設定 */
+        /* --- Hero Section (Video) --- */
         .hero-container {
             position: relative;
-            /* 画面の高さを厳密に計算して固定 */
-            height: 100vh; 
-            height: 100dvh; /* スマホのアドレスバー対策 */
+            height: 100vh;
+            height: 100dvh;
             width: 100%;
             overflow: hidden;
         }
@@ -51,29 +50,27 @@
             background-color: #000;
         }
         
-        /* 動画を常に画面中心に配置し、隙間なく埋める設定 */
         .video-foreground, .video-background iframe {
             position: absolute;
             top: 50%;
             left: 50%;
             width: 100vw;
-            height: 56.25vw; /* 16:9 の比率 */
+            height: 56.25vw;
             min-height: 100vh;
             min-height: 100dvh;
-            min-width: 177.77vh; /* 16:9 の比率に基づく最小幅 */
+            min-width: 177.77vh;
             min-width: 177.77dvh;
             transform: translate(-50%, -50%);
             opacity: 0.8;
             transition: opacity 0.5s ease;
         }
 
-        /* 詳細モード時の動画の見え方（少し暗くする） */
         body.details-open .video-foreground {
             opacity: 0.4;
             filter: blur(8px);
         }
 
-        /* コントロールボタン群 (右下固定) */
+        /* Controls (Right Bottom) */
         .controls-container {
             position: absolute;
             bottom: 30px;
@@ -81,7 +78,6 @@
             display: flex;
             gap: 12px;
             z-index: 50;
-            /* 画面リサイズ時のチラつき防止 */
             transform: translateZ(0);
         }
 
@@ -109,7 +105,7 @@
             transform: scale(0.95);
         }
 
-        /* 詳細情報オーバーレイ */
+        /* Details Overlay */
         .details-overlay {
             position: absolute;
             inset: 0;
@@ -128,7 +124,6 @@
             pointer-events: auto;
         }
 
-        /* 詳細カード */
         .details-card {
             width: 90%;
             max-width: 600px;
@@ -147,7 +142,7 @@
             transform: scale(1) translateY(0);
         }
 
-        /* ハンバーガーメニュー (左上) */
+        /* --- Menu & Header --- */
         .menu-btn {
             position: fixed;
             top: 30px;
@@ -159,7 +154,6 @@
         }
         .menu-btn:hover { opacity: 1; }
 
-        /* 右上のSNSアイコン */
         .social-header {
             position: fixed;
             top: 30px;
@@ -172,7 +166,6 @@
         }
         .social-header a:hover { opacity: 1; }
 
-        /* 中央ロゴ (固定表示) */
         .header-logo {
             position: fixed;
             top: 30px;
@@ -194,7 +187,6 @@
             display: inline-block;
         }
 
-        /* メニューオーバーレイ */
         .side-menu {
             position: fixed;
             top: 0;
@@ -221,11 +213,49 @@
         }
         .menu-overlay-bg.open { opacity: 1; pointer-events: auto; }
 
+        /* --- Bento Grid & Cards --- */
+        .bento-card {
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .bento-card:hover {
+            transform: scale(1.015);
+            z-index: 10;
+        }
+
+        /* AI Modal */
+        .ai-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 500px;
+            background: rgba(28, 28, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 24px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .ai-modal.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <!-- ヘッダー要素 -->
+    <!-- Header -->
     <button class="menu-btn" onclick="toggleMenu()">
         <i data-lucide="menu" class="w-6 h-6"></i>
     </button>
@@ -239,7 +269,7 @@
         <a href="https://www.instagram.com/emupi20202020/" target="_blank"><i data-lucide="instagram" class="w-5 h-5"></i></a>
     </div>
 
-    <!-- ハンバーガーメニュー -->
+    <!-- Mobile Menu -->
     <div id="menuOverlay" class="menu-overlay-bg" onclick="toggleMenu()"></div>
     <div id="sideMenu" class="side-menu flex flex-col gap-8">
         <button onclick="toggleMenu()" class="absolute top-8 right-8 text-gray-400 hover:text-white">
@@ -247,16 +277,15 @@
         </button>
         <nav class="flex flex-col gap-6 text-xl font-bold text-gray-300">
             <a href="#" onclick="toggleMenu()" class="hover:text-white">Home</a>
+            <a href="#profile-card" onclick="toggleMenu()" class="hover:text-white">Profile</a>
             <a href="#links" onclick="toggleMenu()" class="hover:text-white">Works</a>
             <a href="mailto:contact@example.com" class="hover:text-white">Contact</a>
         </nav>
         <div class="mt-auto text-xs text-gray-500">© 2025 Emupi</div>
     </div>
 
-    <!-- ヒーローセクション -->
+    <!-- Hero Section (Video) -->
     <section class="hero-container">
-        
-        <!-- 背景動画 -->
         <div class="video-background">
             <div class="video-foreground">
                 <iframe 
@@ -270,11 +299,9 @@
             </div>
         </div>
 
-        <!-- 詳細情報オーバーレイ -->
+        <!-- Details Overlay (Visible when + is clicked) -->
         <div class="details-overlay">
             <div class="details-card">
-                
-                <!-- タイトル -->
                 <h1 class="text-6xl md:text-8xl font-bold text-white tracking-tighter leading-none mb-2 drop-shadow-xl">
                     emupi
                 </h1>
@@ -282,7 +309,6 @@
                     <i data-lucide="music" class="w-4 h-4"></i> Vida Loca
                 </p>
 
-                <!-- サブスクリンク -->
                 <div class="inline-block border border-white/10 rounded-xl p-2 bg-black/20 backdrop-blur-sm mb-8">
                     <div class="flex flex-wrap justify-center gap-2">
                         <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center gap-1.5 bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">
@@ -295,46 +321,55 @@
                             <i data-lucide="headphones" class="w-3.5 h-3.5"></i> LINE MUSIC
                         </a>
                     </div>
-                    <div class="mt-2 border-t border-white/5 pt-2">
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="block w-full text-center text-[10px] text-gray-400 hover:text-white py-1 font-medium transition-colors">
-                            All Links
-                        </a>
-                    </div>
                 </div>
 
-                <!-- MVリンク -->
                 <div>
                     <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="inline-flex items-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white px-6 py-2.5 rounded-full text-xs font-bold transition-all group">
                         Watch Music Video <i data-lucide="arrow-right" class="w-3 h-3 group-hover:translate-x-0.5 transition-transform"></i>
                     </a>
                 </div>
-
             </div>
         </div>
 
-        <!-- 右下のコントロールボタン -->
+        <!-- Controls -->
         <div class="controls-container">
             <button id="playPauseBtn" class="control-btn" onclick="togglePlayPause()" title="再生/停止">
                 <i data-lucide="pause" class="w-5 h-5 fill-current"></i>
             </button>
-            
             <button id="toggleDetailsBtn" class="control-btn" onclick="toggleDetails()" title="詳細を表示">
                 <i data-lucide="plus" class="w-6 h-6 transition-transform duration-300"></i>
             </button>
         </div>
 
-        <!-- スクロールダウンアイコン -->
+        <!-- Scroll Down -->
         <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 text-white/20 transition-opacity duration-300" id="scrollIndicator">
             <i data-lucide="chevron-down" class="w-6 h-6 animate-bounce"></i>
         </div>
-
     </section>
 
-    <!-- Bento Grid -->
+    <!-- Bento Grid Section -->
     <section id="links" class="max-w-6xl mx-auto px-4 py-24 bg-black relative z-10">
         <h2 class="text-3xl md:text-5xl font-bold text-center mb-16 text-white">Create. Inspire.</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
-             <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-2 bg-[#161617] rounded-[2rem] p-8 md:p-10 flex flex-col justify-between relative overflow-hidden group h-[500px] border border-white/5">
+            
+            <!-- 1. Profile Card (NEW: Beaconsのプロフィール要素) -->
+            <div id="profile-card" class="bento-card col-span-1 md:col-span-2 lg:col-span-2 bg-[#161617] rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-6 border border-white/5">
+                <img src="https://ui-avatars.com/api/?name=Emupi&background=random&size=200" alt="Emupi" class="w-24 h-24 rounded-full border-2 border-white/10 shadow-xl">
+                <div class="text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
+                        <h3 class="text-2xl font-bold text-white">Emupi</h3>
+                        <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full border border-blue-500/30">Official</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-md">
+                        TikTokやライブ配信で活動中！🎵<br>
+                        音楽と映像で世界観を表現します。<br>
+                        お仕事の依頼はDMまたはメールまで。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. TikTok (Main) -->
+             <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-2 bg-[#161617] rounded-[2rem] p-8 md:p-10 flex flex-col justify-between relative overflow-hidden group h-[400px] border border-white/5">
                 <div class="z-10">
                     <div class="flex items-center gap-2 mb-3 text-gray-400 text-xs font-bold uppercase tracking-wider">
                         <i data-lucide="music-2" class="w-4 h-4"></i> TikTok
@@ -350,7 +385,43 @@
                 </div>
             </a>
             
-            <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="bento-card col-span-1 md:col-span-1 bg-white text-black rounded-[2rem] p-8 flex flex-col justify-between h-[240px] md:h-auto group">
+            <!-- 3. Music Links (NEW: 楽曲一覧) -->
+            <div class="bento-card col-span-1 md:col-span-2 bg-[#1d1d1f] rounded-[2rem] p-8 border border-white/5">
+                <div class="flex items-center gap-2 mb-6 text-green-400 text-xs font-bold uppercase tracking-wider">
+                    <i data-lucide="headphones" class="w-4 h-4"></i> Music Streaming
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
+                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="music" class="w-4 h-4"></i> Apple Music</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    </a>
+                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
+                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="disc-3" class="w-4 h-4"></i> Spotify</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    </a>
+                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
+                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4"></i> YouTube Music</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    </a>
+                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
+                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list-music" class="w-4 h-4"></i> LINE MUSIC</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 4. Discography (NEW: Vida Loca カード) -->
+            <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="bento-card col-span-1 bg-[#161617] rounded-[2rem] overflow-hidden relative h-[240px] group border border-white/5">
+                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop" alt="Vida Loca" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity scale-105 group-hover:scale-100 duration-700">
+                <div class="relative z-10 p-6 h-full flex flex-col justify-end">
+                    <p class="text-xs font-bold text-amber-400 mb-1">LATEST RELEASE</p>
+                    <h3 class="text-2xl font-bold text-white mb-1">Vida Loca</h3>
+                    <span class="text-[10px] text-gray-300 bg-black/50 backdrop-blur-md px-2 py-1 rounded w-fit">2021.08.01</span>
+                </div>
+            </a>
+
+            <!-- 5. Instagram -->
+            <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="bento-card col-span-1 bg-white text-black rounded-[2rem] p-8 flex flex-col justify-between h-[240px] group">
                 <div>
                     <i data-lucide="instagram" class="w-8 h-8 mb-4 text-pink-600"></i>
                     <h3 class="text-xl font-bold mb-1">Stories.</h3>
@@ -362,7 +433,21 @@
                 </div>
             </a>
 
-            <a href="https://twitter.com/emupi2020" target="_blank" class="bento-card col-span-1 md:col-span-1 bg-[#161617] rounded-[2rem] p-8 flex flex-col justify-between h-[240px] md:h-auto border border-white/5">
+            <!-- 6. Live Streaming (NEW) -->
+            <div class="bento-card col-span-1 bg-gradient-to-br from-purple-900 to-indigo-900 rounded-[2rem] p-8 flex flex-col justify-between h-[240px] border border-white/5 relative overflow-hidden group">
+                <div class="z-10">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        <span class="text-xs font-bold text-purple-200 uppercase tracking-wider">Live Streaming</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Live</h3>
+                    <p class="text-purple-200 text-xs mt-2">配信で会いに来てね。</p>
+                </div>
+                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-500 blur-[50px] opacity-30 group-hover:opacity-60 transition-opacity"></div>
+            </div>
+
+            <!-- 7. Twitter -->
+            <a href="https://twitter.com/emupi2020" target="_blank" class="bento-card col-span-1 bg-[#161617] rounded-[2rem] p-8 flex flex-col justify-between h-[240px] border border-white/5">
                 <div>
                     <i data-lucide="twitter" class="w-8 h-8 mb-4 text-white"></i>
                     <h3 class="text-xl font-bold text-white mb-1">Latest.</h3>
@@ -372,12 +457,52 @@
                 </div>
             </a>
             
+            <!-- 8. YouTube -->
+            <a href="#" target="_blank" class="bento-card col-span-1 md:col-span-2 bg-[#161617] rounded-[2rem] overflow-hidden relative h-[240px] group flex items-center justify-center border border-white/5">
+                <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" alt="YouTube" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity group-hover:scale-105 duration-700">
+                <div class="relative z-10 text-center">
+                    <h3 class="text-3xl font-bold text-white mb-3 drop-shadow-lg">YouTube Channel</h3>
+                    <span class="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-full text-xs font-medium hover:bg-red-700 transition-colors">
+                        <i data-lucide="youtube" class="w-4 h-4"></i> チャンネル登録
+                    </span>
+                </div>
+            </a>
+
+             <!-- 9. Contact -->
              <a href="mailto:contact@example.com" class="bento-card col-span-1 bg-[#1d1d1f] rounded-[2rem] p-8 flex flex-col justify-center items-center text-center h-[240px] border border-white/5">
                 <div class="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center text-[#2997ff] mb-4">
                     <i data-lucide="mail" class="w-6 h-6"></i>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-2">Contact</h3>
+                <p class="text-gray-400 text-xs">お仕事のご依頼</p>
             </a>
+
+            <!-- 10. AI Lyric Studio -->
+            <div onclick="openAiModal()" class="cursor-pointer bento-card col-span-1 md:col-span-2 lg:col-span-1 bg-gradient-to-br from-indigo-900 to-[#161617] rounded-[2rem] p-8 flex flex-col justify-between h-[240px] border border-white/5 relative overflow-hidden group">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-2 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Gemini AI
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Lyric Studio</h3>
+                    <p class="text-indigo-200 text-xs leading-relaxed">AIが歌詞を即興制作。</p>
+                </div>
+                <div class="absolute -right-4 -top-4 w-32 h-32 bg-indigo-500 blur-[60px] opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                <div class="relative z-10 mt-auto pt-4">
+                     <span class="text-white text-xs font-bold bg-indigo-600/30 border border-indigo-500/50 px-3 py-1.5 rounded-full flex items-center w-fit gap-1">
+                        試してみる <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                     </span>
+                </div>
+            </div>
+
+            <!-- 11. Community / Email -->
+            <div class="bento-card col-span-1 md:col-span-2 lg:col-span-1 bg-[#1d1d1f] rounded-[2rem] p-8 flex flex-col justify-between h-auto border border-white/5">
+                <h3 class="text-lg font-bold text-white mb-2">Community</h3>
+                <form class="space-y-2" onsubmit="event.preventDefault(); alert('登録ありがとうございます！');">
+                    <input type="email" placeholder="メールアドレス" class="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <button type="submit" class="w-full bg-white text-black font-bold py-2.5 rounded-lg text-sm hover:bg-gray-200">登録する</button>
+                </form>
+            </div>
+
         </div>
     </section>
 
@@ -385,10 +510,36 @@
         <p>Copyright © 2025 Emupi Official. All rights reserved.</p>
     </footer>
 
+    <!-- AI Modal -->
+    <div id="aiModalOverlay" class="menu-overlay-bg" onclick="closeAiModal()"></div>
+    <div id="aiModal" class="ai-modal">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2 text-indigo-400 font-bold">
+                <i data-lucide="sparkles" class="w-5 h-5"></i> AI Lyric Studio
+            </div>
+            <button onclick="closeAiModal()" class="text-gray-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <p class="text-gray-300 text-sm mb-4">
+            今の気分やテーマを入力してください。<br>Gemini AIが即興でラップ/歌詞を作ります。
+        </p>
+        <div class="space-y-3">
+            <input type="text" id="lyricTheme" placeholder="例: 雨の日のドライブ、真夜中の東京..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            <button onclick="generateLyrics()" id="generateBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                <span>歌詞を生成する ✨</span>
+            </button>
+        </div>
+        <div id="resultArea" class="hidden mt-6 p-4 bg-black/30 rounded-xl border border-white/5">
+            <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider">Generated Lyrics:</p>
+            <p id="lyricOutput" class="text-white text-sm leading-relaxed font-mono whitespace-pre-wrap typing-cursor"></p>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
+        const apiKey = ""; // API Key
 
-        // メニュー開閉
         function toggleMenu() {
             const menu = document.getElementById('sideMenu');
             const overlay = document.getElementById('menuOverlay');
@@ -396,30 +547,25 @@
             overlay.classList.toggle('open');
         }
 
-        // 詳細モード（＋ボタン）の切り替え
         let isDetailsOpen = false;
         function toggleDetails() {
             isDetailsOpen = !isDetailsOpen;
             const body = document.body;
-            // エラー修正：アイコン要素が書き換わっても大丈夫なように、ボタン内の最初のSVGまたはiタグを探す
             const btn = document.getElementById('toggleDetailsBtn');
             const scrollIndicator = document.getElementById('scrollIndicator');
             
             if (isDetailsOpen) {
                 body.classList.add('details-open');
-                // アイコンを×に変更 (HTMLを書き換える方式に変更して確実に動作させる)
                 btn.innerHTML = '<i data-lucide="plus" style="transform: rotate(45deg); transition: transform 0.3s;"></i>';
                 if (scrollIndicator) scrollIndicator.style.opacity = '0';
             } else {
                 body.classList.remove('details-open');
-                // アイコンを＋に戻す
                 btn.innerHTML = '<i data-lucide="plus" style="transform: rotate(0deg); transition: transform 0.3s;"></i>';
                 if (scrollIndicator) scrollIndicator.style.opacity = '1';
             }
-            lucide.createIcons(); // アイコン再描画
+            lucide.createIcons();
         }
 
-        // 再生/停止ボタン制御
         let isPlaying = true;
         function togglePlayPause() {
             const iframe = document.getElementById('bgVideo');
@@ -432,9 +578,61 @@
                 iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
                 btn.innerHTML = '<i data-lucide="pause" class="w-5 h-5 fill-current"></i>';
             }
-            
             isPlaying = !isPlaying;
-            lucide.createIcons(); // アイコン再描画
+            lucide.createIcons();
+        }
+
+        function openAiModal() {
+            document.getElementById('aiModal').classList.add('open');
+            document.getElementById('aiModalOverlay').classList.add('open');
+        }
+        function closeAiModal() {
+            document.getElementById('aiModal').classList.remove('open');
+            document.getElementById('aiModalOverlay').classList.remove('open');
+        }
+
+        async function generateLyrics() {
+            const theme = document.getElementById('lyricTheme').value;
+            if (!theme) return;
+            const btn = document.getElementById('generateBtn');
+            const output = document.getElementById('lyricOutput');
+            const resultArea = document.getElementById('resultArea');
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 生成中...';
+            btn.disabled = true;
+            resultArea.classList.remove('hidden');
+            output.textContent = "AIがビートを感じています...";
+            lucide.createIcons();
+
+            const prompt = `あなたは日本人アーティスト「Emupi」の作詞アシスタントです。以下のテーマに基づいて、短くてかっこいい歌詞（サビ部分）を生成してください。日本語と英語をミックスし、エモーショナルでトレンド感のある言葉を選んでください。\n\nテーマ: ${theme}`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                const generatedText = data.candidates[0].content.parts[0].text;
+
+                output.textContent = "";
+                let i = 0;
+                const typeWriter = setInterval(() => {
+                    if (i < generatedText.length) {
+                        output.textContent += generatedText.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(typeWriter);
+                        document.querySelector('.typing-cursor').classList.remove('typing-cursor');
+                    }
+                }, 30);
+            } catch (error) {
+                console.error('Error:', error);
+                output.textContent = "エラーが発生しました。";
+            } finally {
+                btn.innerHTML = '<span>歌詞を生成する ✨</span>';
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
