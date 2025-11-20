@@ -1,153 +1,200 @@
-<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8">
-  <title>Sample Layout</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #0f1115;
-      color: #e6e6e6;
-    }
-    .wrap {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #30333a;
-      margin-bottom: 24px;
-    }
-    .avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: #22242b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: #9ca3b0;
-    }
-    .header-text-main {
-      font-size: 18px;
-      margin-bottom: 4px;
-    }
-    .header-text-sub {
-      font-size: 13px;
-      color: #9ca3b0;
-    }
-    .section-title {
-      font-size: 15px;
-      margin: 24px 0 10px;
-      border-bottom: 1px solid #30333a;
-      padding-bottom: 4px;
-    }
-    .btn-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .btn {
-      display: block;
-      padding: 10px 14px;
-      background: #1a1c22;
-      border-radius: 8px;
-      border: 1px solid #30333a;
-      text-decoration: none;
-      color: #e6e6e6;
-      font-size: 14px;
-    }
-    .btn:hover {
-      background: #23252d;
-    }
-    .placeholder-text {
-      font-size: 13px;
-      line-height: 1.7;
-      color: #b4b8c2;
-    }
-    .card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .card {
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #30333a;
-      background: #171920;
-    }
-    .card-title {
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-    .card-body {
-      font-size: 12px;
-      color: #a1a5b3;
-      line-height: 1.6;
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <!-- 上部プロフィールエリア（Beaconsのアイコン＋名前エリア相当） -->
-    <header>
-      <div class="avatar">
-        アイコン
-      </div>
-      <div>
-        <div class="header-text-main">ここに表示名を置く想定</div>
-        <div class="header-text-sub">
-          ここに簡単な肩書きや一言説明が入る想定（※テスト段階では実データを書かない）
-        </div>
-      </div>
-    </header>
+import React, { useState, useEffect } from 'react';
+import { Instagram, Twitter, Youtube, Music, ChevronRight, Play, ArrowRight, Mail, Share2 } from 'lucide-react';
 
-    <!-- メインリンク群（Beaconsのボタンリスト相当） -->
-    <div class="section-title">メインリンク置き場（仮）</div>
-    <div class="btn-list">
-      <a class="btn" href="#">
-        ボタンA：ここに主要リンク1を置く想定（例：動画サービス、配信先など）
-      </a>
-      <a class="btn" href="#">
-        ボタンB：ここに主要リンク2を置く想定（例：SNSやプロフィールページなど）
-      </a>
-      <a class="btn" href="#">
-        ボタンC：ここに主要リンク3を置く想定（例：サブチャンネルや別サービスなど）
-      </a>
+// Google Fonts (Inter - AppleのSan Franciscoに近いフォント)
+const FontLink = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    
+    .apple-text-gradient {
+      background: linear-gradient(180deg, #ffb6ff 0%, #b344ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .fade-in-up {
+      animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+  `}</style>
+);
+
+export default function App() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const profileData = {
+    name: "emupi",
+    tagline: "Pro. Beyond.",
+    description: "TikTok、音楽、そしてライブ配信。\nすべてを、かつてない次元で。",
+    heroImage: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop", // 背景用
+    avatar: "https://ui-avatars.com/api/?name=Emupi&background=random&size=200",
+  };
+
+  // Apple風ナビゲーション
+  const Navbar = () => (
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/10' : 'bg-transparent'}`}>
+      <div className="max-w-5xl mx-auto px-4 h-12 flex items-center justify-between text-xs font-light text-gray-300">
+        <div className="flex items-center gap-4">
+          <span className="text-white font-semibold text-lg"> emupi</span>
+        </div>
+        <div className="hidden sm:flex gap-8">
+          <a href="#tiktok" className="hover:text-white transition-colors">TikTok</a>
+          <a href="#youtube" className="hover:text-white transition-colors">YouTube</a>
+          <a href="#social" className="hover:text-white transition-colors">Social</a>
+          <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+        </div>
+        <button className="bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-500 transition-colors text-xs font-medium">
+          Follow
+        </button>
+      </div>
+    </nav>
+  );
+
+  return (
+    <div className="bg-[#000000] min-h-screen text-gray-100 overflow-x-hidden selection:bg-pink-500 selection:text-white">
+      <FontLink />
+      <Navbar />
+
+      {/* Hero Section (iPhone Pro Product Page Style) */}
+      <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 pt-20">
+        <div className="fade-in-up">
+          <h2 className="text-amber-500 font-medium text-xl mb-2 tracking-wide">New</h2>
+          <h1 className="text-6xl md:text-8xl font-bold text-white mb-4 tracking-tight">
+            {profileData.name}
+          </h1>
+          <p className="text-2xl md:text-3xl text-gray-400 font-medium max-w-2xl mx-auto leading-tight">
+            {profileData.description}
+          </p>
+          
+          <div className="mt-8 flex gap-4 justify-center items-center text-lg md:text-xl">
+            <a href="#links" className="text-blue-500 hover:underline flex items-center gap-1">
+              プロフィールを見る <ChevronRight size={16} />
+            </a>
+            <a href="#contact" className="text-blue-500 hover:underline flex items-center gap-1">
+              お問い合わせ <ChevronRight size={16} />
+            </a>
+          </div>
+        </div>
+
+        {/* Hero Image / Visual */}
+        <div className="mt-12 relative w-full max-w-4xl h-64 md:h-96 rounded-3xl overflow-hidden fade-in-up delay-200 group cursor-pointer">
+           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
+           <img 
+             src={profileData.heroImage} 
+             alt="Hero" 
+             className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
+           />
+           <div className="absolute bottom-8 left-0 right-0 text-center z-20">
+             <p className="text-gray-300 text-sm font-medium">Designed by Emupi in Japan</p>
+           </div>
+        </div>
+      </section>
+
+      {/* Bento Grid Layout Section */}
+      <section id="links" className="max-w-6xl mx-auto px-4 py-24 bg-[#101010]">
+        <h3 className="text-4xl md:text-5xl font-bold text-center mb-16 fade-in-up">
+          すべてが、<br className="md:hidden" />ここにつながる。
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          {/* TikTok Card (Large) */}
+          <a href="https://www.tiktok.com/@emupi2020" target="_blank" rel="noreferrer" className="col-span-1 md:col-span-2 row-span-2 bg-[#1d1d1f] rounded-3xl overflow-hidden group relative min-h-[400px] md:min-h-[500px] flex flex-col justify-between p-8 hover:scale-[1.01] transition-transform duration-500">
+            <div className="z-10">
+              <div className="flex items-center gap-2 mb-2 text-gray-400 text-xs font-bold uppercase tracking-wider">
+                <Music size={14} /> TikTok
+              </div>
+              <h4 className="text-4xl font-bold text-white mb-2">Entertainment.<br/>Reimagined.</h4>
+              <p className="text-gray-400 text-lg">最新のショート動画をチェック。</p>
+            </div>
+            <div className="absolute right-0 bottom-0 w-3/4 h-3/4 bg-gradient-to-br from-pink-500/20 to-purple-600/20 blur-3xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"></div>
+            <div className="z-10 mt-auto">
+              <span className="inline-flex items-center bg-white text-black px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors">
+                今すぐ観る
+              </span>
+            </div>
+          </a>
+
+          {/* Instagram Card */}
+          <a href="https://www.instagram.com/emupi20202020/" target="_blank" rel="noreferrer" className="col-span-1 bg-white text-black rounded-3xl p-8 flex flex-col justify-between min-h-[300px] group hover:scale-[1.02] transition-transform duration-300">
+            <div>
+              <div className="flex items-center gap-2 mb-2 text-gray-500 text-xs font-bold uppercase tracking-wider">
+                <Instagram size={14} /> Instagram
+              </div>
+              <h4 className="text-3xl font-bold mb-2">Stories.</h4>
+              <p className="text-gray-600">日常の瞬間を、<br/>もっと鮮やかに。</p>
+            </div>
+            <div className="flex justify-end">
+              <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center group-hover:bg-pink-600 transition-colors">
+                <ArrowRight size={20} />
+              </div>
+            </div>
+          </a>
+
+          {/* Twitter/X Card */}
+          <a href="https://twitter.com/emupi2020" target="_blank" rel="noreferrer" className="col-span-1 bg-[#1d1d1f] rounded-3xl p-8 min-h-[300px] flex flex-col justify-center items-center text-center group hover:scale-[1.02] transition-transform duration-300 border border-gray-800 hover:border-gray-600">
+            <Twitter size={48} className="text-white mb-4 group-hover:text-blue-400 transition-colors" />
+            <h4 className="text-2xl font-bold text-white">Latest News</h4>
+            <p className="text-gray-400 mt-2 text-sm">リアルタイムな情報は<br/>こちらから。</p>
+            <span className="mt-6 text-blue-500 text-sm flex items-center hover:underline">
+              フォローする <ChevronRight size={12} />
+            </span>
+          </a>
+
+          {/* YouTube Card */}
+          <a href="#" target="_blank" rel="noreferrer" className="col-span-1 md:col-span-2 bg-[#1d1d1f] rounded-3xl overflow-hidden relative min-h-[300px] group flex items-center justify-center hover:scale-[1.01] transition-transform duration-300">
+            <img 
+              src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2070&auto=format&fit=crop" 
+              alt="YouTube" 
+              className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-40 transition-opacity scale-105 group-hover:scale-100 duration-700"
+            />
+            <div className="relative z-10 text-center p-6">
+              <div className="flex items-center justify-center gap-2 text-red-500 font-bold mb-2 uppercase tracking-wider text-xs">
+                <Youtube size={14} /> YouTube Channel
+              </div>
+              <h4 className="text-4xl md:text-5xl font-bold text-white mb-4">Cinematic.<br/>Experience.</h4>
+              <button className="flex items-center gap-2 mx-auto bg-white/20 backdrop-blur-md border border-white/30 px-6 py-3 rounded-full text-white hover:bg-white/30 transition-colors">
+                <Play size={18} fill="currentColor" /> Watch Now
+              </button>
+            </div>
+          </a>
+
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#101010] py-12 px-4 border-t border-gray-800 text-xs text-gray-400">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-8 pb-8 border-b border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>Copyright © 2025 Emupi. All rights reserved.</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:underline">Privacy Policy</a>
+              <a href="#" className="hover:underline">Terms of Use</a>
+              <a href="#" className="hover:underline">Contact</a>
+            </div>
+          </div>
+          <div className="text-center md:text-left">
+             <p className="mb-2">Designed based on Apple Style.</p>
+             <p>Emupi Official Website.</p>
+          </div>
+        </div>
+      </footer>
     </div>
-
-    <!-- プロフィールテキスト（Beaconsの自己紹介テキスト相当） -->
-    <div class="section-title">説明エリア（仮）</div>
-    <p class="placeholder-text">
-      ここに自己紹介や活動内容などのテキストを置く想定です。<br>
-      テスト段階では「どんな種類の情報を入れるか」だけを示す文章にしておき、具体的な名前やIDなどは書きません。
-    </p>
-
-    <!-- コンテンツ／プロジェクト一覧（Beaconsの追加ブロック相当） -->
-    <div class="section-title">コンテンツ一覧エリア（仮）</div>
-    <div class="card-list">
-      <div class="card">
-        <div class="card-title">コンテンツ枠1（例：固定の企画やシリーズへのリンク）</div>
-        <div class="card-body">
-          ここに「この枠にはどんなリンクや説明を置くのか」をメモ的に書きます。
-          実際のタイトルやURLはテストが終わってから差し替えます。
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">コンテンツ枠2（例：最新のお知らせや告知用）</div>
-        <div class="card-body">
-          ここにはお知らせや直近のトピックを載せる想定です。
-          どの程度の文字量が読みやすいかを確認する用途として使えます。
-        </div>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
+  );
+}
