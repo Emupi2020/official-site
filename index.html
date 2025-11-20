@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- テーマ設定 --- */
+        /* --- テーマ設定 (変数定義) --- */
         :root {
             /* ライトモード */
             --bg-color: #f5f5f7;
@@ -60,7 +60,7 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            overflow-x: hidden;
+            overflow-x: hidden; /* 横スクロール禁止 */
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.3s, color 0.3s;
         }
@@ -120,15 +120,15 @@
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            background-color: #000; /* 動画エリアは常に黒背景（映画館スタイル） */
+            background-color: #000; /* 動画エリアは常に黒背景 */
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* 下寄せ配置 */
+            justify-content: flex-end;
             align-items: center;
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 動画: 左右が見切れないように横幅基準で配置 */
+        /* 動画: 16:9固定、画面内に収める (Contain) */
         .video-foreground iframe {
             position: absolute;
             top: 50%; left: 50%;
@@ -157,7 +157,7 @@
             text-align: center;
             display: flex; flex-direction: column; align-items: center;
             padding: 0 20px;
-            /* 下からの位置を％で指定して画面サイズ追従 */
+            /* 画面下部から15%の位置 */
             margin-bottom: 15vh; 
             width: 100%;
         }
@@ -173,7 +173,7 @@
         @media (max-width: 768px) {
             .hero-title { font-size: 36px; }
             .hero-desc { font-size: 15px; }
-            .hero-content { margin-bottom: 18vh; } /* モバイルは少し上げる */
+            .hero-content { margin-bottom: 18vh; }
         }
 
         .controls-wrapper {
@@ -323,7 +323,7 @@
             <div class="hero-fade-top"></div>
             <div class="hero-fade-bottom"></div>
             
-            <!-- ヒーローコンテンツ（下部固定） -->
+            <!-- ヒーローコンテンツ（下部固定・小型化） -->
             <div class="hero-content">
                 <h1 class="hero-title">Emupi</h1>
                 
@@ -342,7 +342,7 @@
                 </div>
             </div>
 
-            <!-- Controls -->
+            <!-- Controls (右下隅に固定) -->
             <div class="controls-wrapper">
                 <button onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors border border-white/10 shadow-lg">
                     <i data-lucide="pause" class="w-4 h-4 fill-current" id="playIcon"></i>
@@ -688,6 +688,13 @@
 
             if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
             else { location.hash = '#' + pageId; }
+
+            // スクロール制御（トップページのみ禁止）
+            if (pageId === 'home') {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = ''; // 通常のスクロールに戻す
+            }
         }
 
         function handleNavClick(event, pageId) {
@@ -698,17 +705,20 @@
         window.addEventListener('popstate', () => {
             const hash = window.location.hash.substring(1);
             if (hash && document.getElementById(hash)) {
-                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-                document.getElementById(hash).classList.add('active');
+                switchPage(hash);
             } else {
-                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-                document.getElementById('home').classList.add('active');
+                switchPage('home');
             }
         });
 
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash.substring(1);
-            if (hash && document.getElementById(hash)) { switchPage(hash); }
+            if (hash && document.getElementById(hash)) { 
+                switchPage(hash); 
+            } else {
+                // 初期ロード時にトップページならスクロール禁止
+                switchPage('home');
+            }
         });
 
         function toggleMobileMenu() { document.getElementById('navLinks').classList.toggle('open'); }
@@ -727,13 +737,21 @@
                 if(overlay) overlay.classList.add('active');
                 if(card) card.classList.add('active');
             }
+            // モーダルが開いている間はスクロール禁止（トップ以外でも）
             document.body.style.overflow = 'hidden';
         }
 
         function closeAllModals() {
             document.querySelectorAll('.overlay-bg').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.modal-card').forEach(el => el.classList.remove('active'));
-            document.body.style.overflow = 'auto';
+            
+            // モーダルを閉じたら、現在のページに合わせてスクロール設定を戻す
+            const activePage = document.querySelector('.page-section.active');
+            if (activePage && activePage.id === 'home') {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
         }
         
         function closeModal(event) {
