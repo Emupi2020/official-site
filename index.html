@@ -379,4 +379,400 @@
                 <div class="card-content justify-end">
                     <!-- オーバーレイカード (ガラス) -->
                     <div class="bg-black/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 w-full shadow-2xl">
-                        <div class="flex flex-col md:flex-row md:items-end justify-between
+                        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            
+                            <!-- MV Info -->
+                            <div class="flex-1">
+                                <p class="card-eyebrow text-white/80">Latest Single</p>
+                                <h3 class="card-heading text-white">Vida Loca</h3>
+                                <p class="card-text text-white/80 text-sm mb-4">熱い夏の夜、燃え上がるような恋愛模様を描いた一曲。</p>
+                                <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-100 text-sm py-2.5 px-5 mb-4 md:mb-0">
+                                    <i data-lucide="play-circle" class="w-4 h-4 fill-current"></i> Watch MV
+                                </a>
+                            </div>
+
+                            <!-- Streaming Links (統合) -->
+                            <div class="flex-1 border-t md:border-t-0 md:border-l border-white/20 pt-4 md:pt-0 md:pl-6">
+                                <p class="card-eyebrow text-white/60 mb-3">Streaming</p>
+                                <div class="space-y-2">
+                                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between group text-white hover:text-white">
+                                        <span class="flex items-center gap-2 text-sm font-medium"><i data-lucide="music" class="w-4 h-4 text-pink-500"></i> Apple Music</span>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                                    </a>
+                                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between group text-white hover:text-white">
+                                        <span class="flex items-center gap-2 text-sm font-medium"><i data-lucide="disc-3" class="w-4 h-4 text-green-500"></i> Spotify</span>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                                    </a>
+                                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between group text-white hover:text-white">
+                                        <span class="flex items-center gap-2 text-sm font-medium"><i data-lucide="list-music" class="w-4 h-4 text-green-400"></i> LINE MUSIC</span>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 3. SHORTS PAGE -->
+    <main id="shorts" class="page-section">
+        <div class="category-header">
+            <h2 class="category-title">Shorts</h2>
+            <p class="category-desc">日常の切り抜き、ネタ動画、そして歌。</p>
+        </div>
+        <div class="bento-grid">
+             <!-- Accounts (Moved to Top) -->
+            <div class="bento-card">
+                <div class="card-content">
+                    <p class="card-eyebrow">Accounts</p>
+                    <h3 class="card-heading text-2xl mb-6">TikTok</h3>
+                    <div class="link-list">
+                        <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="link-item">
+                            <span><i data-lucide="music-2"></i> Main Account</span> Open
+                        </a>
+                        <a href="#" target="_blank" class="link-item">
+                            <span><i data-lucide="user"></i> Sub Account</span> Open
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommended (Large) -->
+            <div class="bento-card col-span-1 md:col-span-2 h-[400px] has-bg bg-[#1c1c1e]">
+                <div class="card-content items-center justify-center text-center">
+                    <i data-lucide="star" class="w-12 h-12 text-amber-400 mb-4 fill-current"></i>
+                    <p class="card-eyebrow text-amber-400">Recommended</p>
+                    <h3 class="card-heading">Must Watch</h3>
+                    <p class="card-text">個人的にお気に入りの一本。<br>まずはこれを見てください。</p>
+                    <button onclick="playRandomTikTok()" class="apple-btn mt-4"><i data-lucide="play" class="w-4 h-4 fill-current"></i> 再生する</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. GAME PAGE -->
+    <main id="game" class="page-section">
+        <div class="category-header">
+            <h2 class="category-title">Game</h2>
+            <p class="category-desc">叫び声注意！？<br>FPSからホラーまで、全力で楽しむ実況スタイル。</p>
+        </div>
+        <div class="bento-grid">
+             <div class="bento-card col-span-1 md:col-span-2 bg-gradient-to-br from-red-900/20 to-black h-[450px] has-bg">
+                <div class="card-content">
+                    <div class="flex items-center gap-2 mb-2">
+                         <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                         <p class="card-eyebrow text-red-500 mb-0">YouTube Gaming</p>
+                    </div>
+                    <!-- チャンネル名を変更 -->
+                    <h3 class="card-heading">サンちゃん。【IQ3な実況】</h3>
+                    <!-- 説明文をアレンジして変更 -->
+                    <p class="card-text max-w-md">
+                        IQ3という別キャラクターで活動中。<br>
+                        裏アカ感覚で楽しむ、自由気ままなゲーム実況。
+                    </p>
+                    <a href="#" target="_blank" class="apple-btn bg-red-600 hover:bg-red-500 mt-auto w-fit text-white border-none">チャンネル登録</a>
+                </div>
+                <!-- Image decoration -->
+                <i data-lucide="gamepad-2" class="absolute -bottom-10 -right-10 w-80 h-80 text-red-600/10 rotate-12"></i>
+            </div>
+        </div>
+    </main>
+
+    <!-- 5. VISUAL & SNS -->
+    <main id="visual" class="page-section">
+        <div class="category-header">
+            <h2 class="category-title">Visual & SNS</h2>
+            <p class="category-desc">もうひとつの顔、そして日常。</p>
+        </div>
+        <div class="bento-grid">
+            <!-- Visual Account -->
+            <div class="bento-card col-span-1 h-[450px] has-bg">
+                 <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop" class="card-img-bg">
+                 <div class="card-content justify-end">
+                     <div class="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-white/10">
+                        <p class="card-eyebrow text-pink-400">Crossdress / Visual</p>
+                        <!-- 修正: Emukoに変更 -->
+                        <h3 class="card-heading text-white">Emuko</h3>
+                        <p class="card-text text-white/80 text-sm">Creator Mode</p>
+                        <a href="#" target="_blank" class="apple-btn-outline text-white hover:text-white mt-2 px-0">View Gallery ></a>
+                     </div>
+                 </div>
+            </div>
+
+            <!-- Main SNS List -->
+            <div class="bento-card">
+                <div class="card-content">
+                    <h3 class="card-heading text-2xl mb-6">Socials</h3>
+                    <div class="link-list">
+                        <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="link-item">
+                            <span><i data-lucide="instagram"></i> Instagram (Main)</span> Follow
+                        </a>
+                        <a href="https://twitter.com/emupi2020" target="_blank" class="link-item">
+                            <span><i data-lucide="twitter"></i> X (Twitter)</span> Follow
+                        </a>
+                        <a href="#" target="_blank" class="link-item">
+                            <span><i data-lucide="message-circle" class="text-green-500"></i> Official LINE</span> Add
+                        </a>
+                        <a href="mailto:contact@example.com" class="link-item">
+                            <span><i data-lucide="mail"></i> Contact</span> Mail
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 6. Point System Modal -->
+    <div id="pointModal" class="overlay-bg" onclick="closeModal(event)">
+        <div class="modal-card wide flex flex-col" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <p class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">Member's Program</p>
+                    <h3 class="text-3xl font-bold">🅿︎ Point System</h3>
+                </div>
+                <button onclick="closeAllModals()" class="w-8 h-8 rounded-full bg-gray-500/20 flex items-center justify-center hover:bg-gray-500/40 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button onclick="switchTab('about')" class="tab-btn active" id="btn-about">Overview</button>
+                <button onclick="switchTab('earn')" class="tab-btn" id="btn-earn">How to Earn</button>
+                <button onclick="switchTab('exchange')" class="tab-btn" id="btn-exchange">Rewards</button>
+                <button onclick="switchTab('rules')" class="tab-btn" id="btn-rules">Rules</button>
+            </div>
+
+            <!-- Content -->
+            <div id="about" class="tab-content active">
+                <h4 class="text-xl font-bold mb-4">Emupiを応援して特典をゲット！</h4>
+                <p class="opacity-80 leading-relaxed text-sm mb-8">
+                    「🅿ポイント」は、ファンの皆様のための独自のポイントプログラムです。ライブ配信への参加や、動画へのアクションでポイントが貯まります。貯まったポイントは限定グッズや特別な体験と交換できます。
+                </p>
+                <div class="bg-blue-500/10 p-5 rounded-2xl border border-blue-500/20">
+                    <p class="text-blue-400 text-xs font-bold mb-2">MESSAGE</p>
+                    <p class="opacity-90 text-sm font-medium">いつも支えてくれてありがとう。みんなともっと楽しい時間を共有したくて作りました！</p>
+                </div>
+            </div>
+
+            <div id="earn" class="tab-content">
+                 <div class="space-y-4">
+                    <div class="flex justify-between items-center bg-[var(--list-hover)] p-4 rounded-2xl">
+                        <span class="text-sm font-medium">ライブ配信を最後まで視聴</span>
+                        <span class="text-green-400 font-bold text-sm">+10🅿</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-[var(--list-hover)] p-4 rounded-2xl">
+                        <span class="text-sm font-medium">動画へのいいね・コメント</span>
+                        <span class="text-green-400 font-bold text-sm">+50🅿</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-[var(--list-hover)] p-4 rounded-2xl">
+                        <span class="text-sm font-medium">イベントギフト</span>
+                        <span class="text-green-400 font-bold text-sm">+100🅿</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="exchange" class="tab-content">
+                <p class="opacity-60 text-xs mb-4">※交換申請は公式LINEからお願いします。</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="border border-[var(--card-border)] p-5 rounded-2xl flex justify-between items-center bg-[var(--list-hover)]">
+                        <span class="text-sm font-medium">デジタルサイン画像</span>
+                        <span class="font-bold">500🅿</span>
+                    </div>
+                    <div class="border border-[var(--card-border)] p-5 rounded-2xl flex justify-between items-center bg-[var(--list-hover)]">
+                        <span class="text-sm font-medium">リクエスト歌唱動画</span>
+                        <span class="font-bold">1,000🅿</span>
+                    </div>
+                     <div class="border border-[var(--card-border)] p-5 rounded-2xl flex justify-between items-center bg-[var(--list-hover)]">
+                        <span class="text-sm font-medium">1on1 トーク (5分)</span>
+                        <span class="font-bold">5,000🅿</span>
+                    </div>
+                </div>
+            </div>
+             
+             <div id="rules" class="tab-content">
+                <ul class="list-disc list-inside text-sm opacity-80 space-y-3">
+                    <li>ポイントの譲渡、売買は禁止です。</li>
+                    <li>不正に獲得したポイントは無効になります。</li>
+                    <li>有効期限は最終獲得日から1年です。</li>
+                    <li>本プログラムは予告なく変更・終了する場合があります。</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Music Details Modal (Top) -->
+    <div id="musicModal" class="overlay-bg" onclick="closeAllModals()"></div>
+    <div id="musicCard" class="modal-card flex flex-col items-center" style="z-index: 160;">
+         <div class="flex w-full justify-end mb-2">
+             <button onclick="closeAllModals()" class="w-8 h-8 rounded-full bg-gray-500/20 flex items-center justify-center hover:bg-gray-500/40 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+         </div>
+         <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop" class="w-40 h-40 rounded-xl shadow-2xl mb-6 object-cover">
+         <div class="mb-8 text-center">
+            <h2 class="text-3xl font-bold mb-1">Vida Loca</h2>
+            <p class="opacity-60 text-sm font-medium">Emupi • 2021</p>
+         </div>
+         <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-black font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 mb-6 hover:opacity-90 transition-colors shadow-lg">
+            <i data-lucide="play" class="w-4 h-4 fill-current"></i> Play Video
+         </a>
+         <div class="w-full space-y-2">
+             <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between p-4 rounded-2xl bg-[var(--list-hover)] hover:bg-[var(--card-border)] transition-colors text-sm">
+                 <span class="flex items-center gap-3"><i data-lucide="music" class="text-pink-500 w-5 h-5"></i> Apple Music</span>
+                 <i data-lucide="external-link" class="w-4 h-4 opacity-60"></i>
+             </a>
+             <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between p-4 rounded-2xl bg-[var(--list-hover)] hover:bg-[var(--card-border)] transition-colors text-sm">
+                 <span class="flex items-center gap-3"><i data-lucide="disc-3" class="text-green-500 w-5 h-5"></i> Spotify</span>
+                 <i data-lucide="external-link" class="w-4 h-4 opacity-60"></i>
+             </a>
+         </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="max-w-[980px] mx-auto text-center">
+             <p>&copy; 2025 Emupi Official. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Toast -->
+    <div id="toast" class="toast"><i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i> Copied to clipboard</div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Random TikTok Video Logic ---
+        // ここにおすすめ動画のURLリストを登録してください
+        const tiktokVideos = [
+            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
+            "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
+            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"  // 例: 動画C
+        ];
+
+        function playRandomTikTok() {
+            if (tiktokVideos.length === 0) {
+                alert("おすすめ動画の準備中です！");
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * tiktokVideos.length);
+            const randomVideoUrl = tiktokVideos[randomIndex];
+            // 新しいタブで開く
+            window.open(randomVideoUrl, '_blank');
+        }
+
+        // --- SPA Logic ---
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.querySelector('.nav-links').classList.remove('open');
+            window.scrollTo(0, 0);
+
+            if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
+            else { location.hash = '#' + pageId; }
+        }
+
+        function handleNavClick(event, pageId) {
+            event.preventDefault();
+            switchPage(pageId);
+        }
+
+        window.addEventListener('popstate', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById(hash)) {
+                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+                document.getElementById(hash).classList.add('active');
+            } else {
+                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+                document.getElementById('home').classList.add('active');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById(hash)) { switchPage(hash); }
+        });
+
+        function toggleMobileMenu() { document.getElementById('navLinks').classList.toggle('open'); }
+
+        // Modal System
+        function openModal(cardId, overlayId) {
+            if (cardId === 'pointModal') {
+                const overlay = document.getElementById('pointModal');
+                const card = overlay.querySelector('.modal-card');
+                if(overlay) overlay.classList.add('active');
+                if(card) card.classList.add('active');
+            } 
+            else if (cardId && overlayId) {
+                const overlay = document.getElementById(overlayId);
+                const card = document.getElementById(cardId);
+                if(overlay) overlay.classList.add('active');
+                if(card) card.classList.add('active');
+            }
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.overlay-bg').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.modal-card').forEach(el => el.classList.remove('active'));
+            document.body.style.overflow = 'auto';
+        }
+        
+        function closeModal(event) {
+            if (event.target.classList.contains('overlay-bg')) closeAllModals();
+        }
+
+        // Tabs
+        function switchTab(tabId) {
+            const container = document.querySelector('.modal-card.active'); // Only affect active modal
+            if (!container) return;
+            
+            container.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            container.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        // Clipboard
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            } catch (err) { console.error(err); }
+            document.body.removeChild(textarea);
+        }
+
+        // Video
+        let isPlaying = true;
+        function togglePlayPause() {
+            const iframe = document.getElementById('bgVideo');
+            const icon = document.getElementById('playIcon');
+            if (isPlaying) {
+                iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                icon.setAttribute('data-lucide', 'play');
+                icon.setAttribute('class', 'w-4 h-4 fill-current ml-0.5'); // Adjust icon position
+            } else {
+                iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                icon.setAttribute('data-lucide', 'pause');
+                icon.setAttribute('class', 'w-4 h-4 fill-current');
+            }
+            isPlaying = !isPlaying;
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
+
+
