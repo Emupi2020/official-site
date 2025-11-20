@@ -65,12 +65,12 @@
             transition: opacity 0.5s ease;
         }
 
-        body.details-open .video-foreground {
-            opacity: 0.4;
-            filter: blur(8px);
+        body.overlay-open .video-foreground {
+            opacity: 0.3;
+            filter: blur(12px);
         }
 
-        /* Controls (Right Bottom) */
+        /* Controls */
         .controls-container {
             position: absolute;
             bottom: 30px;
@@ -95,162 +95,111 @@
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             cursor: pointer;
         }
+        .control-btn:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.1); }
+        .control-btn:active { transform: scale(0.95); }
 
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .control-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Details Overlay */
-        .details-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 40;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            background: rgba(0, 0, 0, 0.4);
-        }
-
-        body.details-open .details-overlay {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .details-card {
-            width: 90%;
-            max-width: 600px;
-            padding: 60px 40px;
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(20, 20, 20, 0.4);
-            backdrop-filter: blur(20px);
-            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            transform: scale(0.95) translateY(20px);
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        body.details-open .details-card {
-            transform: scale(1) translateY(0);
-        }
-
-        /* --- Menu & Header --- */
-        .menu-btn {
-            position: fixed;
-            top: 30px;
-            left: 30px;
-            z-index: 60;
-            color: white;
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-        .menu-btn:hover { opacity: 1; }
-
-        .social-header {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            z-index: 60;
-            display: flex;
-            gap: 20px;
-            color: white;
-            opacity: 0.7;
-        }
-        .social-header a:hover { opacity: 1; }
-
-        .header-logo {
-            position: fixed;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 60;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            opacity: 0.9;
-        }
-        .header-logo span {
-            width: 3px;
-            height: 16px;
-            background: white;
-            display: inline-block;
-        }
-
-        .side-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 300px;
-            background: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(20px);
-            z-index: 100;
-            transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            padding: 80px 40px;
-        }
-        .side-menu.open { transform: translateX(0); }
-        .menu-overlay-bg {
+        /* Universal Overlay & Modal Styles */
+        .overlay-bg {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 90;
+            z-index: 80; /* Menu is 90 */
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s;
+            transition: opacity 0.3s ease;
         }
-        .menu-overlay-bg.open { opacity: 1; pointer-events: auto; }
+        .overlay-bg.active { opacity: 1; pointer-events: auto; }
 
-        /* --- Bento Grid & Cards --- */
-        .bento-card {
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        .bento-card:hover {
-            transform: scale(1.015);
-            z-index: 10;
-        }
-
-        /* AI Modal */
-        .ai-modal {
+        .modal-card {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
+            transform: translate(-50%, -40%) scale(0.95);
             width: 90%;
-            max-width: 500px;
-            background: rgba(28, 28, 30, 0.95);
+            max-width: 500px; /* Default width */
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 40px 30px;
+            border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 24px;
-            z-index: 100;
+            background: rgba(28, 28, 30, 0.85);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            z-index: 85;
             opacity: 0;
             pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            backdrop-filter: blur(20px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .ai-modal.open {
+        .modal-card.active {
             opacity: 1;
             pointer-events: auto;
             transform: translate(-50%, -50%) scale(1);
         }
-        .typing-cursor::after {
-            content: '|';
-            animation: blink 1s infinite;
+        .modal-card.wide { max-width: 700px; } /* Wider modal for Points */
+
+        /* Scrollbar hidden */
+        .modal-card::-webkit-scrollbar { display: none; }
+        .modal-card { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- Menu & Header --- */
+        .menu-btn { position: fixed; top: 30px; left: 30px; z-index: 60; color: white; opacity: 0.7; transition: opacity 0.3s; }
+        .menu-btn:hover { opacity: 1; }
+        .social-header { position: fixed; top: 30px; right: 30px; z-index: 60; display: flex; gap: 20px; color: white; opacity: 0.7; }
+        .social-header a:hover { opacity: 1; }
+        .header-logo { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); z-index: 60; font-weight: 700; letter-spacing: -0.02em; font-size: 1.2rem; display: flex; align-items: center; gap: 6px; opacity: 0.9; }
+        .header-logo span { width: 3px; height: 16px; background: white; display: inline-block; }
+
+        .side-menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); z-index: 100; transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); border-right: 1px solid rgba(255,255,255,0.1); padding: 80px 40px; }
+        .side-menu.open { transform: translateX(0); }
+        .menu-overlay-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .menu-overlay-bg.open { opacity: 1; pointer-events: auto; }
+
+        /* --- Bento Grid --- */
+        .bento-card { transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .bento-card:hover { transform: scale(1.015); z-index: 10; }
+
+        /* List Items in Bento Card */
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+            text-decoration: none;
+            color: white;
         }
-        @keyframes blink { 50% { opacity: 0; } }
+        .list-item:hover { background: rgba(255,255,255,0.1); }
+        
+        /* Point System Tabs */
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #86868b;
+            transition: all 0.3s;
+            background: transparent;
+        }
+        .tab-btn.active {
+            background: white;
+            color: black;
+        }
+        .tab-content { display: none; animation: fadeIn 0.4s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: rgba(255, 255, 255, 0.9); color: black; padding: 12px 24px; border-radius: 50px;
+            font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 200; display: flex; align-items: center; gap: 8px;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
     </style>
 </head>
 <body>
@@ -277,8 +226,9 @@
         </button>
         <nav class="flex flex-col gap-6 text-xl font-bold text-gray-300">
             <a href="#" onclick="toggleMenu()" class="hover:text-white">Home</a>
-            <a href="#profile-card" onclick="toggleMenu()" class="hover:text-white">Profile</a>
-            <a href="#links" onclick="toggleMenu()" class="hover:text-white">Works</a>
+            <a href="#links" onclick="toggleMenu()" class="hover:text-white">Profile & SNS</a>
+            <!-- Fixed: Changed function call to correct name -->
+            <a href="#" onclick="toggleMenu(); openModal('pointModal')" class="hover:text-white">🅿︎ Point System</a>
             <a href="mailto:contact@example.com" class="hover:text-white">Contact</a>
         </nav>
         <div class="mt-auto text-xs text-gray-500">© 2025 Emupi</div>
@@ -288,46 +238,125 @@
     <section class="hero-container">
         <div class="video-background">
             <div class="video-foreground">
-                <iframe 
-                    id="bgVideo"
-                    src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    title="Background Video"
-                    style="width:100%; height:100%;">
-                </iframe>
+                <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title="Background Video" style="width:100%; height:100%;"></iframe>
             </div>
         </div>
 
-        <!-- Details Overlay (Visible when + is clicked) -->
-        <div class="details-overlay">
-            <div class="details-card">
-                <h1 class="text-6xl md:text-8xl font-bold text-white tracking-tighter leading-none mb-2 drop-shadow-xl">
-                    emupi
-                </h1>
-                <p class="text-xl text-gray-300 font-medium flex items-center justify-center gap-2 mb-10">
-                    <i data-lucide="music" class="w-4 h-4"></i> Vida Loca
-                </p>
+        <!-- Music/MV Overlay (Details Modal) -->
+        <div id="globalOverlay" class="overlay-bg" onclick="closeAllModals()"></div>
+        
+        <!-- 1. Music Details Modal -->
+        <div id="musicModal" class="modal-card flex flex-col items-center">
+            <button onclick="closeAllModals()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            
+            <div class="mb-6 text-center mt-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-1 tracking-tight">Vida Loca</h2>
+                <p class="text-gray-400 text-xs tracking-widest uppercase font-medium">The Experience.</p>
+            </div>
 
-                <div class="inline-block border border-white/10 rounded-xl p-2 bg-black/20 backdrop-blur-sm mb-8">
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center gap-1.5 bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">
-                            <i data-lucide="music" class="w-3.5 h-3.5"></i> Apple Music
-                        </a>
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center gap-1.5 bg-[#1DB954] text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#1ed760] transition-colors">
-                            <i data-lucide="disc-3" class="w-3.5 h-3.5"></i> Spotify
-                        </a>
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center gap-1.5 bg-[#00C300] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#00e000] transition-colors">
-                            <i data-lucide="headphones" class="w-3.5 h-3.5"></i> LINE MUSIC
-                        </a>
+            <!-- MV Link (Primary) -->
+            <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="w-full bg-white text-black font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-3 mb-8 hover:scale-[1.02] transition-transform shadow-lg shadow-white/10 group relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-gray-200/30 to-transparent translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                <i data-lucide="play-circle" class="w-6 h-6 fill-black"></i>
+                <span class="text-lg tracking-tight">Watch Music Video</span>
+            </a>
+
+            <!-- Audio Links -->
+            <div class="w-full flex items-center gap-4 mb-6 opacity-60">
+                <div class="h-px bg-white/20 flex-1"></div>
+                <span class="text-[10px] text-white font-medium uppercase tracking-widest">Audio Streaming</span>
+                <div class="h-px bg-white/20 flex-1"></div>
+            </div>
+
+            <div class="w-full space-y-2 mb-4">
+                <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="list-item group">
+                    <span class="text-sm font-medium text-white flex items-center gap-3"><i data-lucide="music" class="w-4 h-4 text-pink-500"></i> Apple Music</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-600 group-hover:text-white"></i>
+                </a>
+                <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="list-item group">
+                    <span class="text-sm font-medium text-white flex items-center gap-3"><i data-lucide="disc-3" class="w-4 h-4 text-green-500"></i> Spotify</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-600 group-hover:text-white"></i>
+                </a>
+                <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="list-item group">
+                    <span class="text-sm font-medium text-white flex items-center gap-3"><i data-lucide="list-music" class="w-4 h-4 text-green-400"></i> LINE MUSIC</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-600 group-hover:text-white"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. Point System Modal (Wide) -->
+        <div id="pointModal" class="modal-card wide flex flex-col">
+            <button onclick="closeAllModals()" class="absolute top-6 right-6 text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            
+            <div class="text-center mb-8">
+                <div class="inline-block bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-[10px] font-bold mb-2 border border-blue-500/30">MEMBER'S PROGRAM</div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white">🅿︎ Point System</h2>
+                <p class="text-gray-400 text-xs mt-2">ファンコミュニティを楽しむための独自ポイント制度</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex justify-center gap-2 mb-8 bg-white/5 p-1 rounded-full w-fit mx-auto">
+                <button onclick="switchTab('tab1')" class="tab-btn active" id="btn-tab1">とは？</button>
+                <button onclick="switchTab('tab2')" class="tab-btn" id="btn-tab2">貯め方</button>
+                <button onclick="switchTab('tab3')" class="tab-btn" id="btn-tab3">交換</button>
+                <button onclick="switchTab('tab4')" class="tab-btn" id="btn-tab4">お願い</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="tab1" class="tab-content active text-sm text-gray-300 leading-relaxed space-y-4">
+                <h3 class="text-white font-bold text-lg mb-2">Emupiを応援して特典をゲット！</h3>
+                <p>いつも応援ありがとうございます！<br>「🅿ポイント」は、ライブ配信への参加や応援によって貯まるオリジナルのポイント制度です。</p>
+                <p>貯まったポイントは、限定グッズや特別な体験と交換することができます。みんなで楽しく推し活しましょう！</p>
+                <div class="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl mt-4">
+                    <p class="text-blue-200 text-xs">💡 メッセージ: <br>いつも支えてくれてありがとう。みんなともっと楽しい時間を共有したくて作りました！</p>
+                </div>
+            </div>
+
+            <div id="tab2" class="tab-content text-sm text-gray-300 leading-relaxed">
+                <h3 class="text-white font-bold text-lg mb-4">ポイントの獲得方法</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                        <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold whitespace-nowrap">+10🅿</span>
+                        <span>ライブ配信を最後まで視聴する</span>
+                    </li>
+                    <li class="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                        <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold whitespace-nowrap">+50🅿</span>
+                        <span>TikTok動画にいいね＆コメント</span>
+                    </li>
+                    <li class="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                        <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold whitespace-nowrap">+100🅿</span>
+                        <span>イベント時の特別ギフト</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="tab3" class="tab-content text-sm text-gray-300 leading-relaxed">
+                <h3 class="text-white font-bold text-lg mb-4">ポイント交換について</h3>
+                <p class="mb-4">貯めたポイントは以下の特典と交換できます。交換申請は公式LINEからお願いします。</p>
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="border border-white/10 p-4 rounded-xl flex justify-between items-center">
+                        <span>デジタルサイン入り画像</span>
+                        <span class="font-bold text-white">500🅿</span>
+                    </div>
+                    <div class="border border-white/10 p-4 rounded-xl flex justify-between items-center">
+                        <span>リクエスト歌唱動画</span>
+                        <span class="font-bold text-white">1,000🅿</span>
+                    </div>
+                    <div class="border border-white/10 p-4 rounded-xl flex justify-between items-center">
+                        <span>1on1 トーク (5分)</span>
+                        <span class="font-bold text-white">5,000🅿</span>
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="inline-flex items-center gap-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white px-6 py-2.5 rounded-full text-xs font-bold transition-all group">
-                        Watch Music Video <i data-lucide="arrow-right" class="w-3 h-3 group-hover:translate-x-0.5 transition-transform"></i>
-                    </a>
-                </div>
+            <div id="tab4" class="tab-content text-sm text-gray-300 leading-relaxed">
+                <h3 class="text-white font-bold text-lg mb-4 text-red-400">⚠️ お願い事項</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li>ポイントの譲渡や売買は禁止です。</li>
+                    <li>不正な方法で獲得したポイントは無効となります。</li>
+                    <li>有効期限は最終獲得日から1年間です。</li>
+                    <li>システムは予告なく変更される場合があります。</li>
+                </ul>
             </div>
         </div>
 
@@ -336,7 +365,7 @@
             <button id="playPauseBtn" class="control-btn" onclick="togglePlayPause()" title="再生/停止">
                 <i data-lucide="pause" class="w-5 h-5 fill-current"></i>
             </button>
-            <button id="toggleDetailsBtn" class="control-btn" onclick="toggleDetails()" title="詳細を表示">
+            <button id="toggleMusicBtn" class="control-btn" onclick="openModal('musicModal')" title="詳細を表示">
                 <i data-lucide="plus" class="w-6 h-6 transition-transform duration-300"></i>
             </button>
         </div>
@@ -350,158 +379,126 @@
     <!-- Bento Grid Section -->
     <section id="links" class="max-w-6xl mx-auto px-4 py-24 bg-black relative z-10">
         <h2 class="text-3xl md:text-5xl font-bold text-center mb-16 text-white">Create. Inspire.</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            <!-- 1. Profile Card (NEW: Beaconsのプロフィール要素) -->
-            <div id="profile-card" class="bento-card col-span-1 md:col-span-2 lg:col-span-2 bg-[#161617] rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-6 border border-white/5">
-                <img src="https://ui-avatars.com/api/?name=Emupi&background=random&size=200" alt="Emupi" class="w-24 h-24 rounded-full border-2 border-white/10 shadow-xl">
-                <div class="text-center md:text-left">
-                    <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
-                        <h3 class="text-2xl font-bold text-white">Emupi</h3>
-                        <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full border border-blue-500/30">Official</span>
+            <!-- 1. Profile & Fan Mark -->
+            <div id="profile-card" class="bento-card col-span-1 md:col-span-2 lg:col-span-2 bg-[#161617] rounded-[2rem] p-8 flex flex-col md:flex-row items-center gap-8 border border-white/5">
+                <img src="https://ui-avatars.com/api/?name=Emupi&background=random&size=200" alt="Emupi" class="w-32 h-32 rounded-full border-4 border-white/10 shadow-2xl">
+                <div class="text-center md:text-left flex-1">
+                    <div class="flex items-center justify-center md:justify-start gap-3 mb-3">
+                        <h3 class="text-3xl font-bold text-white">Emupi</h3>
+                        <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-full border border-blue-500/30 tracking-wider">OFFICIAL</span>
                     </div>
-                    <p class="text-gray-400 text-sm leading-relaxed max-w-md">
-                        TikTokやライブ配信で活動中！🎵<br>
-                        音楽と映像で世界観を表現します。<br>
-                        お仕事の依頼はDMまたはメールまで。
+                    <p class="text-gray-400 text-sm leading-relaxed mb-5">
+                        歌真似TikTokライブを中心に活動するマルチクリエイター。<br>
+                        歌、声真似、女装、そしてオリジナル楽曲。<br>
+                        "楽しい"の境界線を超えていく。
+                    </p>
+                    <!-- Fan Mark Button -->
+                    <button onclick="copyToClipboard('🅿︎')" class="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 border border-white/10 px-5 py-2 rounded-full text-sm text-white transition-colors group">
+                        <span class="text-blue-400 font-medium">Fan Mark</span>
+                        <span class="font-bold text-xl bg-white text-black w-6 h-6 rounded flex items-center justify-center">🅿︎</span>
+                        <span class="text-xs text-gray-400 group-hover:text-white transition-colors">Tap to Copy</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Point System Card (Click to Open Modal) -->
+            <div onclick="openModal('pointModal')" class="cursor-pointer bento-card col-span-1 bg-gradient-to-br from-blue-900 to-[#161617] rounded-[2rem] p-8 flex flex-col justify-between min-h-[280px] border border-white/5 relative overflow-hidden group">
+                <div class="z-10">
+                    <div class="flex items-center gap-2 mb-3 text-blue-300 text-xs font-bold uppercase tracking-wider">
+                        <i data-lucide="crown" class="w-4 h-4"></i> Member's Program
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">🅿︎ Point System</h3>
+                    <p class="text-blue-200 text-sm leading-relaxed">
+                        ファン限定のポイントプログラム。<br>
+                        貯めて特典と交換しよう。
                     </p>
                 </div>
-            </div>
-
-            <!-- 2. TikTok (Main) -->
-             <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="bento-card col-span-1 md:col-span-2 lg:col-span-2 row-span-2 bg-[#161617] rounded-[2rem] p-8 md:p-10 flex flex-col justify-between relative overflow-hidden group h-[400px] border border-white/5">
-                <div class="z-10">
-                    <div class="flex items-center gap-2 mb-3 text-gray-400 text-xs font-bold uppercase tracking-wider">
-                        <i data-lucide="music-2" class="w-4 h-4"></i> TikTok
-                    </div>
-                    <h3 class="text-4xl font-bold text-white mb-2">Entertainment.<br>Reimagined.</h3>
-                    <p class="text-gray-400 text-lg font-medium">最新のショート動画をチェック。</p>
-                </div>
-                <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-gradient-to-br from-[#00f2ea] to-[#ff0050] blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-700"></div>
-                <div class="z-10 mt-auto">
-                    <span class="inline-flex items-center bg-white text-black px-6 py-3 rounded-full text-sm font-semibold group-hover:scale-105 transition-transform">
-                        TikTokを見る
+                <div class="absolute -right-4 -bottom-4 w-40 h-40 bg-blue-600 blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div class="relative z-10 mt-auto">
+                    <span class="inline-flex items-center gap-2 text-white font-bold text-sm border-b border-white/30 pb-1 group-hover:border-white transition-colors">
+                        詳細を見る <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                     </span>
                 </div>
-            </a>
-            
-            <!-- 3. Music Links (NEW: 楽曲一覧) -->
-            <div class="bento-card col-span-1 md:col-span-2 bg-[#1d1d1f] rounded-[2rem] p-8 border border-white/5">
-                <div class="flex items-center gap-2 mb-6 text-green-400 text-xs font-bold uppercase tracking-wider">
-                    <i data-lucide="headphones" class="w-4 h-4"></i> Music Streaming
+            </div>
+
+            <!-- 3. TikTok & Live (Folder) -->
+            <div class="bento-card col-span-1 md:col-span-1 bg-[#1d1d1f] rounded-[2rem] p-6 flex flex-col border border-white/5">
+                <div class="flex items-center gap-2 mb-4 text-pink-500 font-bold text-xs uppercase tracking-wider">
+                    <i data-lucide="music-2" class="w-4 h-4"></i> TikTok & Live
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
-                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="music" class="w-4 h-4"></i> Apple Music</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                <div class="flex-1 space-y-2">
+                    <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold">Main Account</span>
+                        <i data-lucide="external-link" class="w-4 h-4 opacity-50 group-hover:opacity-100"></i>
                     </a>
-                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
-                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="disc-3" class="w-4 h-4"></i> Spotify</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    <a href="#" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold">Sub Account</span>
+                        <i data-lucide="external-link" class="w-4 h-4 opacity-50 group-hover:opacity-100"></i>
                     </a>
-                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
-                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="play-circle" class="w-4 h-4"></i> YouTube Music</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    <button onclick="alert('おすすめ動画を開きます（リンク未設定）')" class="list-item group w-full">
+                        <span class="text-sm font-bold text-amber-400">⭐ Recommended</span>
+                        <i data-lucide="play" class="w-4 h-4 opacity-50 group-hover:opacity-100"></i>
+                    </button>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/5 text-[10px] text-gray-500 flex items-start gap-2">
+                    <i data-lucide="info" class="w-3 h-3 mt-0.5"></i>
+                    <span>ライブ配信での使用音源については<br>ガイドラインをご確認ください。</span>
+                </div>
+            </div>
+
+            <!-- 4. YouTube Channels (Folder) -->
+            <div class="bento-card col-span-1 md:col-span-1 bg-[#1d1d1f] rounded-[2rem] p-6 flex flex-col border border-white/5">
+                <div class="flex items-center gap-2 mb-4 text-red-500 font-bold text-xs uppercase tracking-wider">
+                    <i data-lucide="youtube" class="w-4 h-4"></i> YouTube
+                </div>
+                <div class="flex-1 space-y-2">
+                    <a href="#" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold">Main Channel</span>
+                        <span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded">歌/MV</span>
                     </a>
-                    <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-colors group">
-                        <span class="text-sm font-bold text-white flex items-center gap-2"><i data-lucide="list-music" class="w-4 h-4"></i> LINE MUSIC</span>
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white"></i>
+                    <a href="#" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold">Game Channel</span>
+                        <span class="text-xs bg-white/10 text-gray-400 px-2 py-0.5 rounded">実況</span>
                     </a>
                 </div>
             </div>
 
-            <!-- 4. Discography (NEW: Vida Loca カード) -->
-            <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="bento-card col-span-1 bg-[#161617] rounded-[2rem] overflow-hidden relative h-[240px] group border border-white/5">
-                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop" alt="Vida Loca" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity scale-105 group-hover:scale-100 duration-700">
-                <div class="relative z-10 p-6 h-full flex flex-col justify-end">
-                    <p class="text-xs font-bold text-amber-400 mb-1">LATEST RELEASE</p>
-                    <h3 class="text-2xl font-bold text-white mb-1">Vida Loca</h3>
-                    <span class="text-[10px] text-gray-300 bg-black/50 backdrop-blur-md px-2 py-1 rounded w-fit">2021.08.01</span>
+            <!-- 5. Visual & SNS (Folder) -->
+            <div class="bento-card col-span-1 md:col-span-1 bg-[#1d1d1f] rounded-[2rem] p-6 flex flex-col border border-white/5">
+                <div class="flex items-center gap-2 mb-4 text-purple-400 font-bold text-xs uppercase tracking-wider">
+                    <i data-lucide="smartphone" class="w-4 h-4"></i> Visual & SNS
                 </div>
-            </a>
+                <div class="flex-1 space-y-2">
+                    <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold flex gap-2"><i data-lucide="instagram" class="w-4 h-4"></i> Instagram</span>
+                        <span class="text-xs text-gray-500">Main</span>
+                    </a>
+                    <a href="#" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold flex gap-2"><i data-lucide="instagram" class="w-4 h-4"></i> Instagram</span>
+                        <span class="text-xs text-pink-400">Creator (女装)</span>
+                    </a>
+                    <a href="https://twitter.com/emupi2020" target="_blank" class="list-item group">
+                        <span class="text-sm font-bold flex gap-2"><i data-lucide="twitter" class="w-4 h-4"></i> X (Twitter)</span>
+                    </a>
+                    <a href="#" target="_blank" class="list-item group bg-green-900/20 hover:bg-green-900/40">
+                        <span class="text-sm font-bold flex gap-2 text-green-400"><i data-lucide="message-circle" class="w-4 h-4"></i> Official LINE</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- 5. Instagram -->
-            <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="bento-card col-span-1 bg-white text-black rounded-[2rem] p-8 flex flex-col justify-between h-[240px] group">
+            <!-- 6. Contact -->
+             <a href="mailto:contact@example.com" class="bento-card col-span-1 md:col-span-3 bg-[#161617] rounded-[2rem] p-8 flex items-center justify-between border border-white/5 group">
                 <div>
-                    <i data-lucide="instagram" class="w-8 h-8 mb-4 text-pink-600"></i>
-                    <h3 class="text-xl font-bold mb-1">Stories.</h3>
+                    <h3 class="text-lg font-bold text-white mb-1">Contact</h3>
+                    <p class="text-gray-400 text-xs">お仕事のご依頼・コラボのご相談はこちら</p>
                 </div>
-                <div class="flex justify-end">
-                    <div class="w-10 h-10 bg-[#f5f5f7] rounded-full flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors">
-                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                    </div>
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black group-hover:scale-110 transition-transform">
+                    <i data-lucide="mail" class="w-5 h-5"></i>
                 </div>
             </a>
-
-            <!-- 6. Live Streaming (NEW) -->
-            <div class="bento-card col-span-1 bg-gradient-to-br from-purple-900 to-indigo-900 rounded-[2rem] p-8 flex flex-col justify-between h-[240px] border border-white/5 relative overflow-hidden group">
-                <div class="z-10">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        <span class="text-xs font-bold text-purple-200 uppercase tracking-wider">Live Streaming</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-white">Live</h3>
-                    <p class="text-purple-200 text-xs mt-2">配信で会いに来てね。</p>
-                </div>
-                <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-purple-500 blur-[50px] opacity-30 group-hover:opacity-60 transition-opacity"></div>
-            </div>
-
-            <!-- 7. Twitter -->
-            <a href="https://twitter.com/emupi2020" target="_blank" class="bento-card col-span-1 bg-[#161617] rounded-[2rem] p-8 flex flex-col justify-between h-[240px] border border-white/5">
-                <div>
-                    <i data-lucide="twitter" class="w-8 h-8 mb-4 text-white"></i>
-                    <h3 class="text-xl font-bold text-white mb-1">Latest.</h3>
-                </div>
-                <div class="text-[#2997ff] text-sm font-medium flex items-center gap-1 group-hover:underline">
-                    Follow <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </div>
-            </a>
-            
-            <!-- 8. YouTube -->
-            <a href="#" target="_blank" class="bento-card col-span-1 md:col-span-2 bg-[#161617] rounded-[2rem] overflow-hidden relative h-[240px] group flex items-center justify-center border border-white/5">
-                <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" alt="YouTube" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-30 transition-opacity group-hover:scale-105 duration-700">
-                <div class="relative z-10 text-center">
-                    <h3 class="text-3xl font-bold text-white mb-3 drop-shadow-lg">YouTube Channel</h3>
-                    <span class="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-full text-xs font-medium hover:bg-red-700 transition-colors">
-                        <i data-lucide="youtube" class="w-4 h-4"></i> チャンネル登録
-                    </span>
-                </div>
-            </a>
-
-             <!-- 9. Contact -->
-             <a href="mailto:contact@example.com" class="bento-card col-span-1 bg-[#1d1d1f] rounded-[2rem] p-8 flex flex-col justify-center items-center text-center h-[240px] border border-white/5">
-                <div class="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center text-[#2997ff] mb-4">
-                    <i data-lucide="mail" class="w-6 h-6"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white mb-2">Contact</h3>
-                <p class="text-gray-400 text-xs">お仕事のご依頼</p>
-            </a>
-
-            <!-- 10. AI Lyric Studio -->
-            <div onclick="openAiModal()" class="cursor-pointer bento-card col-span-1 md:col-span-2 lg:col-span-1 bg-gradient-to-br from-indigo-900 to-[#161617] rounded-[2rem] p-8 flex flex-col justify-between h-[240px] border border-white/5 relative overflow-hidden group">
-                <div class="relative z-10">
-                    <div class="flex items-center gap-2 mb-2 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i> Gemini AI
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Lyric Studio</h3>
-                    <p class="text-indigo-200 text-xs leading-relaxed">AIが歌詞を即興制作。</p>
-                </div>
-                <div class="absolute -right-4 -top-4 w-32 h-32 bg-indigo-500 blur-[60px] opacity-30 group-hover:opacity-50 transition-opacity"></div>
-                <div class="relative z-10 mt-auto pt-4">
-                     <span class="text-white text-xs font-bold bg-indigo-600/30 border border-indigo-500/50 px-3 py-1.5 rounded-full flex items-center w-fit gap-1">
-                        試してみる <i data-lucide="arrow-right" class="w-3 h-3"></i>
-                     </span>
-                </div>
-            </div>
-
-            <!-- 11. Community / Email -->
-            <div class="bento-card col-span-1 md:col-span-2 lg:col-span-1 bg-[#1d1d1f] rounded-[2rem] p-8 flex flex-col justify-between h-auto border border-white/5">
-                <h3 class="text-lg font-bold text-white mb-2">Community</h3>
-                <form class="space-y-2" onsubmit="event.preventDefault(); alert('登録ありがとうございます！');">
-                    <input type="email" placeholder="メールアドレス" class="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
-                    <button type="submit" class="w-full bg-white text-black font-bold py-2.5 rounded-lg text-sm hover:bg-gray-200">登録する</button>
-                </form>
-            </div>
 
         </div>
     </section>
@@ -509,36 +506,15 @@
     <footer class="bg-[#161617] py-12 px-6 border-t border-white/5 text-center text-gray-500 text-xs">
         <p>Copyright © 2025 Emupi Official. All rights reserved.</p>
     </footer>
-
-    <!-- AI Modal -->
-    <div id="aiModalOverlay" class="menu-overlay-bg" onclick="closeAiModal()"></div>
-    <div id="aiModal" class="ai-modal">
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center gap-2 text-indigo-400 font-bold">
-                <i data-lucide="sparkles" class="w-5 h-5"></i> AI Lyric Studio
-            </div>
-            <button onclick="closeAiModal()" class="text-gray-400 hover:text-white">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-        <p class="text-gray-300 text-sm mb-4">
-            今の気分やテーマを入力してください。<br>Gemini AIが即興でラップ/歌詞を作ります。
-        </p>
-        <div class="space-y-3">
-            <input type="text" id="lyricTheme" placeholder="例: 雨の日のドライブ、真夜中の東京..." class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors">
-            <button onclick="generateLyrics()" id="generateBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
-                <span>歌詞を生成する ✨</span>
-            </button>
-        </div>
-        <div id="resultArea" class="hidden mt-6 p-4 bg-black/30 rounded-xl border border-white/5">
-            <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider">Generated Lyrics:</p>
-            <p id="lyricOutput" class="text-white text-sm leading-relaxed font-mono whitespace-pre-wrap typing-cursor"></p>
-        </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i>
+        <span>Copied to clipboard!</span>
     </div>
 
     <script>
         lucide.createIcons();
-        const apiKey = ""; // API Key
 
         function toggleMenu() {
             const menu = document.getElementById('sideMenu');
@@ -547,25 +523,39 @@
             overlay.classList.toggle('open');
         }
 
-        let isDetailsOpen = false;
-        function toggleDetails() {
-            isDetailsOpen = !isDetailsOpen;
+        // Modal Control System
+        function openModal(modalId) {
+            const overlay = document.getElementById('globalOverlay');
+            const modal = document.getElementById(modalId);
             const body = document.body;
-            const btn = document.getElementById('toggleDetailsBtn');
-            const scrollIndicator = document.getElementById('scrollIndicator');
-            
-            if (isDetailsOpen) {
-                body.classList.add('details-open');
-                btn.innerHTML = '<i data-lucide="plus" style="transform: rotate(45deg); transition: transform 0.3s;"></i>';
-                if (scrollIndicator) scrollIndicator.style.opacity = '0';
-            } else {
-                body.classList.remove('details-open');
-                btn.innerHTML = '<i data-lucide="plus" style="transform: rotate(0deg); transition: transform 0.3s;"></i>';
-                if (scrollIndicator) scrollIndicator.style.opacity = '1';
-            }
-            lucide.createIcons();
+
+            overlay.classList.add('active');
+            modal.classList.add('active');
+            body.classList.add('overlay-open');
         }
 
+        function closeAllModals() {
+            const overlay = document.getElementById('globalOverlay');
+            const modals = document.querySelectorAll('.modal-card');
+            const body = document.body;
+
+            overlay.classList.remove('active');
+            modals.forEach(m => m.classList.remove('active'));
+            body.classList.remove('overlay-open');
+        }
+
+        // Point System Tabs
+        function switchTab(tabId) {
+            // Remove active class from all contents and buttons
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Add active class to target
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        // Video Controls
         let isPlaying = true;
         function togglePlayPause() {
             const iframe = document.getElementById('bgVideo');
@@ -582,57 +572,23 @@
             lucide.createIcons();
         }
 
-        function openAiModal() {
-            document.getElementById('aiModal').classList.add('open');
-            document.getElementById('aiModalOverlay').classList.add('open');
-        }
-        function closeAiModal() {
-            document.getElementById('aiModal').classList.remove('open');
-            document.getElementById('aiModalOverlay').classList.remove('open');
-        }
-
-        async function generateLyrics() {
-            const theme = document.getElementById('lyricTheme').value;
-            if (!theme) return;
-            const btn = document.getElementById('generateBtn');
-            const output = document.getElementById('lyricOutput');
-            const resultArea = document.getElementById('resultArea');
-            
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 生成中...';
-            btn.disabled = true;
-            resultArea.classList.remove('hidden');
-            output.textContent = "AIがビートを感じています...";
-            lucide.createIcons();
-
-            const prompt = `あなたは日本人アーティスト「Emupi」の作詞アシスタントです。以下のテーマに基づいて、短くてかっこいい歌詞（サビ部分）を生成してください。日本語と英語をミックスし、エモーショナルでトレンド感のある言葉を選んでください。\n\nテーマ: ${theme}`;
-
+        // Copy to Clipboard: Fixed for iframe environments
+        function copyToClipboard(text) {
+            // Use temporary textarea hack for broader compatibility
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await response.json();
-                const generatedText = data.candidates[0].content.parts[0].text;
-
-                output.textContent = "";
-                let i = 0;
-                const typeWriter = setInterval(() => {
-                    if (i < generatedText.length) {
-                        output.textContent += generatedText.charAt(i);
-                        i++;
-                    } else {
-                        clearInterval(typeWriter);
-                        document.querySelector('.typing-cursor').classList.remove('typing-cursor');
-                    }
-                }, 30);
-            } catch (error) {
-                console.error('Error:', error);
-                output.textContent = "エラーが発生しました。";
-            } finally {
-                btn.innerHTML = '<span>歌詞を生成する ✨</span>';
-                btn.disabled = false;
+                document.execCommand('copy');
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            } catch (err) {
+                console.error('Copy failed', err);
+                alert('クリップボードへのコピーに失敗しました。');
             }
+            document.body.removeChild(textarea);
         }
     </script>
 </body>
