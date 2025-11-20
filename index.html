@@ -71,7 +71,8 @@
         /* --- Navigation Bar --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
-            background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+            background: var(--nav-bg);
+            backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
             z-index: 100; display: flex; justify-content: center;
             border-bottom: 1px solid var(--card-border);
             transition: background 0.5s;
@@ -88,10 +89,9 @@
         .nav-item:hover { opacity: 1; }
         
         .nav-item.nav-logo { 
-            opacity: 1; padding-left: 0; margin-right: auto; display: flex; align-items: center; height: 100%; padding-bottom: 3px;
+            opacity: 1; padding-left: 0; margin-right: auto; display: flex; align-items: center; height: 100%; padding-bottom: 2px;
         }
-        .logo-svg { width: 20px; height: 20px; display: block; border-radius: 5px; }
-
+        
         .mobile-menu-btn { display: none; color: var(--nav-text); height: 100%; align-items: center; cursor: pointer; }
         
         @media (max-width: 834px) {
@@ -131,7 +131,7 @@
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 【重要】動画の黒帯を消すための完全なCover設定 */
+        /* 【重要】動画の黒帯を消すために強制拡大 (scale 1.35) */
         .video-foreground {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
         }
@@ -139,11 +139,11 @@
             position: absolute;
             top: 50%; left: 50%;
             width: 100vw; height: 56.25vw; /* 16:9 */
-            transform: translate(-50%, -50%);
+            /* scale(1.35) で黒帯を画面外へ押し出す */
+            transform: translate(-50%, -50%) scale(1.35);
             opacity: 0.7;
         }
         
-        /* 画面のアスペクト比に応じて動画サイズを調整し、常に埋める */
         @media (min-aspect-ratio: 16/9) {
             .video-foreground iframe { width: 100%; height: 56.25vw; }
         }
@@ -157,7 +157,7 @@
             background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 50%);
         }
 
-        /* 【重要】下部の境界線を消すためのフェード */
+        /* 下部の境界線を消すフェード */
         .hero-fade-bottom {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 150px; z-index: 2;
             background: var(--hero-overlay-gradient);
@@ -283,12 +283,9 @@
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
-            <!-- ロゴ: SVGアイコン -->
+            <!-- ロゴ: 指定の文字 -->
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
-                <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100" height="100" rx="22" fill="#0071e3"/>
-                    <text x="50" y="75" font-family="sans-serif" font-size="65" font-weight="bold" fill="white" text-anchor="middle">P</text>
-                </svg>
+                <span style="font-size: 26px; font-weight: 500;">🅿︎</span>
             </a>
             
             <div class="nav-links flex gap-1" id="navLinks">
