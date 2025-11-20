@@ -23,7 +23,7 @@
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
-            --header-height: 48px;
+            --header-height: 44px; /* Apple Standard Height */
             --nav-bg: rgba(251, 251, 253, 0.8);
             --nav-text: #1d1d1f;
             --card-bg: #ffffff;
@@ -66,7 +66,7 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- Navigation Bar --- */
+        /* --- Navigation Bar (Apple Style Refined) --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             background: var(--nav-bg);
@@ -76,29 +76,30 @@
             transition: background 0.5s;
         }
         .nav-content {
-            max-width: 1024px; width: 100%; height: 100%; /* 高さを継承して中央揃えを確実に */
+            max-width: 1024px; width: 100%; height: 100%; 
             padding: 0 22px; display: flex; justify-content: space-between; align-items: center;
             font-size: 12px; font-weight: 400; color: var(--nav-text); letter-spacing: -0.01em;
         }
+        
+        /* 共通のアイテムスタイル */
         .nav-item { 
             cursor: pointer; opacity: 0.8; transition: opacity 0.3s; text-decoration: none; padding: 0 10px; white-space: nowrap; color: var(--nav-text);
-            display: flex; align-items: center; height: 100%; /* クリック領域を広げる */
+            height: 100%; display: flex; align-items: center;
         }
         .nav-item:hover { opacity: 1; }
         
-        /* ロゴ調整: 見切れ対策と位置合わせ */
+        /* ロゴの特別設定: 余計な装飾を排除し、Flexboxの整列のみに頼る */
         .nav-item.nav-logo { 
             opacity: 1; 
-            font-weight: bold; 
-            padding-left: 0; /* 左端に寄せる */
-            font-size: 22px; /* サイズ調整 */
-            line-height: 0; /* 行の高さをなくして上下中央配置を優先 */
+            font-size: 18px; /* アイコンサイズとして適切な大きさ */
+            padding-left: 0; 
+            margin-right: auto; /* 右側余白を確保 */
             display: flex;
-            align-items: center; /* 垂直中央 */
-            padding-bottom: 3px; /* 微調整: 視覚的な中心合わせ */
+            align-items: center;
+            line-height: 1; /* 高さズレ防止 */
         }
 
-        /* Mobile Menu Button調整 */
+        /* Mobile Menu Button */
         .mobile-menu-btn { 
             display: none; 
             color: var(--nav-text); 
@@ -113,11 +114,12 @@
                 background: var(--bg-color);
                 flex-direction: column; align-items: flex-start; overflow: hidden;
                 transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 0 40px;
+                border-bottom: 1px solid var(--card-border); /* メニュー展開時の下線 */
             }
-            .nav-links.open { height: 100vh; padding-top: 40px; }
+            .nav-links.open { height: 100vh; padding-top: 40px; border-bottom: none; }
             .nav-item {
                 font-size: 28px; font-weight: 600; padding: 15px 0; border-bottom: 1px solid var(--card-border);
-                width: 100%; display: block; height: auto; /* モバイルでは高さ自動 */
+                width: 100%; display: block; height: auto;
                 opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s;
             }
             .nav-links.open .nav-item { opacity: 1; transform: translateY(0); }
@@ -126,6 +128,8 @@
             .nav-links.open .nav-item:nth-child(3) { transition-delay: 0.2s; }
             .nav-links.open .nav-item:nth-child(4) { transition-delay: 0.25s; }
             .nav-links.open .nav-item:nth-child(5) { transition-delay: 0.3s; }
+            
+            .nav-item.nav-logo { display: flex; } /* モバイルでもロゴは表示 */
             .mobile-menu-btn { display: flex; opacity: 0.8; }
         }
 
@@ -272,7 +276,7 @@
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
-            <!-- ロゴ: 🅿 (位置調整済み) -->
+            <!-- ロゴ: 🅿 (Flexboxで完璧に中央揃え) -->
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
                 🅿
             </a>
@@ -375,8 +379,4 @@
                 <div class="card-content justify-end">
                     <!-- オーバーレイカード (ガラス) -->
                     <div class="bg-black/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 w-full shadow-2xl">
-                        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            
-                            <!-- MV Info -->
-                            <div class="flex-1">
-                                <p cla
+                        <div class="flex flex-col md:flex-row md:items-end justify-between
