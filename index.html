@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- テーマ設定 (変数定義) --- */
+        /* --- テーマ設定 --- */
         :root {
             /* ライトモード */
             --bg-color: #f5f5f7;
@@ -33,7 +33,9 @@
             --modal-bg: rgba(255, 255, 255, 0.8);
             --modal-text: #1d1d1f;
             --modal-shadow: rgba(0, 0, 0, 0.15);
+            
             /* グラデーション: 黒(動画背景)から白(ページ背景)へ */
+            /* 上も下もこの色を使ってフェードさせます */
             --hero-gradient-stop: #f5f5f7; 
         }
 
@@ -52,6 +54,8 @@
                 --modal-bg: rgba(28, 28, 30, 0.8);
                 --modal-text: #f5f5f7;
                 --modal-shadow: rgba(0, 0, 0, 0.5);
+                
+                /* ダークモード時は黒へのフェード */
                 --hero-gradient-stop: #000000;
             }
         }
@@ -60,7 +64,7 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            overflow-x: hidden; /* 横スクロール禁止 */
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.3s, color 0.3s;
         }
@@ -113,14 +117,14 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section (Horizontal Fixed Video) --- */
+        /* --- Hero Section --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            background-color: #000; /* 動画エリアは常に黒背景 */
+            background-color: #000;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -128,46 +132,47 @@
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 動画: 16:9固定、画面内に収める (Contain) */
+        /* 動画: 16:9固定 */
         .video-foreground iframe {
             position: absolute;
             top: 50%; left: 50%;
             width: 100vw; 
-            height: 56.25vw; /* 16:9 (100 * 9 / 16) */
+            height: 56.25vw;
             transform: translate(-50%, -50%);
             opacity: 0.8;
         }
 
-        /* フェード処理: ページ背景色へ馴染ませる */
+        /* 【修正】上部のフェード: 背景色から透明へ */
         .hero-fade-top {
-            position: absolute; top: 0; left: 0; width: 100%; height: 120px; z-index: 2;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+            position: absolute; top: 0; left: 0; width: 100%; height: 150px; z-index: 2;
+            background: linear-gradient(to bottom, var(--hero-gradient-stop) 20%, rgba(0,0,0,0) 100%);
             pointer-events: none;
         }
+
+        /* 下部のフェード: 透明から背景色へ */
         .hero-fade-bottom {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; z-index: 2;
-            /* 黒（動画背景）から、ページ設定された背景色（白or黒）へ遷移するグラデーション */
             background: linear-gradient(to top, var(--hero-gradient-stop) 10%, rgba(0,0,0,0) 100%);
             pointer-events: none;
         }
 
-        /* ヒーローコンテンツ（下部固定配置） */
+        /* ヒーローコンテンツ */
         .hero-content {
             position: relative; z-index: 10;
             text-align: center;
             display: flex; flex-direction: column; align-items: center;
             padding: 0 20px;
-            /* 画面下部から15%の位置 */
             margin-bottom: 15vh; 
             width: 100%;
         }
+        /* 文字色はテーマに関わらず白（動画の上なので）、ただしライトモード時はフェードと被るため少し影を強化 */
         .hero-title {
             font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
-            color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,0.8);
         }
         .hero-desc {
             font-size: 17px; font-weight: 400; line-height: 1.47059; letter-spacing: -0.022em; margin-bottom: 24px;
-            color: #f5f5f7; max-width: 600px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            color: #f5f5f7; max-width: 600px; text-shadow: 0 2px 20px rgba(0,0,0,0.8);
         }
         
         @media (max-width: 768px) {
@@ -319,7 +324,7 @@
                 </div>
             </div>
             
-            <!-- フェード処理 -->
+            <!-- 上下フェード（両方ともページ背景色へ馴染ませる） -->
             <div class="hero-fade-top"></div>
             <div class="hero-fade-bottom"></div>
             
