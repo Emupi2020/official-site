@@ -19,6 +19,7 @@
     <style>
         /* --- テーマ設定 --- */
         :root {
+            /* ライトモード */
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
@@ -32,11 +33,13 @@
             --modal-bg: rgba(255, 255, 255, 0.8);
             --modal-text: #1d1d1f;
             --modal-shadow: rgba(0, 0, 0, 0.15);
-            --hero-overlay-gradient: linear-gradient(to top, #f5f5f7 0%, rgba(245,245,247,0) 30%);
+            /* グラデーション: 黒(動画背景)から白(ページ背景)へ */
+            --hero-gradient-stop: #f5f5f7; 
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
+                /* ダークモード */
                 --bg-color: #000000;
                 --text-primary: #f5f5f7;
                 --text-secondary: #86868b;
@@ -49,7 +52,7 @@
                 --modal-bg: rgba(28, 28, 30, 0.8);
                 --modal-text: #f5f5f7;
                 --modal-shadow: rgba(0, 0, 0, 0.5);
-                --hero-overlay-gradient: linear-gradient(to top, #000000 0%, rgba(0,0,0,0) 40%);
+                --hero-gradient-stop: #000000;
             }
         }
 
@@ -110,87 +113,89 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section (Fixed Aspect Ratio Video) --- */
+        /* --- Hero Section (Horizontal Fixed Video) --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            background-color: #000;
+            background-color: #000; /* 動画エリアは常に黒背景（映画館スタイル） */
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* 下寄せ配置の基準 */
+            justify-content: flex-end; /* 下寄せ配置 */
             align-items: center;
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        
+        /* 動画: 左右が見切れないように横幅基準で配置 */
         .video-foreground iframe {
-            position: absolute; top: 50%; left: 50%;
-            width: 100vw; height: 56.25vw; /* 16:9 */
-            transform: translate(-50%, -50%) scale(1.35); /* 黒帯除去ズーム */
-            opacity: 0.7;
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 100vw; 
+            height: 56.25vw; /* 16:9 (100 * 9 / 16) */
+            transform: translate(-50%, -50%);
+            opacity: 0.8;
         }
-        @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100%; height: 56.25vw; } }
-        @media (max-aspect-ratio: 16/9) { .video-foreground iframe { width: 177.78vh; height: 100%; } }
 
-        /* フェード処理 */
+        /* フェード処理: ページ背景色へ馴染ませる */
         .hero-fade-top {
             position: absolute; top: 0; left: 0; width: 100%; height: 120px; z-index: 2;
-            background: linear-gradient(to bottom, var(--hero-fade-color) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
             pointer-events: none;
         }
         .hero-fade-bottom {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 250px; z-index: 2;
-            background: var(--hero-overlay-gradient);
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; z-index: 2;
+            /* 黒（動画背景）から、ページ設定された背景色（白or黒）へ遷移するグラデーション */
+            background: linear-gradient(to top, var(--hero-gradient-stop) 10%, rgba(0,0,0,0) 100%);
             pointer-events: none;
         }
 
-        /* ヒーローコンテンツ（Apple製品ページ風・下部配置） */
+        /* ヒーローコンテンツ（下部固定配置） */
         .hero-content {
-            position: relative; /* absoluteではなくflexコンテナ内で配置 */
-            z-index: 10;
+            position: relative; z-index: 10;
             text-align: center;
             display: flex; flex-direction: column; align-items: center;
             padding: 0 20px;
-            margin-bottom: 80px; /* 下からの距離（固定） */
+            /* 下からの位置を％で指定して画面サイズ追従 */
+            margin-bottom: 15vh; 
             width: 100%;
-            /* 背景色に関わらず見やすくするための影 */
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        /* 文字色はテーマ依存ではなく、常に動画の上なので白か、背景に溶け込む色にする */
-        /* 今回はフェードで背景色になるため、テーマカラーを適用するが、動画上のため白文字+影で視認性確保 */
         .hero-title {
             font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
-            color: #fff; /* 動画上なので白 */
+            color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         .hero-desc {
             font-size: 17px; font-weight: 400; line-height: 1.47059; letter-spacing: -0.022em; margin-bottom: 24px;
-            color: #f5f5f7; max-width: 600px;
+            color: #f5f5f7; max-width: 600px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
+        
         @media (max-width: 768px) {
             .hero-title { font-size: 36px; }
             .hero-desc { font-size: 15px; }
+            .hero-content { margin-bottom: 18vh; } /* モバイルは少し上げる */
         }
 
         .controls-wrapper {
             position: absolute; bottom: 30px; right: 30px; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); 
         }
 
-        /* Apple Style Small Buttons */
+        /* Apple Buttons */
         .apple-btn-small {
             background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
             font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .apple-btn-small:hover { background: #0077ED; transform: scale(1.02); }
         
         .apple-btn-small-outline {
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
             color: white; padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
             transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
             border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.3); }
+        .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.25); }
 
         /* --- Category Header --- */
         .category-header { text-align: center; padding: 100px 20px 60px; background: var(--bg-color); }
@@ -288,7 +293,7 @@
         <div class="nav-content">
             <!-- ロゴ: 🅿︎ -->
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
-                🅿︎
+                <span style="font-size: 26px; font-weight: 500;">🅿︎</span>
             </a>
             
             <div class="nav-links flex gap-1" id="navLinks">
@@ -314,11 +319,11 @@
                 </div>
             </div>
             
-            <!-- 上下フェード -->
+            <!-- フェード処理 -->
             <div class="hero-fade-top"></div>
             <div class="hero-fade-bottom"></div>
             
-            <!-- ヒーローコンテンツ（下部にコンパクトに配置） -->
+            <!-- ヒーローコンテンツ（下部固定） -->
             <div class="hero-content">
                 <h1 class="hero-title">Emupi</h1>
                 
@@ -337,7 +342,7 @@
                 </div>
             </div>
 
-            <!-- Controls (右下隅に固定) -->
+            <!-- Controls -->
             <div class="controls-wrapper">
                 <button onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors border border-white/10 shadow-lg">
                     <i data-lucide="pause" class="w-4 h-4 fill-current" id="playIcon"></i>
@@ -653,10 +658,11 @@
         lucide.createIcons();
 
         // --- Random TikTok Video Logic ---
+        // ここにおすすめ動画のURLリストを登録してください
         const tiktokVideos = [
-            "https://www.tiktok.com/@emupi2020/video/6986594026992995586",
-            "https://www.tiktok.com/@emupi2020/video/6991234567890123456",
-            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"
+            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
+            "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
+            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"  // 例: 動画C
         ];
 
         function playRandomTikTok() {
@@ -666,6 +672,7 @@
             }
             const randomIndex = Math.floor(Math.random() * tiktokVideos.length);
             const randomVideoUrl = tiktokVideos[randomIndex];
+            // 新しいタブで開く
             window.open(randomVideoUrl, '_blank');
         }
 
