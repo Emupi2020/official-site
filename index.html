@@ -17,13 +17,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- テーマ設定 (変数定義) --- */
+        /* --- テーマ設定 --- */
         :root {
-            /* ライトモード（デフォルト） */
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
-            --header-height: 48px;
+            --header-height: 44px;
             --nav-bg: rgba(251, 251, 253, 0.8);
             --nav-text: #1d1d1f;
             --card-bg: #ffffff;
@@ -33,13 +32,11 @@
             --modal-bg: rgba(255, 255, 255, 0.8);
             --modal-text: #1d1d1f;
             --modal-shadow: rgba(0, 0, 0, 0.15);
-            --tab-active-bg: #e8e8ed;
-            --tab-active-text: #000;
+            --hero-overlay-gradient: linear-gradient(to top, #f5f5f7 0%, rgba(245,245,247,0) 30%);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                /* ダークモード */
                 --bg-color: #000000;
                 --text-primary: #f5f5f7;
                 --text-secondary: #86868b;
@@ -52,8 +49,7 @@
                 --modal-bg: rgba(28, 28, 30, 0.8);
                 --modal-text: #f5f5f7;
                 --modal-shadow: rgba(0, 0, 0, 0.5);
-                --tab-active-bg: #fff;
-                --tab-active-text: #000;
+                --hero-overlay-gradient: linear-gradient(to top, #000000 0%, rgba(0,0,0,0) 40%);
             }
         }
 
@@ -84,13 +80,7 @@
             height: 100%; display: flex; align-items: center;
         }
         .nav-item:hover { opacity: 1; }
-        
-        /* ロゴ: 🅿︎ (位置修正済み) */
-        .nav-item.nav-logo { 
-            opacity: 1; padding-left: 0; margin-right: auto; 
-            display: flex; align-items: center; height: 100%; 
-            font-size: 24px; line-height: 1; padding-bottom: 3px;
-        }
+        .nav-item.nav-logo { opacity: 1; padding-left: 0; margin-right: auto; display: flex; align-items: center; height: 100%; padding-bottom: 3px; }
 
         .mobile-menu-btn { display: none; color: var(--nav-text); height: 100%; align-items: center; cursor: pointer; }
         
@@ -120,68 +110,87 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section (Video Fixed Aspect Ratio) --- */
+        /* --- Hero Section (Fixed Aspect Ratio Video) --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            background-color: #000; /* 余白は常に黒 */
+            background-color: #000;
             display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 下寄せ配置の基準 */
             align-items: center;
-            justify-content: center;
         }
-        
-        .video-background {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
-            display: flex; align-items: center; justify-content: center;
-        }
-        
-        /* 動画: 16:9固定、画面内に収める (Contain) */
+        .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         .video-foreground iframe {
-            width: 100vw;
-            height: 56.25vw; /* 16:9 aspect ratio */
-            max-height: 100vh;
-            max-height: 100dvh;
-            max-width: 177.78vh; /* height * 16/9 */
-            aspect-ratio: 16/9;
+            position: absolute; top: 50%; left: 50%;
+            width: 100vw; height: 56.25vw; /* 16:9 */
+            transform: translate(-50%, -50%) scale(1.35); /* 黒帯除去ズーム */
             opacity: 0.7;
         }
+        @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100%; height: 56.25vw; } }
+        @media (max-aspect-ratio: 16/9) { .video-foreground iframe { width: 177.78vh; height: 100%; } }
 
-        /* フィルター */
-        .hero-overlay {
-            position: absolute; inset: 0; z-index: 1;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0) 100%);
+        /* フェード処理 */
+        .hero-fade-top {
+            position: absolute; top: 0; left: 0; width: 100%; height: 120px; z-index: 2;
+            background: linear-gradient(to bottom, var(--hero-fade-color) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: none;
+        }
+        .hero-fade-bottom {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 250px; z-index: 2;
+            background: var(--hero-overlay-gradient);
+            pointer-events: none;
         }
 
+        /* ヒーローコンテンツ（Apple製品ページ風・下部配置） */
         .hero-content {
-            position: absolute; z-index: 10; bottom: 20%; left: 0; width: 100%; text-center: center;
-            display: flex; flex-direction: column; align-items: center; padding: 0 20px;
-            color: #fff;
+            position: relative; /* absoluteではなくflexコンテナ内で配置 */
+            z-index: 10;
+            text-align: center;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 0 20px;
+            margin-bottom: 80px; /* 下からの距離（固定） */
+            width: 100%;
+            /* 背景色に関わらず見やすくするための影 */
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .hero-content h1, .hero-content p { color: #fff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        
-        /* 右下のボタン位置固定 */
+        /* 文字色はテーマ依存ではなく、常に動画の上なので白か、背景に溶け込む色にする */
+        /* 今回はフェードで背景色になるため、テーマカラーを適用するが、動画上のため白文字+影で視認性確保 */
+        .hero-title {
+            font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
+            color: #fff; /* 動画上なので白 */
+        }
+        .hero-desc {
+            font-size: 17px; font-weight: 400; line-height: 1.47059; letter-spacing: -0.022em; margin-bottom: 24px;
+            color: #f5f5f7; max-width: 600px;
+        }
+        @media (max-width: 768px) {
+            .hero-title { font-size: 36px; }
+            .hero-desc { font-size: 15px; }
+        }
+
         .controls-wrapper {
             position: absolute; bottom: 30px; right: 30px; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); 
         }
 
-        /* Apple Buttons */
-        .apple-btn {
-            background: #0071e3; color: white; padding: 12px 24px; border-radius: 980px;
-            font-size: 17px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;
+        /* Apple Style Small Buttons */
+        .apple-btn-small {
+            background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
+            font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
-        .apple-btn:hover { background: #0077ED; transform: scale(1.02); }
+        .apple-btn-small:hover { background: #0077ED; transform: scale(1.02); }
         
-        .apple-btn-glass {
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            color: white; padding: 12px 24px; border-radius: 980px; font-size: 17px; font-weight: 400;
-            transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;
+        .apple-btn-small-outline {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            color: white; padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
+            transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        .apple-btn-glass:hover { background: rgba(255, 255, 255, 0.3); }
+        .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.3); }
 
         /* --- Category Header --- */
         .category-header { text-align: center; padding: 100px 20px 60px; background: var(--bg-color); }
@@ -304,35 +313,33 @@
                     <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                 </div>
             </div>
-            <div class="hero-overlay"></div>
             
+            <!-- 上下フェード -->
+            <div class="hero-fade-top"></div>
+            <div class="hero-fade-bottom"></div>
+            
+            <!-- ヒーローコンテンツ（下部にコンパクトに配置） -->
             <div class="hero-content">
-                <h1 class="text-6xl md:text-9xl font-bold mb-4 tracking-tighter drop-shadow-2xl">Emupi</h1>
+                <h1 class="hero-title">Emupi</h1>
                 
-                <div class="space-y-2 mb-10">
-                    <p class="text-2xl md:text-3xl font-medium leading-tight">
-                        Vocal Impersonator. Streamer. Creator.
-                    </p>
-                    <p class="text-lg md:text-xl font-light opacity-80">
-                        歌と声、そして映像。<br class="md:hidden">すべてのエンターテインメントをここに。
-                    </p>
-                </div>
+                <p class="hero-desc">
+                    Vocal Impersonator. Streamer. Creator.<br>
+                    歌と声、そして映像。すべてのエンターテインメントをここに。
+                </p>
                 
-                <div class="flex flex-col sm:flex-row gap-4 items-center w-full justify-center">
-                    <button onclick="switchPage('singing')" class="apple-btn">
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="switchPage('singing')" class="apple-btn-small">
                         活動を見る
                     </button>
-                    <button onclick="copyToClipboard('🅿︎')" class="group flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full transition-all">
-                        <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Fan Mark</span>
-                        <span class="bg-white text-black w-6 h-6 rounded flex items-center justify-center text-sm font-bold ml-2">🅿︎</span>
-                        <span class="text-[10px] text-gray-300 group-hover:text-white transition-colors border-l border-white/30 pl-3 ml-1">Tap to Copy</span>
+                    <button onclick="copyToClipboard('🅿︎')" class="apple-btn-small-outline">
+                        Fan Mark: 🅿︎ <i data-lucide="copy" class="w-3 h-3 ml-1"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Controls -->
+            <!-- Controls (右下隅に固定) -->
             <div class="controls-wrapper">
-                <button onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors border border-white/10">
+                <button onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors border border-white/10 shadow-lg">
                     <i data-lucide="pause" class="w-4 h-4 fill-current" id="playIcon"></i>
                 </button>
                 <button onclick="openModal('musicCard', 'musicModal')" class="w-10 h-10 rounded-full bg-[#0071e3] text-white flex items-center justify-center hover:bg-[#0077ED] transition-colors shadow-lg">
@@ -646,11 +653,10 @@
         lucide.createIcons();
 
         // --- Random TikTok Video Logic ---
-        // ここにおすすめ動画のURLリストを登録してください
         const tiktokVideos = [
-            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
-            "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
-            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"  // 例: 動画C
+            "https://www.tiktok.com/@emupi2020/video/6986594026992995586",
+            "https://www.tiktok.com/@emupi2020/video/6991234567890123456",
+            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"
         ];
 
         function playRandomTikTok() {
@@ -660,7 +666,6 @@
             }
             const randomIndex = Math.floor(Math.random() * tiktokVideos.length);
             const randomVideoUrl = tiktokVideos[randomIndex];
-            // 新しいタブで開く
             window.open(randomVideoUrl, '_blank');
         }
 
