@@ -35,7 +35,6 @@
             --modal-shadow: rgba(0, 0, 0, 0.15);
             --tab-active-bg: #e8e8ed;
             --tab-active-text: #000;
-            --hero-overlay-gradient: linear-gradient(to top, #f5f5f7 0%, rgba(245,245,247,0) 20%); /* 白へのフェード */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -55,7 +54,6 @@
                 --modal-shadow: rgba(0, 0, 0, 0.5);
                 --tab-active-bg: #fff;
                 --tab-active-text: #000;
-                --hero-overlay-gradient: linear-gradient(to top, #000000 0%, rgba(0,0,0,0) 30%); /* 黒へのフェード */
             }
         }
 
@@ -71,8 +69,7 @@
         /* --- Navigation Bar --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
-            background: var(--nav-bg);
-            backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+            background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
             z-index: 100; display: flex; justify-content: center;
             border-bottom: 1px solid var(--card-border);
             transition: background 0.5s;
@@ -88,10 +85,13 @@
         }
         .nav-item:hover { opacity: 1; }
         
+        /* ロゴ: 🅿︎ (位置修正済み) */
         .nav-item.nav-logo { 
-            opacity: 1; padding-left: 0; margin-right: auto; display: flex; align-items: center; height: 100%; padding-bottom: 2px;
+            opacity: 1; padding-left: 0; margin-right: auto; 
+            display: flex; align-items: center; height: 100%; 
+            font-size: 24px; line-height: 1; padding-bottom: 3px;
         }
-        
+
         .mobile-menu-btn { display: none; color: var(--nav-text); height: 100%; align-items: center; cursor: pointer; }
         
         @media (max-width: 834px) {
@@ -120,48 +120,41 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section (Fix Black Bars) --- */
+        /* --- Hero Section (Video Fixed Aspect Ratio) --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            background-color: #000; /* 動画読み込み前は黒 */
+            background-color: #000; /* 余白は常に黒 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 【重要】動画の黒帯を消すために強制拡大 (scale 1.35) */
-        .video-foreground {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
-        }
-        .video-foreground iframe {
+        .video-background {
             position: absolute;
-            top: 50%; left: 50%;
-            width: 100vw; height: 56.25vw; /* 16:9 */
-            /* scale(1.35) で黒帯を画面外へ押し出す */
-            transform: translate(-50%, -50%) scale(1.35);
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        /* 動画: 16:9固定、画面内に収める (Contain) */
+        .video-foreground iframe {
+            width: 100vw;
+            height: 56.25vw; /* 16:9 aspect ratio */
+            max-height: 100vh;
+            max-height: 100dvh;
+            max-width: 177.78vh; /* height * 16/9 */
+            aspect-ratio: 16/9;
             opacity: 0.7;
         }
-        
-        @media (min-aspect-ratio: 16/9) {
-            .video-foreground iframe { width: 100%; height: 56.25vw; }
-        }
-        @media (max-aspect-ratio: 16/9) {
-            .video-foreground iframe { width: 177.78vh; height: 100%; }
-        }
 
-        /* 上に重ねる黒っぽいフィルター */
+        /* フィルター */
         .hero-overlay {
             position: absolute; inset: 0; z-index: 1;
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 50%);
-        }
-
-        /* 下部の境界線を消すフェード */
-        .hero-fade-bottom {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 150px; z-index: 2;
-            background: var(--hero-overlay-gradient);
-            pointer-events: none;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0) 100%);
         }
 
         .hero-content {
@@ -169,8 +162,9 @@
             display: flex; flex-direction: column; align-items: center; padding: 0 20px;
             color: #fff;
         }
-        .hero-content h1, .hero-content p { color: #fff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .hero-content h1, .hero-content p { color: #fff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         
+        /* 右下のボタン位置固定 */
         .controls-wrapper {
             position: absolute; bottom: 30px; right: 30px; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); 
         }
@@ -283,9 +277,9 @@
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
-            <!-- ロゴ: 指定の文字 -->
+            <!-- ロゴ: 🅿︎ -->
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
-                <span style="font-size: 26px; font-weight: 500;">🅿︎</span>
+                🅿︎
             </a>
             
             <div class="nav-links flex gap-1" id="navLinks">
@@ -310,11 +304,7 @@
                     <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                 </div>
             </div>
-            <!-- 上のフィルター（暗くする） -->
             <div class="hero-overlay"></div>
-            
-            <!-- 下のフェード（白/黒に馴染ませる） -->
-            <div class="hero-fade-bottom"></div>
             
             <div class="hero-content">
                 <h1 class="text-6xl md:text-9xl font-bold mb-4 tracking-tighter drop-shadow-2xl">Emupi</h1>
