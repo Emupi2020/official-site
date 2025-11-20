@@ -17,13 +17,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
+        /* --- テーマ設定 (変数定義) --- */
         :root {
-            --bg-color: #000000;
-            --text-primary: #f5f5f7;
+            /* ライトモード（デフォルト） */
+            --bg-color: #f5f5f7;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
             --header-height: 48px;
-            --nav-bg: rgba(0, 0, 0, 0.8);
-            --card-bg: #161617;
-            --accent-blue: #2997ff;
+            --nav-bg: rgba(251, 251, 253, 0.8);
+            --nav-text: #1d1d1f;
+            --card-bg: #ffffff;
+            --card-border: rgba(0, 0, 0, 0.1);
+            --accent-blue: #0071e3;
+            --list-hover: rgba(0, 0, 0, 0.05);
+            --modal-bg: rgba(255, 255, 255, 0.8);
+            --modal-text: #1d1d1f;
+            --modal-shadow: rgba(0, 0, 0, 0.15);
+            --tab-active-bg: #e8e8ed;
+            --tab-active-text: #000;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* ダークモード */
+                --bg-color: #000000;
+                --text-primary: #f5f5f7;
+                --text-secondary: #86868b;
+                --nav-bg: rgba(0, 0, 0, 0.8);
+                --nav-text: #e8e8ed;
+                --card-bg: #161617;
+                --card-border: rgba(255, 255, 255, 0.1);
+                --accent-blue: #2997ff;
+                --list-hover: rgba(255, 255, 255, 0.1);
+                --modal-bg: rgba(28, 28, 30, 0.8);
+                --modal-text: #f5f5f7;
+                --modal-shadow: rgba(0, 0, 0, 0.5);
+                --tab-active-bg: #fff;
+                --tab-active-text: #000;
+            }
         }
 
         body {
@@ -32,37 +63,62 @@
             color: var(--text-primary);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         /* --- Navigation Bar --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
-            background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
-            z-index: 100; display: flex; justify-content: center; transition: background 0.5s;
+            background: var(--nav-bg);
+            backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+            z-index: 100; display: flex; justify-content: center;
+            border-bottom: 1px solid var(--card-border);
+            transition: background 0.5s;
         }
         .nav-content {
-            max-width: 1024px; width: 100%; padding: 0 22px; display: flex; justify-content: space-between; align-items: center;
-            font-size: 12px; font-weight: 400; color: #e8e8ed; letter-spacing: -0.01em;
+            max-width: 1024px; width: 100%; height: 100%; /* 高さを継承して中央揃えを確実に */
+            padding: 0 22px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 12px; font-weight: 400; color: var(--nav-text); letter-spacing: -0.01em;
         }
-        /* ロゴ以外のメニュー項目は少し薄く、ホバーで濃く */
-        .nav-item { cursor: pointer; opacity: 0.8; transition: opacity 0.3s; text-decoration: none; padding: 0 10px; white-space: nowrap; }
-        .nav-item:hover { opacity: 1; color: white; }
+        .nav-item { 
+            cursor: pointer; opacity: 0.8; transition: opacity 0.3s; text-decoration: none; padding: 0 10px; white-space: nowrap; color: var(--nav-text);
+            display: flex; align-items: center; height: 100%; /* クリック領域を広げる */
+        }
+        .nav-item:hover { opacity: 1; }
         
-        /* ロゴ専用: 最初から不透明度100% */
-        .nav-item.nav-logo { opacity: 1; font-weight: bold; }
+        /* ロゴ調整: 見切れ対策と位置合わせ */
+        .nav-item.nav-logo { 
+            opacity: 1; 
+            font-weight: bold; 
+            padding-left: 0; /* 左端に寄せる */
+            font-size: 22px; /* サイズ調整 */
+            line-height: 0; /* 行の高さをなくして上下中央配置を優先 */
+            display: flex;
+            align-items: center; /* 垂直中央 */
+            padding-bottom: 3px; /* 微調整: 視覚的な中心合わせ */
+        }
 
-        /* Mobile Menu */
-        .mobile-menu-btn { display: none; }
+        /* Mobile Menu Button調整 */
+        .mobile-menu-btn { 
+            display: none; 
+            color: var(--nav-text); 
+            height: 100%; 
+            align-items: center; 
+            cursor: pointer;
+        }
+        
         @media (max-width: 834px) {
             .nav-links {
                 position: fixed; top: var(--header-height); left: 0; width: 100%; height: 0;
-                background: #000; flex-direction: column; align-items: flex-start; overflow: hidden;
+                background: var(--bg-color);
+                flex-direction: column; align-items: flex-start; overflow: hidden;
                 transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 0 40px;
             }
             .nav-links.open { height: 100vh; padding-top: 40px; }
             .nav-item {
-                font-size: 28px; font-weight: 600; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);
-                width: 100%; display: block; opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s;
+                font-size: 28px; font-weight: 600; padding: 15px 0; border-bottom: 1px solid var(--card-border);
+                width: 100%; display: block; height: auto; /* モバイルでは高さ自動 */
+                opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s;
             }
             .nav-links.open .nav-item { opacity: 1; transform: translateY(0); }
             .nav-links.open .nav-item:nth-child(1) { transition-delay: 0.1s; }
@@ -70,22 +126,23 @@
             .nav-links.open .nav-item:nth-child(3) { transition-delay: 0.2s; }
             .nav-links.open .nav-item:nth-child(4) { transition-delay: 0.25s; }
             .nav-links.open .nav-item:nth-child(5) { transition-delay: 0.3s; }
-            .mobile-menu-btn { display: block; cursor: pointer; opacity: 0.8; }
+            .mobile-menu-btn { display: flex; opacity: 0.8; }
         }
 
         /* --- Page Sections --- */
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section --- */
+        /* --- Hero Section (Always Dark Style) --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
+            background-color: #000;
         }
-        .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; background: black; }
+        .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         .video-foreground iframe {
             position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw;
             min-height: 100vh; min-height: 100dvh;
@@ -96,28 +153,15 @@
             position: absolute; inset: 0; z-index: 1;
             background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 50%);
         }
-
         .hero-content {
-            position: absolute;
-            z-index: 10;
-            bottom: 20%; 
-            left: 0;
-            width: 100%;
-            text-center: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 20px;
+            position: absolute; z-index: 10; bottom: 20%; left: 0; width: 100%; text-center: center;
+            display: flex; flex-direction: column; align-items: center; padding: 0 20px;
+            color: #fff;
         }
+        .hero-content h1, .hero-content p { color: #fff !important; }
         
         .controls-wrapper {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            z-index: 20;
-            display: flex;
-            gap: 12px;
-            transform: translateZ(0); 
+            position: absolute; bottom: 30px; right: 30px; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); 
         }
 
         /* Apple Buttons */
@@ -127,10 +171,17 @@
         }
         .apple-btn:hover { background: #0077ED; transform: scale(1.02); }
         
+        .apple-btn-glass {
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: white; padding: 12px 24px; border-radius: 980px; font-size: 17px; font-weight: 400;
+            transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .apple-btn-glass:hover { background: rgba(255, 255, 255, 0.3); }
+
         /* --- Category Header --- */
-        .category-header { text-align: center; padding: 100px 20px 60px; background: #000; }
-        .category-title { font-size: 48px; font-weight: 700; color: #f5f5f7; letter-spacing: -0.003em; margin-bottom: 10px; }
-        .category-desc { font-size: 21px; font-weight: 400; color: #86868b; line-height: 1.4; max-width: 600px; margin: 0 auto; }
+        .category-header { text-align: center; padding: 100px 20px 60px; background: var(--bg-color); }
+        .category-title { font-size: 48px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.003em; margin-bottom: 10px; }
+        .category-desc { font-size: 21px; font-weight: 400; color: var(--text-secondary); line-height: 1.4; max-width: 600px; margin: 0 auto; }
 
         /* --- Bento Grid --- */
         .bento-grid {
@@ -143,8 +194,10 @@
         .bento-card {
             background: var(--card-bg); border-radius: 30px; overflow: hidden; position: relative;
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
-        .bento-card:hover { transform: scale(1.02); z-index: 5; box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+        .bento-card:hover { transform: scale(1.02); z-index: 5; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
 
         .card-img-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: opacity 0.4s; }
         .bento-card:hover .card-img-bg { opacity: 0.8; transform: scale(1.03); }
@@ -154,17 +207,22 @@
             display: flex; flex-direction: column; justify-content: space-between;
         }
         
-        .card-eyebrow { font-size: 12px; font-weight: 600; color: #86868b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .card-heading { font-size: 32px; font-weight: 700; color: #f5f5f7; line-height: 1.1; margin-bottom: 10px; }
-        .card-text { font-size: 17px; color: #86868b; font-weight: 400; margin-bottom: 20px; }
+        .card-eyebrow { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .card-heading { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: 10px; }
+        .card-text { font-size: 17px; color: var(--text-secondary); font-weight: 400; margin-bottom: 20px; }
         
+        .text-overlay-dark { color: #fff !important; }
+        .bento-card.has-bg .card-heading, 
+        .bento-card.has-bg .card-text, 
+        .bento-card.has-bg .card-eyebrow { color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
         .link-list { margin-top: auto; }
         .link-item {
             display: flex; align-items: center; justify-content: space-between; padding: 14px 0;
-            border-top: 1px solid rgba(255,255,255,0.1); color: #2997ff; font-size: 14px; text-decoration: none; font-weight: 500;
+            border-top: 1px solid var(--card-border); color: var(--accent-blue); font-size: 14px; text-decoration: none; font-weight: 500;
         }
-        .link-item:hover { color: white; }
-        .link-item span { display: flex; align-items: center; gap: 8px; color: #f5f5f7; }
+        .link-item:hover { background-color: var(--list-hover); padding-left: 5px; padding-right: 5px; border-radius: 8px; }
+        .link-item span { display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
 
         /* Modals */
         .overlay-bg {
@@ -176,29 +234,31 @@
         .modal-card {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -45%) scale(0.95);
             width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 50px 40px;
-            border-radius: 40px; background: rgba(28, 28, 30, 0.8); box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            border-radius: 40px; 
+            background: var(--modal-bg); 
+            box-shadow: 0 25px 50px var(--modal-shadow);
             z-index: 160; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            color: var(--modal-text);
         }
         .modal-card.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
         .modal-card.wide { max-width: 800px; }
         .modal-card::-webkit-scrollbar { display: none; }
 
         /* Tab System */
-        .tabs { display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; color: #86868b; font-size: 14px; font-weight: 500; cursor: pointer; padding: 8px 0; position: relative; }
-        .tab-btn.active { color: white; }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: -11px; left: 0; width: 100%; height: 2px; background: white; }
+        .tabs { display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
+        .tab-btn { background: none; border: none; color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer; padding: 8px 0; position: relative; }
+        .tab-btn.active { color: var(--text-primary); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -11px; left: 0; width: 100%; height: 2px; background: var(--text-primary); }
         .tab-content { display: none; animation: fadeUp 0.4s; }
         .tab-content.active { display: block; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Footer */
-        footer { background: #1d1d1f; color: #86868b; padding: 40px 20px; font-size: 12px; border-top: 1px solid #424245; }
+        footer { background: var(--bg-color); color: var(--text-secondary); padding: 40px 20px; font-size: 12px; border-top: 1px solid var(--card-border); }
 
         /* Toast Notification */
         .toast {
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: rgba(255, 255, 255, 0.9); color: black; padding: 10px 20px; border-radius: 50px;
+            background: var(--text-primary); color: var(--bg-color); padding: 10px 20px; border-radius: 50px;
             font-size: 14px; font-weight: 500; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 200; display: flex; align-items: center; gap: 8px;
             opacity: 0; visibility: hidden;
@@ -207,13 +267,13 @@
         
     </style>
 </head>
-<body class="dark-mode">
+<body class="">
 
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
-            <!-- 修正: ロゴをテキストの「🅿」に変更し、常時不透明度100%に -->
-            <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo flex items-center" style="font-size: 24px; line-height: 1;">
+            <!-- ロゴ: 🅿 (位置調整済み) -->
+            <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
                 🅿
             </a>
             
@@ -226,7 +286,7 @@
             </div>
 
             <div class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <i data-lucide="menu" class="w-5 h-5 text-[#e8e8ed]"></i>
+                <i data-lucide="menu" class="w-5 h-5"></i>
             </div>
         </div>
     </nav>
@@ -242,14 +302,13 @@
             <div class="hero-overlay"></div>
             
             <div class="hero-content">
-                <!-- 修正: 大文字E -->
-                <h1 class="text-6xl md:text-9xl font-bold text-white mb-4 tracking-tighter drop-shadow-2xl">Emupi</h1>
+                <h1 class="text-6xl md:text-9xl font-bold mb-4 tracking-tighter drop-shadow-2xl">Emupi</h1>
                 
                 <div class="space-y-2 mb-10">
-                    <p class="text-2xl md:text-3xl text-white font-medium leading-tight">
-                        Singer. Streamer. Creator.
+                    <p class="text-2xl md:text-3xl font-medium leading-tight">
+                        Vocal Impersonator. Streamer. Creator.
                     </p>
-                    <p class="text-lg md:text-xl text-gray-300 font-light">
+                    <p class="text-lg md:text-xl font-light opacity-80">
                         歌と声、そして映像。<br class="md:hidden">すべてのエンターテインメントをここに。
                     </p>
                 </div>
@@ -258,11 +317,10 @@
                     <button onclick="switchPage('singing')" class="apple-btn">
                         活動を見る
                     </button>
-                    <!-- 修正: ファンマークボタンのデザインを復元 -->
                     <button onclick="copyToClipboard('🅿︎')" class="group flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full transition-all">
                         <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Fan Mark</span>
-                        <span class="bg-white text-black w-6 h-6 rounded flex items-center justify-center text-sm font-bold">🅿︎</span>
-                        <span class="text-[10px] text-gray-400 group-hover:text-white transition-colors border-l border-white/10 pl-3">Tap to Copy</span>
+                        <span class="bg-white text-black w-6 h-6 rounded flex items-center justify-center text-sm font-bold ml-2">🅿︎</span>
+                        <span class="text-[10px] text-gray-300 group-hover:text-white transition-colors border-l border-white/30 pl-3 ml-1">Tap to Copy</span>
                     </button>
                 </div>
             </div>
@@ -287,388 +345,38 @@
         </div>
         
         <div class="bento-grid">
-            <!-- Vida Loca (Large Card) -->
-            <div class="bento-card col-span-1 md:col-span-2 h-[500px]">
-                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop" class="card-img-bg">
-                <div class="card-content justify-end">
-                    <div class="bg-black/30 backdrop-blur-md p-6 rounded-3xl border border-white/10 inline-block max-w-lg">
-                        <p class="card-eyebrow text-white/90">Latest Single</p>
-                        <h3 class="card-heading">Vida Loca</h3>
-                        <p class="card-text text-white/90 text-base">熱い夏の夜、燃え上がるような恋愛模様を描いた一曲。</p>
-                        <div class="flex flex-wrap gap-3 mt-4">
-                            <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-100 text-sm py-2 px-4">Watch MV</a>
-                            <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="apple-btn-glass text-sm py-2 px-4">Listen Now ></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Streaming -->
-            <div class="bento-card bg-black border border-gray-800">
-                <div class="card-content">
-                    <div>
-                        <p class="card-eyebrow">Streaming</p>
-                        <h3 class="card-heading text-2xl">All Platforms.</h3>
-                    </div>
-                    <div class="link-list">
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="link-item">
-                            <span><i data-lucide="music" class="text-pink-500 w-4 h-4"></i> Apple Music</span> Listen
-                        </a>
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="link-item">
-                            <span><i data-lucide="disc-3" class="text-green-500 w-4 h-4"></i> Spotify</span> Listen
-                        </a>
-                        <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="link-item">
-                            <span><i data-lucide="list-music" class="text-green-400 w-4 h-4"></i> LINE MUSIC</span> Listen
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TikTok Live -->
+            
+            <!-- 1. TikTok Live (最優先: 左上) -->
             <div class="bento-card">
                 <div class="card-content">
                     <div class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center text-white mb-4"><i data-lucide="mic-2" class="w-5 h-5"></i></div>
                     <h3 class="card-heading text-2xl">TikTok Live</h3>
                     <p class="card-text text-sm">歌マネ配信をメインに活動中。<br>リクエストもお待ちしています。</p>
-                    <div class="mt-auto pt-4 border-t border-white/10">
+                    <div class="mt-auto pt-4 border-t border-[var(--card-border)]">
                         <p class="text-[10px] text-gray-500 mb-3">※使用音源はガイドラインを遵守しています。</p>
-                        <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="card-link text-pink-500">Visit Main Account <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="card-link text-pink-500 font-bold text-sm flex items-center gap-1">Visit Main Account <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <!-- 3. SHORTS PAGE -->
-    <main id="shorts" class="page-section">
-        <div class="category-header">
-            <h2 class="category-title">Shorts</h2>
-            <p class="category-desc">日常の切り抜き、ネタ動画、そして歌。</p>
-        </div>
-        <div class="bento-grid">
-            <!-- Recommended (Large) -->
-            <div class="bento-card col-span-1 md:col-span-2 bg-[#1c1c1e] h-[400px]">
-                <div class="card-content items-center justify-center text-center">
-                    <i data-lucide="star" class="w-12 h-12 text-amber-400 mb-4 fill-current"></i>
-                    <p class="card-eyebrow text-amber-400">Recommended</p>
-                    <h3 class="card-heading">Must Watch</h3>
-                    <p class="card-text">個人的にお気に入りの一本。<br>まずはこれを見てください。</p>
-                    <button onclick="alert('動画リンクを開きます')" class="apple-btn mt-4"><i data-lucide="play" class="w-4 h-4 fill-current"></i> 再生する</button>
-                </div>
-            </div>
-
-            <!-- Accounts -->
-            <div class="bento-card">
+            <!-- 2. YouTube (右上) -->
+             <div class="bento-card">
                 <div class="card-content">
-                    <p class="card-eyebrow">Accounts</p>
-                    <h3 class="card-heading text-2xl mb-6">TikTok</h3>
-                    <div class="link-list">
-                        <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="link-item">
-                            <span><i data-lucide="music-2"></i> Main Account</span> Open
-                        </a>
-                        <a href="#" target="_blank" class="link-item">
-                            <span><i data-lucide="user"></i> Sub Account</span> Open
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 4. GAME PAGE -->
-    <main id="game" class="page-section">
-        <div class="category-header">
-            <h2 class="category-title">Game</h2>
-            <p class="category-desc">叫び声注意！？<br>FPSからホラーまで、全力で楽しむ実況スタイル。</p>
-        </div>
-        <div class="bento-grid">
-             <div class="bento-card col-span-1 md:col-span-2 bg-gradient-to-br from-red-900/40 to-black h-[450px]">
-                <div class="card-content">
-                    <div class="flex items-center gap-2 mb-2">
-                         <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-                         <p class="card-eyebrow text-red-500 mb-0">YouTube Gaming</p>
-                    </div>
-                    <h3 class="card-heading">Emupi Games</h3>
-                    <p class="card-text max-w-md">ゲーム実況専用チャンネル。<br>配信アーカイブもすべてここに。</p>
-                    <a href="#" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-200 mt-auto w-fit">チャンネル登録</a>
-                </div>
-                <!-- Image decoration -->
-                <i data-lucide="gamepad-2" class="absolute -bottom-10 -right-10 w-80 h-80 text-red-600/10 rotate-12"></i>
-            </div>
-        </div>
-    </main>
-
-    <!-- 5. VISUAL & SNS -->
-    <main id="visual" class="page-section">
-        <div class="category-header">
-            <h2 class="category-title">Visual & SNS</h2>
-            <p class="category-desc">もうひとつの顔、そして日常。</p>
-        </div>
-        <div class="bento-grid">
-            <!-- Visual Account -->
-            <div class="bento-card col-span-1 h-[450px]">
-                 <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop" class="card-img-bg">
-                 <div class="card-content justify-end">
-                     <div class="bg-black/60 backdrop-blur-md p-6 rounded-3xl">
-                        <p class="card-eyebrow text-pink-400">Crossdress / Visual</p>
-                        <h3 class="card-heading">Creator Mode</h3>
-                        <a href="#" target="_blank" class="apple-btn-outline text-white hover:text-white mt-2 px-0">View Gallery ></a>
-                     </div>
-                 </div>
-            </div>
-
-            <!-- Main SNS List -->
-            <div class="bento-card">
-                <div class="card-content">
-                    <h3 class="card-heading text-2xl mb-6">Socials</h3>
-                    <div class="link-list">
-                        <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="link-item">
-                            <span><i data-lucide="instagram"></i> Instagram (Main)</span> Follow
-                        </a>
-                        <a href="https://twitter.com/emupi2020" target="_blank" class="link-item">
-                            <span><i data-lucide="twitter"></i> X (Twitter)</span> Follow
-                        </a>
-                        <a href="#" target="_blank" class="link-item">
-                            <span><i data-lucide="message-circle" class="text-green-500"></i> Official LINE</span> Add
-                        </a>
-                        <a href="mailto:contact@example.com" class="link-item">
-                            <span><i data-lucide="mail"></i> Contact</span> Mail
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 6. Point System Modal -->
-    <div id="pointModal" class="overlay-bg" onclick="closeModal(event)">
-        <div class="modal-card wide flex flex-col" onclick="event.stopPropagation()">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <p class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">Member's Program</p>
-                    <h3 class="text-3xl font-bold text-white">🅿︎ Point System</h3>
-                </div>
-                <button onclick="closeAllModals()" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <!-- Tabs -->
-            <div class="tabs">
-                <button onclick="switchTab('about')" class="tab-btn active" id="btn-about">Overview</button>
-                <button onclick="switchTab('earn')" class="tab-btn" id="btn-earn">How to Earn</button>
-                <button onclick="switchTab('exchange')" class="tab-btn" id="btn-exchange">Rewards</button>
-                <button onclick="switchTab('rules')" class="tab-btn" id="btn-rules">Rules</button>
-            </div>
-
-            <!-- Content -->
-            <div id="about" class="tab-content active">
-                <h4 class="text-xl font-bold text-white mb-4">Emupiを応援して特典をゲット！</h4>
-                <p class="text-gray-400 leading-relaxed text-sm mb-8">
-                    「🅿ポイント」は、ファンの皆様のための独自のポイントプログラムです。ライブ配信への参加や、動画へのアクションでポイントが貯まります。貯まったポイントは限定グッズや特別な体験と交換できます。
-                </p>
-                <div class="bg-blue-500/10 p-5 rounded-2xl border border-blue-500/20">
-                    <p class="text-blue-400 text-xs font-bold mb-2">MESSAGE</p>
-                    <p class="text-gray-300 text-sm font-medium">いつも支えてくれてありがとう。みんなともっと楽しい時間を共有したくて作りました！</p>
+                    <div class="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-4"><i data-lucide="youtube" class="w-5 h-5"></i></div>
+                    <h3 class="card-heading text-2xl">YouTube</h3>
+                    <p class="card-text text-sm">歌ってみた動画やMVを公開しているメインチャンネル。</p>
+                    <a href="#" target="_blank" class="card-link mt-auto flex items-center gap-1 text-red-500 font-bold text-sm">Go to Channel <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
                 </div>
             </div>
 
-            <div id="earn" class="tab-content">
-                 <div class="space-y-4">
-                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
-                        <span class="text-sm text-gray-300 font-medium">ライブ配信を最後まで視聴</span>
-                        <span class="text-green-400 font-bold text-sm">+10🅿</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
-                        <span class="text-sm text-gray-300 font-medium">動画へのいいね・コメント</span>
-                        <span class="text-green-400 font-bold text-sm">+50🅿</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl">
-                        <span class="text-sm text-gray-300 font-medium">イベントギフト</span>
-                        <span class="text-green-400 font-bold text-sm">+100🅿</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="exchange" class="tab-content">
-                <p class="text-gray-500 text-xs mb-4">※交換申請は公式LINEからお願いします。</p>
-                <div class="grid grid-cols-1 gap-4">
-                    <div class="border border-white/10 p-5 rounded-2xl flex justify-between items-center bg-white/5">
-                        <span class="text-sm text-gray-300 font-medium">デジタルサイン画像</span>
-                        <span class="font-bold text-white">500🅿</span>
-                    </div>
-                    <div class="border border-white/10 p-5 rounded-2xl flex justify-between items-center bg-white/5">
-                        <span class="text-sm text-gray-300 font-medium">リクエスト歌唱動画</span>
-                        <span class="font-bold text-white">1,000🅿</span>
-                    </div>
-                     <div class="border border-white/10 p-5 rounded-2xl flex justify-between items-center bg-white/5">
-                        <span class="text-sm text-gray-300 font-medium">1on1 トーク (5分)</span>
-                        <span class="font-bold text-white">5,000🅿</span>
-                    </div>
-                </div>
-            </div>
-             
-             <div id="rules" class="tab-content">
-                <ul class="list-disc list-inside text-sm text-gray-400 space-y-3">
-                    <li>ポイントの譲渡、売買は禁止です。</li>
-                    <li>不正に獲得したポイントは無効になります。</li>
-                    <li>有効期限は最終獲得日から1年です。</li>
-                    <li>本プログラムは予告なく変更・終了する場合があります。</li>
-                </ul>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Music Details Modal (Top) -->
-    <div id="musicModal" class="overlay-bg" onclick="closeAllModals()"></div>
-    <div id="musicCard" class="modal-card flex flex-col items-center" style="z-index: 160;">
-         <div class="flex w-full justify-end mb-2">
-             <button onclick="closeAllModals()" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-         </div>
-         <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop" class="w-40 h-40 rounded-xl shadow-2xl mb-6 object-cover">
-         <div class="mb-8 text-center">
-            <h2 class="text-3xl font-bold text-white mb-1">Vida Loca</h2>
-            <p class="text-gray-500 text-sm font-medium">Emupi • 2021</p>
-         </div>
-         <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="w-full bg-white text-black font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 mb-6 hover:bg-gray-100 transition-colors shadow-lg">
-            <i data-lucide="play" class="w-4 h-4 fill-current"></i> Play Video
-         </a>
-         <div class="w-full space-y-2">
-             <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors text-sm text-gray-300">
-                 <span class="flex items-center gap-3"><i data-lucide="music" class="text-pink-500 w-5 h-5"></i> Apple Music</span>
-                 <i data-lucide="external-link" class="w-4 h-4 text-gray-600"></i>
-             </a>
-             <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors text-sm text-gray-300">
-                 <span class="flex items-center gap-3"><i data-lucide="disc-3" class="text-green-500 w-5 h-5"></i> Spotify</span>
-                 <i data-lucide="external-link" class="w-4 h-4 text-gray-600"></i>
-             </a>
-         </div>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        <div class="max-w-[980px] mx-auto text-center">
-             <p>&copy; 2025 Emupi Official. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <!-- Toast -->
-    <div id="toast" class="toast"><i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i> Copied to clipboard</div>
-
-    <script>
-        lucide.createIcons();
-
-        // --- SPA Logic ---
-        function switchPage(pageId) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            document.querySelector('.nav-links').classList.remove('open');
-            window.scrollTo(0, 0);
-
-            if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
-            else { location.hash = '#' + pageId; }
-        }
-
-        function handleNavClick(event, pageId) {
-            event.preventDefault();
-            switchPage(pageId);
-        }
-
-        window.addEventListener('popstate', () => {
-            const hash = window.location.hash.substring(1);
-            if (hash && document.getElementById(hash)) {
-                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-                document.getElementById(hash).classList.add('active');
-            } else {
-                document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-                document.getElementById('home').classList.add('active');
-            }
-        });
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const hash = window.location.hash.substring(1);
-            if (hash && document.getElementById(hash)) { switchPage(hash); }
-        });
-
-        function toggleMobileMenu() { document.getElementById('navLinks').classList.toggle('open'); }
-
-        // Modal System
-        function openModal(cardId, overlayId) {
-            // Case 1: Point System (Overlay acts as container)
-            if (cardId === 'pointModal') {
-                const overlay = document.getElementById('pointModal');
-                const card = overlay.querySelector('.modal-card');
-                if(overlay) overlay.classList.add('active');
-                if(card) card.classList.add('active');
-            } 
-            // Case 2: Music Card (Distinct Overlay and Card)
-            else if (cardId && overlayId) {
-                const overlay = document.getElementById(overlayId);
-                const card = document.getElementById(cardId);
-                if(overlay) overlay.classList.add('active');
-                if(card) card.classList.add('active');
-            }
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeAllModals() {
-            document.querySelectorAll('.overlay-bg').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.modal-card').forEach(el => el.classList.remove('active'));
-            document.body.style.overflow = 'auto';
-        }
-        
-        function closeModal(event) {
-            if (event.target.classList.contains('overlay-bg')) closeAllModals();
-        }
-
-        // Tabs
-        function switchTab(tabId) {
-            const container = document.querySelector('.modal-card.active'); // Only affect active modal
-            if (!container) return;
-            
-            container.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            container.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + tabId).classList.add('active');
-        }
-
-        // Clipboard
-        function copyToClipboard(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                const toast = document.getElementById('toast');
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
-            } catch (err) { console.error(err); }
-            document.body.removeChild(textarea);
-        }
-
-        // Video
-        let isPlaying = true;
-        function togglePlayPause() {
-            const iframe = document.getElementById('bgVideo');
-            const icon = document.getElementById('playIcon');
-            if (isPlaying) {
-                iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-                icon.setAttribute('data-lucide', 'play');
-                icon.setAttribute('class', 'w-4 h-4 fill-current ml-0.5'); // Adjust icon position
-            } else {
-                iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                icon.setAttribute('data-lucide', 'pause');
-                icon.setAttribute('class', 'w-4 h-4 fill-current');
-            }
-            isPlaying = !isPlaying;
-            lucide.createIcons();
-        }
-    </script>
-</body>
-</html>
+            <!-- 3. Vida Loca + Streaming Combined (Large Card) -->
+            <div class="bento-card col-span-1 md:col-span-2 h-[500px] has-bg">
+                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop" class="card-img-bg">
+                <div class="card-content justify-end">
+                    <!-- オーバーレイカード (ガラス) -->
+                    <div class="bg-black/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 w-full shadow-2xl">
+                        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            
+                            <!-- MV Info -->
+                            <div class="flex-1">
+                                <p cla
