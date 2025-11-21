@@ -278,13 +278,14 @@
 </head>
 <body class="">
 
-    <!-- 【追加】Version Info Overlay (Pointer events none to allow clicks through) -->
+    <!-- Version Info Overlay (Pointer events none) -->
     <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999] flex flex-col justify-between p-4 select-none">
         <!-- Left Top Badge -->
         <div class="flex items-start">
-            <div class="bg-red-600/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 animate-pulse">
+            <div class="bg-blue-600/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 animate-pulse">
                 <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Development Build</p>
-                <p class="text-2xl font-black font-mono tracking-tighter">v1.0.4</p>
+                <p class="text-2xl font-black font-mono tracking-tighter">v1.0.5</p>
+                <p class="text-[10px] font-medium opacity-90 mt-0.5">Scroll Unlocked</p>
             </div>
         </div>
         
@@ -745,12 +746,10 @@
             if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
             else { location.hash = '#' + pageId; }
 
-            // スクロール制御（トップページのみ禁止）
-            if (pageId === 'home') {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = ''; 
-            }
+            // Scroll Unlocked Version: 
+            // ここにあったスクロール制御ロジック(overflow=hidden等)を削除しました。
+            // トップページでも常にスクロール可能です。
+            document.body.style.overflow = ''; 
         }
 
         function handleNavClick(event, pageId) {
@@ -780,29 +779,21 @@
 
         // Modal System
         function openModal(cardId, overlayId) {
-            if (!overlayId) {
-                const target = document.getElementById(cardId);
-                if (target && target.classList.contains('overlay-bg')) {
-                     target.classList.add('active');
-                     const innerCard = target.querySelector('.modal-card');
-                     if(innerCard) innerCard.classList.add('active');
-                     document.body.style.overflow = 'hidden';
-                     return;
-                }
+            // カードIDから要素を取得
+            let card = document.getElementById(cardId);
+            let overlay = overlayId ? document.getElementById(overlayId) : null;
+
+            // オーバーレイがIDに含まれている場合の自動判定
+            if (!overlay && card && card.classList.contains('overlay-bg')) {
+                overlay = card;
+                card = overlay.querySelector('.modal-card');
             }
 
-            if (cardId === 'pointModal') {
-                const overlay = document.getElementById('pointModal');
-                const card = overlay.querySelector('.modal-card');
-                if(overlay) overlay.classList.add('active');
-                if(card) card.classList.add('active');
-            } 
-            else if (cardId && overlayId) {
-                const overlay = document.getElementById(overlayId);
-                const card = document.getElementById(cardId);
-                if(overlay) overlay.classList.add('active');
-                if(card) card.classList.add('active');
-            }
+            // クラス付与
+            if (overlay) overlay.classList.add('active');
+            if (card) card.classList.add('active');
+            
+            // モーダル展開時はスクロール禁止
             document.body.style.overflow = 'hidden';
         }
 
@@ -810,12 +801,8 @@
             document.querySelectorAll('.overlay-bg').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.modal-card').forEach(el => el.classList.remove('active'));
             
-            const activePage = document.querySelector('.page-section.active');
-            if (activePage && activePage.id === 'home') {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
+            // モーダルを閉じたら、必ずスクロールを許可
+            document.body.style.overflow = '';
         }
         
         function closeModal(event) {
