@@ -396,8 +396,8 @@
 
             <!-- 3. Vida Loca + Streaming Combined (Large Card) -->
             <div class="bento-card col-span-1 md:col-span-2 h-[500px] has-bg">
-                <!-- Vida Loca 背景画像 -->
-                <img src="./Assets/images/IMG_0365.webp" class="card-img-bg" alt="Vida Loca">
+                <!-- 【重要】ファイルパス修正済: assets (小文字) -->
+                <img src="./assets/images/IMG_0365.webp" class="card-img-bg" alt="Vida Loca" onerror="this.style.display='none'">
                 
                 <div class="card-content justify-end">
                     <!-- オーバーレイカード (ガラス) -->
@@ -447,7 +447,7 @@
             <p class="category-desc">日常の切り抜き、ネタ動画、そして歌。</p>
         </div>
         <div class="bento-grid">
-             <!-- Accounts (Moved to Top) -->
+             <!-- Accounts -->
             <div class="bento-card">
                 <div class="card-content">
                     <p class="card-eyebrow">Accounts</p>
@@ -463,7 +463,7 @@
                 </div>
             </div>
             
-            <!-- Recommended (Large) -->
+            <!-- Recommended -->
             <div class="bento-card col-span-1 md:col-span-2 h-[400px] has-bg bg-[#1c1c1e]">
                 <div class="card-content items-center justify-center text-center">
                     <i data-lucide="star" class="w-12 h-12 text-amber-400 mb-4 fill-current"></i>
@@ -489,16 +489,13 @@
                          <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
                          <p class="card-eyebrow text-red-500 mb-0">YouTube Gaming</p>
                     </div>
-                    <!-- チャンネル名を変更 -->
                     <h3 class="card-heading">サンちゃん。【IQ3な実況】</h3>
-                    <!-- 説明文をアレンジして変更 -->
                     <p class="card-text max-w-md">
                         IQ3という別キャラクターで活動中。<br>
                         裏アカ感覚で楽しむ、自由気ままなゲーム実況。
                     </p>
                     <a href="#" target="_blank" class="apple-btn bg-red-600 hover:bg-red-500 mt-auto w-fit text-white border-none">チャンネル登録</a>
                 </div>
-                <!-- Image decoration -->
                 <i data-lucide="gamepad-2" class="absolute -bottom-10 -right-10 w-80 h-80 text-red-600/10 rotate-12"></i>
             </div>
         </div>
@@ -514,8 +511,8 @@
             <!-- Visual Account -->
             <div class="bento-card col-span-1 h-[450px] has-bg">
                  <!-- ↓ 画像差し替え箇所 ↓ -->
-                 <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop" class="card-img-bg">
-                 <!-- ↑ src="./images/emuko.jpg" のように書き換える ↑ -->
+                 <img src="./assets/images/emuko.jpg" class="card-img-bg" onerror="this.src='https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop'">
+                 <!-- ↑ 仮にemuko.jpgとしていますが、適宜変更してください ↑ -->
 
                  <div class="card-content justify-end">
                      <div class="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-white/10">
@@ -636,8 +633,8 @@
          <div class="flex w-full justify-end mb-2">
              <button onclick="closeAllModals()" class="w-8 h-8 rounded-full bg-gray-500/20 flex items-center justify-center hover:bg-gray-500/40 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
          </div>
-         <!-- 【修正】Vida Loca ジャケット画像を差し替え -->
-         <img src="./Assets/images/IMG_0365.webp" class="w-40 h-40 rounded-xl shadow-2xl mb-6 object-cover" alt="Vida Loca">
+         <!-- 【重要】Music Modal内もassets(小文字)に修正 -->
+         <img src="./assets/images/IMG_0365.webp" class="w-40 h-40 rounded-xl shadow-2xl mb-6 object-cover" alt="Vida Loca" onerror="this.style.display='none'">
 
          <div class="mb-8 text-center">
             <h2 class="text-3xl font-bold mb-1">Vida Loca</h2>
@@ -672,7 +669,6 @@
         lucide.createIcons();
 
         // --- Random TikTok Video Logic ---
-        // ここにおすすめ動画のURLリストを登録してください
         const tiktokVideos = [
             "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
             "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
