@@ -2,7 +2,7 @@
 <html lang="ja" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Emupi Official | Pro. Beyond.</title>
     
     <!-- Tailwind CSS -->
@@ -33,10 +33,6 @@
             --modal-bg: rgba(255, 255, 255, 0.8);
             --modal-text: #1d1d1f;
             --modal-shadow: rgba(0, 0, 0, 0.15);
-            
-            /* グラデーション: 黒(動画背景)から白(ページ背景)へ */
-            /* 上も下もこの色を使ってフェードさせます */
-            --hero-gradient-stop: #f5f5f7; 
         }
 
         @media (prefers-color-scheme: dark) {
@@ -54,9 +50,6 @@
                 --modal-bg: rgba(28, 28, 30, 0.8);
                 --modal-text: #f5f5f7;
                 --modal-shadow: rgba(0, 0, 0, 0.5);
-                
-                /* ダークモード時は黒へのフェード */
-                --hero-gradient-stop: #000000;
             }
         }
 
@@ -117,14 +110,14 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section --- */
+        /* --- Hero Section (Horizontal Fixed Video) --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            background-color: #000;
+            background-color: #000; /* 動画エリアは常に黒背景 */
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -132,72 +125,94 @@
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 動画: 16:9固定 */
+        /* 動画: 画面いっぱいに広げる (Cover) */
         .video-foreground iframe {
             position: absolute;
             top: 50%; left: 50%;
             width: 100vw; 
-            height: 56.25vw;
+            height: 56.25vw; /* 16:9 */
             transform: translate(-50%, -50%);
             opacity: 0.8;
         }
-
-        /* 【修正】上部のフェード: 背景色から透明へ */
-        .hero-fade-top {
-            position: absolute; top: 0; left: 0; width: 100%; height: 150px; z-index: 2;
-            background: linear-gradient(to bottom, var(--hero-gradient-stop) 20%, rgba(0,0,0,0) 100%);
-            pointer-events: none;
+        /* 画面が横長すぎる場合 */
+        @media (min-aspect-ratio: 16/9) {
+            .video-foreground iframe {
+                width: 100%;
+                height: 56.25vw;
+            }
+        }
+        /* 画面が縦長すぎる場合（スマホなど） */
+        @media (max-aspect-ratio: 16/9) {
+            .video-foreground iframe {
+                width: 177.78vh;
+                height: 100%;
+            }
         }
 
-        /* 下部のフェード: 透明から背景色へ */
-        .hero-fade-bottom {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 200px; z-index: 2;
-            background: linear-gradient(to top, var(--hero-gradient-stop) 10%, rgba(0,0,0,0) 100%);
-            pointer-events: none;
-        }
-
-        /* ヒーローコンテンツ */
+        /* ヒーローコンテンツ（下部固定・Apple Style） */
         .hero-content {
-            position: relative; z-index: 10;
+            position: absolute; 
+            z-index: 10;
+            /* 下から12%の位置に固定（下3分の1エリア） */
+            bottom: 12%; 
+            left: 0;
+            width: 100%;
             text-align: center;
             display: flex; flex-direction: column; align-items: center;
             padding: 0 20px;
-            margin-bottom: 15vh; 
-            width: 100%;
+            /* フェードをかけないため、文字の視認性を確保 */
+            text-shadow: 0 2px 15px rgba(0,0,0,0.6);
         }
-        /* 文字色はテーマに関わらず白（動画の上なので）、ただしライトモード時はフェードと被るため少し影を強化 */
+        /* Apple製品ページ風のタイポグラフィ */
         .hero-title {
-            font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
-            color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,0.8);
+            font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 8px;
+            color: #fff;
         }
         .hero-desc {
-            font-size: 17px; font-weight: 400; line-height: 1.47059; letter-spacing: -0.022em; margin-bottom: 24px;
-            color: #f5f5f7; max-width: 600px; text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+            font-size: 17px; font-weight: 400; line-height: 1.5; letter-spacing: -0.01em; margin-bottom: 24px;
+            color: #f5f5f7; max-width: 500px;
         }
         
         @media (max-width: 768px) {
-            .hero-title { font-size: 36px; }
-            .hero-desc { font-size: 15px; }
-            .hero-content { margin-bottom: 18vh; }
+            .hero-title { font-size: 40px; }
+            .hero-desc { font-size: 15px; max-width: 320px; }
+            /* モバイルでは少し下げる */
+            .hero-content { bottom: 15%; }
         }
 
+        /* コントロールボタンの配置（スマホ時は右上） */
         .controls-wrapper {
-            position: absolute; bottom: 30px; right: 30px; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); 
+            position: absolute; 
+            z-index: 20; 
+            display: flex; 
+            gap: 12px; 
+            transform: translateZ(0); 
+            /* PCなどのデフォルト位置 */
+            bottom: 40px; 
+            right: 30px;
         }
 
-        /* Apple Buttons */
+        @media (max-aspect-ratio: 16/9) {
+            .controls-wrapper {
+                bottom: auto;
+                top: calc(var(--header-height) + 20px);
+                right: 20px;
+            }
+        }
+
+        /* Apple Style Buttons (Small) */
         .apple-btn-small {
-            background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
-            font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
+            background: #0071e3; color: white; padding: 8px 20px; border-radius: 980px;
+            font-size: 14px; font-weight: 500; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .apple-btn-small:hover { background: #0077ED; transform: scale(1.02); }
         
         .apple-btn-small-outline {
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
-            color: white; padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            color: white; padding: 8px 20px; border-radius: 980px; font-size: 14px; font-weight: 500;
             transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.25); }
@@ -320,13 +335,10 @@
         <div class="hero-container">
             <div class="video-background">
                 <div class="video-foreground">
-                    <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    <!-- 新しい動画ID: 3dfxC39ZyZ4 -->
+                    <iframe id="bgVideo" src="https://www.youtube.com/embed/3dfxC39ZyZ4?autoplay=1&mute=1&controls=0&loop=1&playlist=3dfxC39ZyZ4&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                 </div>
             </div>
-            
-            <!-- 上下フェード（両方ともページ背景色へ馴染ませる） -->
-            <div class="hero-fade-top"></div>
-            <div class="hero-fade-bottom"></div>
             
             <!-- ヒーローコンテンツ（下部固定・小型化） -->
             <div class="hero-content">
@@ -347,7 +359,7 @@
                 </div>
             </div>
 
-            <!-- Controls (右下隅に固定) -->
+            <!-- Controls (スマホ時は映像右上に配置) -->
             <div class="controls-wrapper">
                 <button onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors border border-white/10 shadow-lg">
                     <i data-lucide="pause" class="w-4 h-4 fill-current" id="playIcon"></i>
@@ -404,7 +416,7 @@
                                 <p class="card-eyebrow text-white/80">Latest Single</p>
                                 <h3 class="card-heading text-white">Vida Loca</h3>
                                 <p class="card-text text-white/80 text-sm mb-4">熱い夏の夜、燃え上がるような恋愛模様を描いた一曲。</p>
-                                <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-100 text-sm py-2.5 px-5 mb-4 md:mb-0">
+                                <a href="https://www.youtube.com/watch?v=3dfxC39ZyZ4" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-100 text-sm py-2.5 px-5 mb-4 md:mb-0">
                                     <i data-lucide="play-circle" class="w-4 h-4 fill-current"></i> Watch MV
                                 </a>
                             </div>
@@ -634,7 +646,7 @@
             <h2 class="text-3xl font-bold mb-1">Vida Loca</h2>
             <p class="opacity-60 text-sm font-medium">Emupi • 2021</p>
          </div>
-         <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-black font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 mb-6 hover:opacity-90 transition-colors shadow-lg">
+         <a href="https://www.youtube.com/watch?v=3dfxC39ZyZ4" target="_blank" class="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-black font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 mb-6 hover:opacity-90 transition-colors shadow-lg">
             <i data-lucide="play" class="w-4 h-4 fill-current"></i> Play Video
          </a>
          <div class="w-full space-y-2">
@@ -663,7 +675,6 @@
         lucide.createIcons();
 
         // --- Random TikTok Video Logic ---
-        // ここにおすすめ動画のURLリストを登録してください
         const tiktokVideos = [
             "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
             "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
