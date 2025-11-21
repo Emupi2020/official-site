@@ -30,7 +30,7 @@
             --card-border: rgba(0, 0, 0, 0.1);
             --accent-blue: #0071e3;
             --list-hover: rgba(0, 0, 0, 0.05);
-            --modal-bg: rgba(255, 255, 255, 0.8);
+            --modal-bg: rgba(255, 255, 255, 0.95);
             --modal-text: #1d1d1f;
             --modal-shadow: rgba(0, 0, 0, 0.15);
         }
@@ -47,7 +47,7 @@
                 --card-border: rgba(255, 255, 255, 0.1);
                 --accent-blue: #2997ff;
                 --list-hover: rgba(255, 255, 255, 0.1);
-                --modal-bg: rgba(28, 28, 30, 0.8);
+                --modal-bg: rgba(28, 28, 30, 0.95);
                 --modal-text: #f5f5f7;
                 --modal-shadow: rgba(0, 0, 0, 0.5);
             }
@@ -60,25 +60,6 @@
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* --- デバッグ用バージョン表示 (テスト中のみ使用) --- */
-        .debug-version {
-            position: fixed;
-            top: 60px; /* ナビバーの下 */
-            left: 20px;
-            z-index: 10000; /* 最前面 */
-            background-color: rgba(255, 0, 0, 0.1);
-            border: 2px solid rgba(255, 0, 0, 0.5);
-            color: #ff0000;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-weight: bold;
-            font-size: 20px;
-            pointer-events: none; /* クリックを透過させる（下の要素を操作可能にする） */
-            backdrop-filter: blur(4px);
-            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
         }
 
         /* --- Navigation Bar --- */
@@ -141,7 +122,6 @@
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            /* サイト背景色に合わせる */
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
@@ -150,25 +130,17 @@
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 動画: 常に画面を埋め尽くす (Cover) */
         .video-foreground iframe {
             position: absolute;
             top: 50%; left: 50%;
             width: 100vw; 
-            height: 56.25vw; /* 16:9 */
+            height: 56.25vw;
             transform: translate(-50%, -50%);
             opacity: 0.7;
         }
-        /* 画面が横長すぎる場合 */
-        @media (min-aspect-ratio: 16/9) {
-            .video-foreground iframe { width: 100%; height: 56.25vw; }
-        }
-        /* 画面が縦長すぎる場合（スマホ） */
-        @media (max-aspect-ratio: 16/9) {
-            .video-foreground iframe { width: 177.78vh; height: 100%; }
-        }
+        @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100%; height: 56.25vw; } }
+        @media (max-aspect-ratio: 16/9) { .video-foreground iframe { width: 177.78vh; height: 100%; } }
 
-        /* ヒーローコンテンツ */
         .hero-content {
             position: relative; z-index: 10;
             text-align: center;
@@ -177,58 +149,50 @@
             margin-bottom: 15vh; 
             width: 100%;
         }
-        /* テキスト色をテーマに合わせる */
         .hero-title {
             font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
-            color: var(--text-primary);
+            color: #1d1d1f; text-shadow: none;
         }
         .hero-desc {
             font-size: 17px; font-weight: 400; line-height: 1.47059; letter-spacing: -0.022em; margin-bottom: 24px;
-            color: var(--text-secondary); max-width: 600px;
+            color: #1d1d1f; max-width: 600px; text-shadow: none;
         }
-        
+        @media (prefers-color-scheme: dark) {
+            .hero-title { color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,0.8); }
+            .hero-desc { color: #f5f5f7; text-shadow: 0 2px 20px rgba(0,0,0,0.8); }
+        }
         @media (max-width: 768px) {
             .hero-title { font-size: 36px; }
             .hero-desc { font-size: 15px; }
             .hero-content { margin-bottom: 18vh; }
         }
 
-        /* コントロールボタン配置調整 */
         .controls-wrapper {
-            position: absolute; 
-            z-index: 20; 
-            display: flex; 
-            gap: 12px; 
-            transform: translateZ(0); 
-            /* PCデフォルト */
-            bottom: 40px; 
-            right: 30px;
+            position: absolute; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); bottom: 40px; right: 30px;
         }
-        /* スマホ（縦画面）時は映像の右上に移動 */
         @media (max-aspect-ratio: 16/9) {
-            .controls-wrapper {
-                bottom: auto;
-                top: calc(var(--header-height) + 20px);
-                right: 20px;
-            }
+            .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 20px); right: 20px; }
         }
 
         /* Apple Buttons */
         .apple-btn-small {
-            background: var(--accent-blue); color: white; padding: 8px 16px; border-radius: 980px;
+            background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
             font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .apple-btn-small:hover { transform: scale(1.02); opacity: 0.9; }
+        .apple-btn-small:hover { background: #0077ED; transform: scale(1.02); }
         
         .apple-btn-small-outline {
-            background: transparent; backdrop-filter: blur(10px);
-            color: var(--text-primary); padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
+            background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);
+            color: #1d1d1f; padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
             transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
-            border: 1px solid var(--card-border);
+            border: 1px solid rgba(0,0,0,0.1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-        .apple-btn-small-outline:hover { background: var(--list-hover); }
+        @media (prefers-color-scheme: dark) {
+            .apple-btn-small-outline { background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        }
+        .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.8); }
 
         /* --- Category Header --- */
         .category-header { text-align: center; padding: 100px 20px 60px; background: var(--bg-color); }
@@ -263,10 +227,7 @@
         .card-heading { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: 10px; }
         .card-text { font-size: 17px; color: var(--text-secondary); font-weight: 400; margin-bottom: 20px; }
         
-        .text-overlay-dark { color: #fff !important; }
-        .bento-card.has-bg .card-heading, 
-        .bento-card.has-bg .card-text, 
-        .bento-card.has-bg .card-eyebrow { color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .bento-card.has-bg .card-heading, .bento-card.has-bg .card-text, .bento-card.has-bg .card-eyebrow { color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
 
         .link-list { margin-top: auto; }
         .link-item {
@@ -286,9 +247,7 @@
         .modal-card {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -45%) scale(0.95);
             width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 50px 40px;
-            border-radius: 40px; 
-            background: var(--modal-bg); 
-            box-shadow: 0 25px 50px var(--modal-shadow);
+            border-radius: 40px; background: var(--modal-bg); box-shadow: 0 25px 50px var(--modal-shadow);
             z-index: 160; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
             color: var(--modal-text);
         }
@@ -304,15 +263,13 @@
         .tab-content { display: none; animation: fadeUp 0.4s; }
         .tab-content.active { display: block; }
 
-        /* Footer */
         footer { background: var(--bg-color); color: var(--text-secondary); padding: 40px 20px; font-size: 12px; border-top: 1px solid var(--card-border); }
 
-        /* Toast Notification */
         .toast {
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: var(--text-primary); color: var(--bg-color); padding: 10px 20px; border-radius: 50px;
-            font-size: 14px; font-weight: 500; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 200; display: flex; align-items: center; gap: 8px;
+            background: var(--text-primary); color: var(--bg-color); padding: 12px 24px; border-radius: 50px;
+            font-size: 14px; font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 200; display: flex; align-items: center; gap: 10px;
             opacity: 0; visibility: hidden;
         }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
@@ -321,9 +278,20 @@
 </head>
 <body class="">
 
-    <!-- バージョン表示（テスト用） -->
-    <div class="debug-version">
-        v1.0.5 (Test Build)
+    <!-- 【追加】Version Info Overlay (Pointer events none to allow clicks through) -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999] flex flex-col justify-between p-4 select-none">
+        <!-- Left Top Badge -->
+        <div class="flex items-start">
+            <div class="bg-red-600/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 animate-pulse">
+                <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Development Build</p>
+                <p class="text-2xl font-black font-mono tracking-tighter">v1.0.4</p>
+            </div>
+        </div>
+        
+        <!-- Right Bottom Watermark -->
+        <div class="text-right opacity-20 hover:opacity-40 transition-opacity">
+            <p class="text-4xl md:text-8xl font-black text-gray-900 dark:text-white font-mono tracking-tighter">TESTING</p>
+        </div>
     </div>
 
     <!-- Global Navigation -->
@@ -376,7 +344,7 @@
                 </div>
             </div>
 
-            <!-- Controls (位置自動調整) -->
+            <!-- Controls -->
             <div class="controls-wrapper">
                 <button onclick="togglePlayPause()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors border border-white/10 shadow-lg">
                     <i data-lucide="pause" class="w-4 h-4 fill-current" id="playIcon"></i>
@@ -397,20 +365,38 @@
         
         <div class="bento-grid">
             
-            <!-- 1. TikTok Live (最優先: 左上) -->
-            <div class="bento-card">
-                <div class="card-content">
-                    <div class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center text-white mb-4"><i data-lucide="mic-2" class="w-5 h-5"></i></div>
-                    <h3 class="card-heading text-2xl">TikTok Live</h3>
-                    <p class="card-text text-sm">歌マネ配信をメインに活動中。<br>リクエストもお待ちしています。</p>
-                    <div class="mt-auto pt-4 border-t border-[var(--card-border)]">
-                        <p class="text-[10px] text-gray-500 mb-3">※使用音源はガイドラインを遵守しています。</p>
-                        <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="card-link text-pink-500 font-bold text-sm flex items-center gap-1">Visit Main Account <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+            <!-- 1. TikTok Live -->
+            <div class="bento-card col-span-1 md:col-span-2 has-bg bg-black text-white h-[400px] overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black z-0"></div>
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070&auto=format&fit=crop')] opacity-30 bg-cover bg-center z-0 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"></div>
+                
+                <div class="card-content flex flex-col items-center justify-center text-center relative z-10 h-full p-8">
+                    <div class="relative w-28 h-28 mb-6 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-[#00f2ea] to-[#ff0050] rounded-full blur-2xl opacity-40"></div>
+                        <div class="relative w-24 h-24 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-2xl">
+                             <i data-lucide="mic" class="w-10 h-10 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"></i>
+                        </div>
+                        <div class="absolute bottom-0 right-0 w-10 h-10 bg-black border border-gray-700 rounded-full flex items-center justify-center shadow-lg">
+                            <i data-lucide="music-2" class="w-5 h-5 text-[#00f2ea]"></i>
+                        </div>
+                    </div>
+
+                    <h3 class="text-4xl md:text-5xl font-bold mb-2 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">TikTok Live</h3>
+                    <p class="text-gray-300 text-lg font-light mb-6">心に響く、歌まねパフォーマンス。</p>
+                    
+                    <a href="https://www.tiktok.com/@emupi2020" target="_blank" class="apple-btn-small bg-white text-black hover:bg-gray-100 border-none px-6 py-3 text-base shadow-xl transform transition hover:scale-105">
+                        <i data-lucide="play" class="w-4 h-4 fill-black"></i> 配信を見る
+                    </a>
+                    
+                    <div class="absolute bottom-4 right-4 md:bottom-6 md:right-8">
+                         <p class="text-[10px] text-gray-500">
+                             ※<button onclick="openModal('guidelineModal')" class="text-white/60 hover:text-white underline decoration-1 underline-offset-2 transition-colors">使用音源</button>はガイドラインを遵守しています。
+                         </p>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. YouTube (右上) -->
+            <!-- 2. YouTube -->
              <div class="bento-card">
                 <div class="card-content">
                     <div class="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-4"><i data-lucide="youtube" class="w-5 h-5"></i></div>
@@ -420,27 +406,21 @@
                 </div>
             </div>
 
-            <!-- 3. Vida Loca + Streaming Combined (Large Card) -->
-            <div class="bento-card col-span-1 md:col-span-2 h-[500px] has-bg">
-                <!-- 画像パス: assets (小文字) -->
+            <!-- 3. Vida Loca -->
+            <div class="bento-card col-span-1 md:col-span-3 lg:col-span-3 h-[500px] has-bg">
                 <img src="./assets/images/IMG_0365.webp" class="card-img-bg" alt="Vida Loca" onerror="this.style.display='none'">
                 
                 <div class="card-content justify-end">
-                    <!-- オーバーレイカード (ガラス) -->
                     <div class="bg-black/60 backdrop-blur-xl p-6 rounded-3xl border border-white/10 w-full shadow-2xl">
                         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            
-                            <!-- MV Info -->
                             <div class="flex-1">
                                 <p class="card-eyebrow text-white/80">Latest Single</p>
                                 <h3 class="card-heading text-white">Vida Loca</h3>
                                 <p class="card-text text-white/80 text-sm mb-4">熱い夏の夜、燃え上がるような恋愛模様を描いた一曲。</p>
-                                <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-100 text-sm py-2.5 px-5 mb-4 md:mb-0">
+                                <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-btn bg-white text-black hover:bg-gray-100 text-sm py-2.5 px-5 mb-4 md:mb-0 inline-flex items-center gap-2 rounded-full font-medium">
                                     <i data-lucide="play-circle" class="w-4 h-4 fill-current"></i> Watch MV
                                 </a>
                             </div>
-
-                            <!-- Streaming Links (統合) -->
                             <div class="flex-1 border-t md:border-t-0 md:border-l border-white/20 pt-4 md:pt-0 md:pl-6">
                                 <p class="card-eyebrow text-white/60 mb-3">Streaming</p>
                                 <div class="space-y-2">
@@ -496,7 +476,7 @@
                     <p class="card-eyebrow text-amber-400">Recommended</p>
                     <h3 class="card-heading">Must Watch</h3>
                     <p class="card-text">個人的にお気に入りの一本。<br>まずはこれを見てください。</p>
-                    <button onclick="playRandomTikTok()" class="apple-btn mt-4"><i data-lucide="play" class="w-4 h-4 fill-current"></i> 再生する</button>
+                    <button onclick="playRandomTikTok()" class="apple-btn mt-4 inline-flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full font-medium hover:bg-gray-100"><i data-lucide="play" class="w-4 h-4 fill-current"></i> 再生する</button>
                 </div>
             </div>
         </div>
@@ -515,14 +495,12 @@
                          <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
                          <p class="card-eyebrow text-red-500 mb-0">YouTube Gaming</p>
                     </div>
-                    <!-- チャンネル名を変更 -->
                     <h3 class="card-heading">サンちゃん。【IQ3な実況】</h3>
-                    <!-- 説明文をアレンジして変更 -->
                     <p class="card-text max-w-md">
                         IQ3という別キャラクターで活動中。<br>
                         裏アカ感覚で楽しむ、自由気ままなゲーム実況。
                     </p>
-                    <a href="#" target="_blank" class="apple-btn bg-red-600 hover:bg-red-500 mt-auto w-fit text-white border-none">チャンネル登録</a>
+                    <a href="#" target="_blank" class="apple-btn bg-red-600 hover:bg-red-500 mt-auto w-fit text-white border-none px-4 py-2 rounded-full font-medium inline-block">チャンネル登録</a>
                 </div>
                 <i data-lucide="gamepad-2" class="absolute -bottom-10 -right-10 w-80 h-80 text-red-600/10 rotate-12"></i>
             </div>
@@ -538,15 +516,14 @@
         <div class="bento-grid">
             <!-- Visual Account -->
             <div class="bento-card col-span-1 h-[450px] has-bg">
-                 <!-- 画像差し替え箇所 -->
                  <img src="./assets/images/emuko.jpg" class="card-img-bg" onerror="this.src='https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop'">
-                 
+
                  <div class="card-content justify-end">
                      <div class="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-white/10">
                         <p class="card-eyebrow text-pink-400">Crossdress / Visual</p>
                         <h3 class="card-heading text-white">Emuko</h3>
                         <p class="card-text text-white/80 text-sm">Creator Mode</p>
-                        <a href="#" target="_blank" class="apple-btn-outline text-white hover:text-white mt-2 px-0">View Gallery ></a>
+                        <a href="#" target="_blank" class="apple-btn-outline text-white hover:text-white mt-2 px-0 inline-flex items-center">View Gallery <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i></a>
                      </div>
                  </div>
             </div>
@@ -654,7 +631,7 @@
         </div>
     </div>
 
-    <!-- Music Details Modal (Top) -->
+    <!-- Music Details Modal -->
     <div id="musicModal" class="overlay-bg" onclick="closeAllModals()"></div>
     <div id="musicCard" class="modal-card flex flex-col items-center" style="z-index: 160;">
          <div class="flex w-full justify-end mb-2">
@@ -666,9 +643,9 @@
             <h2 class="text-3xl font-bold mb-1">Vida Loca</h2>
             <p class="opacity-60 text-sm font-medium">Emupi • 2021</p>
          </div>
-         <!-- 【修正】YouTubeボタンのデザインをYouTubeカラー＆アイコンに変更 -->
+         <!-- PlayVideo Button (YouTube Style) -->
          <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="w-full bg-[#FF0000] text-white font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 mb-6 hover:bg-[#CC0000] transition-colors shadow-lg">
-            <i data-lucide="youtube" class="w-5 h-5 fill-current"></i> Watch on YouTube
+            <i data-lucide="youtube" class="w-5 h-5 fill-current"></i> Play Video
          </a>
          <div class="w-full space-y-2">
              <a href="https://linkco.re/FmnxTncZ?lang=ja" target="_blank" class="flex items-center justify-between p-4 rounded-2xl bg-[var(--list-hover)] hover:bg-[var(--card-border)] transition-colors text-sm">
@@ -682,6 +659,44 @@
          </div>
     </div>
 
+    <!-- Guideline Modal -->
+    <div id="guidelineModal" class="overlay-bg" onclick="closeModal(event)">
+        <div class="modal-card flex flex-col" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">TikTokライブでの<br>使用音源について</h3>
+                <button onclick="closeAllModals()" class="w-8 h-8 rounded-full bg-gray-500/20 flex items-center justify-center hover:bg-gray-500/40 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6 text-sm overflow-y-auto pr-2">
+                <div class="bg-[var(--list-hover)] p-4 rounded-xl">
+                    <h4 class="font-bold mb-1">【SingKing】</h4>
+                    <a href="https://m.youtube.com/c/singkingkaraoke/featured" target="_blank" class="text-blue-500 hover:underline break-all">https://m.youtube.com/c/singkingkaraoke/featured</a>
+                </div>
+                
+                <div class="bg-[var(--list-hover)] p-4 rounded-xl">
+                    <h4 class="font-bold mb-1">【JPOP Karaoke】</h4>
+                    <a href="https://m.youtube.com/channel/UCTT44jmy7-pIGKpy-Ih8NyA" target="_blank" class="text-blue-500 hover:underline break-all">https://m.youtube.com/channel/UCTT44jmy7-pIGKpy-Ih8NyA</a>
+                </div>
+                
+                <div class="bg-[var(--list-hover)] p-4 rounded-xl">
+                    <h4 class="font-bold mb-1">【カラオケ歌っちゃ王】</h4>
+                    <a href="https://m.youtube.com/channel/UC1tk9F5-MGXEq4LWnjmrtpA" target="_blank" class="text-blue-500 hover:underline break-all">https://m.youtube.com/channel/UC1tk9F5-MGXEq4LWnjmrtpA</a>
+                </div>
+
+                <div class="bg-[var(--list-hover)] p-4 rounded-xl">
+                    <h4 class="font-bold mb-1">【TJ KARAOKE TJ 노래방 공식 유튜브채널】</h4>
+                    <a href="https://m.youtube.com/channel/UCZUhx8ClCv6paFW7qi3qljg" target="_blank" class="text-blue-500 hover:underline break-all">https://m.youtube.com/channel/UCZUhx8ClCv6paFW7qi3qljg</a>
+                </div>
+                
+                <div class="text-center pt-2 opacity-80 leading-relaxed">
+                    配信内での使用音源は全て上記フリー音源、<br>またはNCS楽曲のみ使用しております。
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <div class="max-w-[980px] mx-auto text-center">
@@ -689,17 +704,22 @@
         </div>
     </footer>
     
-    <!-- Toast: 【修正】日本語メッセージ -->
-    <div id="toast" class="toast"><i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i> <span>ファンマークをコピーしました！</span></div>
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+            <i data-lucide="check" class="w-4 h-4 text-white stroke-[3]"></i>
+        </div>
+        コピーしました！
+    </div>
 
     <script>
         lucide.createIcons();
 
         // --- Random TikTok Video Logic ---
         const tiktokVideos = [
-            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
-            "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
-            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"  // 例: 動画C
+            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", 
+            "https://www.tiktok.com/@emupi2020/video/6991234567890123456",
+            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"
         ];
 
         function playRandomTikTok() {
@@ -729,7 +749,7 @@
             if (pageId === 'home') {
                 document.body.style.overflow = 'hidden';
             } else {
-                document.body.style.overflow = ''; // 通常のスクロールに戻す
+                document.body.style.overflow = ''; 
             }
         }
 
@@ -752,7 +772,6 @@
             if (hash && document.getElementById(hash)) { 
                 switchPage(hash); 
             } else {
-                // 初期ロード時にトップページならスクロール禁止
                 switchPage('home');
             }
         });
@@ -761,6 +780,17 @@
 
         // Modal System
         function openModal(cardId, overlayId) {
+            if (!overlayId) {
+                const target = document.getElementById(cardId);
+                if (target && target.classList.contains('overlay-bg')) {
+                     target.classList.add('active');
+                     const innerCard = target.querySelector('.modal-card');
+                     if(innerCard) innerCard.classList.add('active');
+                     document.body.style.overflow = 'hidden';
+                     return;
+                }
+            }
+
             if (cardId === 'pointModal') {
                 const overlay = document.getElementById('pointModal');
                 const card = overlay.querySelector('.modal-card');
@@ -773,7 +803,6 @@
                 if(overlay) overlay.classList.add('active');
                 if(card) card.classList.add('active');
             }
-            // モーダルが開いている間はスクロール禁止（トップ以外でも）
             document.body.style.overflow = 'hidden';
         }
 
@@ -781,7 +810,6 @@
             document.querySelectorAll('.overlay-bg').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.modal-card').forEach(el => el.classList.remove('active'));
             
-            // モーダルを閉じたら、現在のページに合わせてスクロール設定を戻す
             const activePage = document.querySelector('.page-section.active');
             if (activePage && activePage.id === 'home') {
                 document.body.style.overflow = 'hidden';
@@ -796,7 +824,7 @@
 
         // Tabs
         function switchTab(tabId) {
-            const container = document.querySelector('.modal-card.active'); // Only affect active modal
+            const container = document.querySelector('.modal-card.active'); 
             if (!container) return;
             
             container.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -816,21 +844,12 @@
                 document.execCommand('copy');
                 const toast = document.getElementById('toast');
                 toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
+                setTimeout(() => toast.classList.remove('show'), 3000);
             } catch (err) { console.error(err); }
             document.body.removeChild(textarea);
         }
 
-        // Video Playback: 強制再生スクリプト追加
-        window.addEventListener('load', () => {
-            const iframe = document.getElementById('bgVideo');
-            if (iframe) {
-                setTimeout(() => {
-                     iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                }, 1000);
-            }
-        });
-
+        // Video
         let isPlaying = true;
         function togglePlayPause() {
             const iframe = document.getElementById('bgVideo');
