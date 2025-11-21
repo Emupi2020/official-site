@@ -62,6 +62,25 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
+        /* --- デバッグ用バージョン表示 (テスト中のみ使用) --- */
+        .debug-version {
+            position: fixed;
+            top: 60px; /* ナビバーの下 */
+            left: 20px;
+            z-index: 10000; /* 最前面 */
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            color: #ff0000;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none; /* クリックを透過させる（下の要素を操作可能にする） */
+            backdrop-filter: blur(4px);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+
         /* --- Navigation Bar --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
@@ -115,14 +134,14 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section --- */
+        /* --- Hero Section (Full Screen Cover) --- */
         .hero-container {
             position: relative;
             height: 100vh;
             height: 100dvh; 
             width: 100%;
             overflow: hidden;
-            /* 背景色をサイト全体の色（ライトなら白、ダークなら黒）に合わせる */
+            /* サイト背景色に合わせる */
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
@@ -140,9 +159,11 @@
             transform: translate(-50%, -50%);
             opacity: 0.7;
         }
+        /* 画面が横長すぎる場合 */
         @media (min-aspect-ratio: 16/9) {
             .video-foreground iframe { width: 100%; height: 56.25vw; }
         }
+        /* 画面が縦長すぎる場合（スマホ） */
         @media (max-aspect-ratio: 16/9) {
             .video-foreground iframe { width: 177.78vh; height: 100%; }
         }
@@ -156,7 +177,6 @@
             margin-bottom: 15vh; 
             width: 100%;
         }
-        
         /* テキスト色をテーマに合わせる */
         .hero-title {
             font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
@@ -301,6 +321,11 @@
 </head>
 <body class="">
 
+    <!-- バージョン表示（テスト用） -->
+    <div class="debug-version">
+        v1.0.5 (Test Build)
+    </div>
+
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
@@ -328,8 +353,7 @@
         <div class="hero-container">
             <div class="video-background">
                 <div class="video-foreground">
-                    <!-- 【修正】URLのoriginを削除し、API互換性を向上 -->
-                    <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                 </div>
             </div>
             
@@ -491,7 +515,9 @@
                          <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
                          <p class="card-eyebrow text-red-500 mb-0">YouTube Gaming</p>
                     </div>
+                    <!-- チャンネル名を変更 -->
                     <h3 class="card-heading">サンちゃん。【IQ3な実況】</h3>
+                    <!-- 説明文をアレンジして変更 -->
                     <p class="card-text max-w-md">
                         IQ3という別キャラクターで活動中。<br>
                         裏アカ感覚で楽しむ、自由気ままなゲーム実況。
@@ -640,7 +666,7 @@
             <h2 class="text-3xl font-bold mb-1">Vida Loca</h2>
             <p class="opacity-60 text-sm font-medium">Emupi • 2021</p>
          </div>
-         <!-- 【修正】YouTubeボタン -->
+         <!-- 【修正】YouTubeボタンのデザインをYouTubeカラー＆アイコンに変更 -->
          <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="w-full bg-[#FF0000] text-white font-bold py-3.5 px-6 rounded-full flex items-center justify-center gap-2 mb-6 hover:bg-[#CC0000] transition-colors shadow-lg">
             <i data-lucide="youtube" class="w-5 h-5 fill-current"></i> Watch on YouTube
          </a>
@@ -671,9 +697,9 @@
 
         // --- Random TikTok Video Logic ---
         const tiktokVideos = [
-            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", 
-            "https://www.tiktok.com/@emupi2020/video/6991234567890123456", 
-            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"
+            "https://www.tiktok.com/@emupi2020/video/6986594026992995586", // 例: 動画A
+            "https://www.tiktok.com/@emupi2020/video/6991234567890123456", // 例: 動画B
+            "https://www.tiktok.com/@emupi2020/video/7009876543210987654"  // 例: 動画C
         ];
 
         function playRandomTikTok() {
@@ -699,10 +725,11 @@
             if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
             else { location.hash = '#' + pageId; }
 
+            // スクロール制御（トップページのみ禁止）
             if (pageId === 'home') {
                 document.body.style.overflow = 'hidden';
             } else {
-                document.body.style.overflow = '';
+                document.body.style.overflow = ''; // 通常のスクロールに戻す
             }
         }
 
@@ -725,6 +752,7 @@
             if (hash && document.getElementById(hash)) { 
                 switchPage(hash); 
             } else {
+                // 初期ロード時にトップページならスクロール禁止
                 switchPage('home');
             }
         });
@@ -745,6 +773,7 @@
                 if(overlay) overlay.classList.add('active');
                 if(card) card.classList.add('active');
             }
+            // モーダルが開いている間はスクロール禁止（トップ以外でも）
             document.body.style.overflow = 'hidden';
         }
 
@@ -752,6 +781,7 @@
             document.querySelectorAll('.overlay-bg').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.modal-card').forEach(el => el.classList.remove('active'));
             
+            // モーダルを閉じたら、現在のページに合わせてスクロール設定を戻す
             const activePage = document.querySelector('.page-section.active');
             if (activePage && activePage.id === 'home') {
                 document.body.style.overflow = 'hidden';
@@ -766,7 +796,7 @@
 
         // Tabs
         function switchTab(tabId) {
-            const container = document.querySelector('.modal-card.active');
+            const container = document.querySelector('.modal-card.active'); // Only affect active modal
             if (!container) return;
             
             container.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
