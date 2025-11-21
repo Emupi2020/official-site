@@ -130,16 +130,40 @@
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
+        /* 【修正ポイント】
+           動画サイズ計算ロジックの強化
+           - どんなアスペクト比の画面でも確実に埋めるため、少し大きめ(Over-scale)に設定する
+        */
         .video-foreground iframe {
             position: absolute;
             top: 50%; left: 50%;
             width: 100vw; 
-            height: 56.25vw;
+            height: 56.25vw; /* 16:9 */
             transform: translate(-50%, -50%);
             opacity: 0.7;
+            pointer-events: none;
         }
-        @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100%; height: 56.25vw; } }
-        @media (max-aspect-ratio: 16/9) { .video-foreground iframe { width: 177.78vh; height: 100%; } }
+        
+        /* PCなど横長画面: 幅を基準に高さを合わせる */
+        @media (min-aspect-ratio: 16/9) {
+            .video-foreground iframe { 
+                width: 100vw; 
+                height: 56.25vw; 
+            }
+        }
+        
+        /* スマホなど縦長画面: 高さを基準に幅を合わせる 
+           ★修正: 以前は 177.78vh / 100vh だったが、
+           アドレスバーの影響などで微妙に足りない場合があるため、
+           強制的に 110vh 程度まで高さを確保し、それに合わせて幅も拡大する
+        */
+        @media (max-aspect-ratio: 16/9) {
+            .video-foreground iframe { 
+                /* 120vh確保して、それに対する16:9幅にする */
+                width: 213.33vh; /* 120 * 1.7778 */
+                height: 120vh; 
+            }
+        }
 
         .hero-content {
             position: relative; z-index: 10;
@@ -281,10 +305,10 @@
     <!-- Version Info Overlay -->
     <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999] flex flex-col justify-between p-4 select-none">
         <div class="flex items-start">
-            <div class="bg-blue-600/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 animate-pulse">
+            <div class="bg-purple-600/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 animate-pulse">
                 <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Development Build</p>
-                <p class="text-2xl font-black font-mono tracking-tighter">v1.0.6</p>
-                <p class="text-[10px] font-medium opacity-90 mt-0.5">Unified Design</p>
+                <p class="text-2xl font-black font-mono tracking-tighter">v1.0.7</p>
+                <p class="text-[10px] font-medium opacity-90 mt-0.5">Fixed Black Bars</p>
             </div>
         </div>
         <div class="text-right opacity-20 hover:opacity-40 transition-opacity">
