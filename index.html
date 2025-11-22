@@ -23,7 +23,7 @@
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
-            --header-height: 44px;
+            --header-height: 48px; /* 少し高くして余裕を持たせる */
             --nav-bg: rgba(251, 251, 253, 0.8);
             --nav-text: #1d1d1f;
             --card-bg: #ffffff;
@@ -62,41 +62,83 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- Navigation Bar --- */
+        /* --- Navigation Bar (Apple Style Fix) --- */
         .global-nav {
-            position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
+            position: fixed; top: 0; left: 0; width: 100%; 
+            height: auto; /* 高さは中身に合わせる */
+            
+            /* ★ここが修正ポイント: ノッチの高さ + 固定の余白(12px) を確保 */
+            padding-top: calc(env(safe-area-inset-top) + 12px);
+            padding-bottom: 12px;
+
             background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
             z-index: 100; display: flex; justify-content: center;
-            border-bottom: 1px solid var(--card-border);
+            border-bottom: none;
             transition: background 0.5s;
         }
+        
         .nav-content {
-            max-width: 1024px; width: 100%; height: 100%; 
-            padding: 0 22px; display: flex; justify-content: space-between; align-items: center;
+            max-width: 1024px; width: 100%; 
+            /* Flexboxの設定を見直し */
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; /* ここでの中央揃えは各アイテムの高さに対して */
+            
+            padding: 0 22px; 
             font-size: 12px; font-weight: 400; color: var(--nav-text); letter-spacing: -0.01em;
         }
+
         .nav-item { 
-            cursor: pointer; opacity: 0.8; transition: opacity 0.3s; text-decoration: none; padding: 0 10px; white-space: nowrap; color: var(--nav-text);
-            height: 100%; display: flex; align-items: center;
+            cursor: pointer; opacity: 0.8; transition: opacity 0.3s; text-decoration: none; 
+            padding: 0 12px; 
+            white-space: nowrap; color: var(--nav-text);
+            display: flex; align-items: center;
         }
         .nav-item:hover { opacity: 1; }
         
+        /* ロゴエリアの設定 */
         .nav-item.nav-logo { 
             opacity: 1; padding-left: 0; margin-right: auto; 
-            display: flex; align-items: center; height: 100%; 
-            font-size: 26px; line-height: 1; padding-bottom: 3px;
+            display: flex; align-items: center;
+            /* 高さを指定しないことでパディングの影響を素直に受けるようにする */
+        }
+        
+        /* SVGロゴ (Apple風に少し小さく、上品に) */
+        .nav-logo-svg {
+            width: 20px; /* Appleのロゴサイズに近い値 */
+            height: 20px;
+            fill: currentColor;
+            display: block;
         }
 
-        .mobile-menu-btn { display: none; color: var(--nav-text); height: 100%; align-items: center; cursor: pointer; }
+        .mobile-menu-btn { display: none; color: var(--nav-text); align-items: center; cursor: pointer; }
         
         @media (max-width: 834px) {
             .nav-links {
-                position: fixed; top: var(--header-height); left: 0; width: 100%; height: 0;
-                background: var(--bg-color); flex-direction: column; align-items: flex-start; overflow: hidden;
-                transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 0 40px;
-                border-bottom: 1px solid var(--card-border);
+                position: fixed; 
+                top: 0; 
+                /* メニュー展開時の上部余白もセーフエリアを考慮 */
+                padding-top: calc(80px + env(safe-area-inset-top)); 
+                left: 0; width: 100%; 
+                height: 0;
+                background: var(--bg-color); 
+                flex-direction: column; align-items: flex-start; overflow: hidden;
+                
+                visibility: hidden; 
+                opacity: 0;
+                
+                transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, visibility 0.4s;
+                padding-left: 40px; padding-right: 40px;
+                
+                border-bottom: none; 
+                z-index: -1;
             }
-            .nav-links.open { height: 100vh; padding-top: 40px; border-bottom: none; }
+            .nav-links.open { 
+                height: 100vh; 
+                visibility: visible; 
+                opacity: 1;
+            }
+            
             .nav-item {
                 font-size: 28px; font-weight: 600; padding: 15px 0; border-bottom: 1px solid var(--card-border);
                 width: 100%; display: block; height: auto;
@@ -130,10 +172,6 @@
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         
-        /* 【修正ポイント】
-           動画サイズ計算ロジックの強化
-           - どんなアスペクト比の画面でも確実に埋めるため、少し大きめ(Over-scale)に設定する
-        */
         .video-foreground iframe {
             position: absolute;
             top: 50%; left: 50%;
@@ -143,27 +181,8 @@
             opacity: 0.7;
             pointer-events: none;
         }
-        
-        /* PCなど横長画面: 幅を基準に高さを合わせる */
-        @media (min-aspect-ratio: 16/9) {
-            .video-foreground iframe { 
-                width: 100vw; 
-                height: 56.25vw; 
-            }
-        }
-        
-        /* スマホなど縦長画面: 高さを基準に幅を合わせる 
-           ★修正: 以前は 177.78vh / 100vh だったが、
-           アドレスバーの影響などで微妙に足りない場合があるため、
-           強制的に 110vh 程度まで高さを確保し、それに合わせて幅も拡大する
-        */
-        @media (max-aspect-ratio: 16/9) {
-            .video-foreground iframe { 
-                /* 120vh確保して、それに対する16:9幅にする */
-                width: 213.33vh; /* 120 * 1.7778 */
-                height: 120vh; 
-            }
-        }
+        @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100vw; height: 56.25vw; } }
+        @media (max-aspect-ratio: 16/9) { .video-foreground iframe { width: 213.33vh; height: 120vh; } }
 
         .hero-content {
             position: relative; z-index: 10;
@@ -195,7 +214,7 @@
             position: absolute; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); bottom: 40px; right: 30px;
         }
         @media (max-aspect-ratio: 16/9) {
-            .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 20px); right: 20px; }
+            .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 40px); right: 20px; } /* ヘッダー高さ変更に合わせて調整 */
         }
 
         /* Apple Buttons */
@@ -302,25 +321,25 @@
 </head>
 <body class="">
 
-    <!-- Version Info Overlay -->
-    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-[9999] flex flex-col justify-between p-4 select-none">
-        <div class="flex items-start">
-            <div class="bg-purple-600/90 backdrop-blur text-white px-4 py-2 rounded-lg shadow-2xl border border-white/20 animate-pulse">
-                <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Development Build</p>
-                <p class="text-2xl font-black font-mono tracking-tighter">v1.0.7</p>
-                <p class="text-[10px] font-medium opacity-90 mt-0.5">Fixed Black Bars</p>
-            </div>
+    <!-- Version Info Overlay (Bottom Right) -->
+    <div class="fixed bottom-6 right-6 pointer-events-none z-[9999] select-none text-right">
+        <div class="bg-orange-600/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
+            <p class="text-[8px] font-bold uppercase tracking-widest opacity-80">Build</p>
+            <p class="text-lg font-black font-mono tracking-tighter">v1.1.3</p>
         </div>
-        <div class="text-right opacity-20 hover:opacity-40 transition-opacity">
-            <p class="text-4xl md:text-8xl font-black text-gray-900 dark:text-white font-mono tracking-tighter">TESTING</p>
-        </div>
+        <p class="text-2xl font-black text-gray-900/20 dark:text-white/20 font-mono tracking-tighter block">TESTING</p>
     </div>
 
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
-                <span style="font-size: 26px; font-weight: 500;">🅿︎</span>
+                <!-- Apple-like SVG Logo -->
+                <svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M10 8H13C14.6569 8 16 9.34315 16 11C16 12.6569 14.6569 14 13 14H10V8Z" fill="currentColor"/>
+                    <path d="M10 14H12V18H10V14Z" fill="currentColor"/>
+                </svg>
             </a>
             
             <div class="nav-links flex gap-1" id="navLinks">
@@ -342,7 +361,7 @@
         <div class="hero-container">
             <div class="video-background">
                 <div class="video-foreground">
-                    <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1&origin=https://emupi2020.github.io" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    <iframe id="bgVideo" src="https://www.youtube.com/embed/X3uVT49d5TI?autoplay=1&mute=1&controls=0&loop=1&playlist=X3uVT49d5TI&playsinline=1&enablejsapi=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                 </div>
             </div>
             
@@ -382,7 +401,7 @@
         
         <div class="bento-grid">
             
-            <!-- 1. TikTok Live (Unified Design) -->
+            <!-- 1. TikTok Live -->
             <div class="bento-card col-span-1 md:col-span-2 has-bg bg-black text-white h-[450px] group">
                 <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black z-0"></div>
                 <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070&auto=format&fit=crop')] opacity-30 bg-cover bg-center z-0 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"></div>
@@ -413,16 +432,12 @@
                 </div>
             </div>
 
-            <!-- 2. YouTube (Unified Design) -->
-            <!-- TikTokブロックと同じ高さ、同じスタイルに変更 -->
+            <!-- 2. YouTube -->
              <div class="bento-card col-span-1 has-bg bg-black text-white h-[450px] group">
-                <!-- 背景: 赤系のグラデーション -->
                 <div class="absolute inset-0 bg-gradient-to-bl from-red-900 via-gray-900 to-black z-0"></div>
-                <!-- 背景画像 -->
                 <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2070&auto=format&fit=crop')] opacity-40 bg-cover bg-center z-0 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"></div>
 
                 <div class="card-content flex flex-col items-center justify-center text-center relative z-10 h-full p-8">
-                    <!-- アイコン -->
                     <div class="relative w-24 h-24 mb-6 flex items-center justify-center">
                         <div class="absolute inset-0 bg-red-600 rounded-full blur-2xl opacity-30"></div>
                         <div class="relative w-20 h-20 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-2xl">
@@ -439,7 +454,7 @@
                 </div>
             </div>
 
-            <!-- 3. Vida Loca (Unified Design) -->
+            <!-- 3. Vida Loca -->
             <div class="bento-card col-span-1 md:col-span-3 h-[500px] has-bg group bg-black">
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-80"></div>
                 <img src="./assets/images/IMG_0365.webp" class="card-img-bg transition-transform duration-700 group-hover:scale-105 opacity-60" alt="Vida Loca" onerror="this.style.display='none'">
