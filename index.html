@@ -23,7 +23,7 @@
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
-            --header-height: 48px; /* 少し高くして余裕を持たせる */
+            --header-height: 44px; /* Apple Standard */
             --nav-bg: rgba(251, 251, 253, 0.8);
             --nav-text: #1d1d1f;
             --card-bg: #ffffff;
@@ -62,95 +62,121 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- Navigation Bar (Apple Style Fix) --- */
+        /* --- Navigation Bar (Apple Style - Ultra Slim) --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; 
-            height: auto; /* 高さは中身に合わせる */
+            height: auto;
             
-            /* ★ここが修正ポイント: ノッチの高さ + 固定の余白(12px) を確保 */
-            padding-top: calc(env(safe-area-inset-top) + 12px);
-            padding-bottom: 12px;
+            /* ★ここが修正ポイント: 
+               余計なpaddingを全削除し、セーフエリア分だけを確保。
+               これにより、バーの高さは「コンテンツ(44px) + ノッチの高さ」だけになる
+            */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: 0;
 
             background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
-            z-index: 100; display: flex; justify-content: center;
+            z-index: 100; 
+            display: block;
             border-bottom: none;
             transition: background 0.5s;
         }
         
         .nav-content {
-            max-width: 1024px; width: 100%; 
-            /* Flexboxの設定を見直し */
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; /* ここでの中央揃えは各アイテムの高さに対して */
+            max-width: 1024px; 
+            margin: 0 auto;
+            width: 100%; 
+            height: 44px; /* Apple標準の44pxに固定 */
             
-            padding: 0 22px; 
-            font-size: 12px; font-weight: 400; color: var(--nav-text); letter-spacing: -0.01em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            padding: 0 12px; /* 左右の余白もAppleっぽく少し狭める */
         }
 
-        .nav-item { 
-            cursor: pointer; opacity: 0.8; transition: opacity 0.3s; text-decoration: none; 
-            padding: 0 12px; 
-            white-space: nowrap; color: var(--nav-text);
-            display: flex; align-items: center;
-        }
-        .nav-item:hover { opacity: 1; }
-        
-        /* ロゴエリアの設定 */
-        .nav-item.nav-logo { 
-            opacity: 1; padding-left: 0; margin-right: auto; 
-            display: flex; align-items: center;
-            /* 高さを指定しないことでパディングの影響を素直に受けるようにする */
+        /* アイコンコンテナ: 44x44の正方形で中央揃え */
+        .nav-icon-container {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            color: var(--nav-text);
+            margin: 0; padding: 0;
         }
         
-        /* SVGロゴ (Apple風に少し小さく、上品に) */
+        /* SVGロゴサイズ調整 */
         .nav-logo-svg {
-            width: 20px; /* Appleのロゴサイズに近い値 */
+            width: 20px; /* Appleのロゴサイズに合わせる */
             height: 20px;
             fill: currentColor;
             display: block;
         }
 
-        .mobile-menu-btn { display: none; color: var(--nav-text); align-items: center; cursor: pointer; }
+        /* PCメニュー */
+        .nav-links-desktop {
+            display: none;
+            height: 100%;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-item-desktop {
+            padding: 0 12px;
+            font-size: 12px; font-weight: 400; color: var(--nav-text); letter-spacing: -0.01em;
+            text-decoration: none;
+            opacity: 0.8; transition: opacity 0.3s;
+            height: 100%;
+            display: flex; align-items: center;
+        }
+        .nav-item-desktop:hover { opacity: 1; }
+
+        /* スマホメニューボタン */
+        .mobile-menu-btn { display: none; }
         
+        @media (min-width: 835px) {
+            .nav-links-desktop { display: flex; }
+        }
+
         @media (max-width: 834px) {
-            .nav-links {
+            .mobile-menu-btn { display: grid; }
+
+            /* Mobile Menu Overlay */
+            .nav-links-mobile {
                 position: fixed; 
                 top: 0; 
-                /* メニュー展開時の上部余白もセーフエリアを考慮 */
-                padding-top: calc(80px + env(safe-area-inset-top)); 
                 left: 0; width: 100%; 
                 height: 0;
+                
+                /* メニュー展開時の上部余白: バーの高さ(44px) + セーフエリア */
+                padding-top: calc(44px + env(safe-area-inset-top)); 
+                
                 background: var(--bg-color); 
                 flex-direction: column; align-items: flex-start; overflow: hidden;
                 
-                visibility: hidden; 
-                opacity: 0;
-                
+                visibility: hidden; opacity: 0;
                 transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, visibility 0.4s;
                 padding-left: 40px; padding-right: 40px;
-                
                 border-bottom: none; 
                 z-index: -1;
             }
-            .nav-links.open { 
+            .nav-links-mobile.open { 
                 height: 100vh; 
                 visibility: visible; 
                 opacity: 1;
             }
             
-            .nav-item {
+            .nav-item-mobile {
                 font-size: 28px; font-weight: 600; padding: 15px 0; border-bottom: 1px solid var(--card-border);
                 width: 100%; display: block; height: auto;
+                color: var(--text-primary); text-decoration: none;
                 opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s;
             }
-            .nav-links.open .nav-item { opacity: 1; transform: translateY(0); }
-            .nav-links.open .nav-item:nth-child(1) { transition-delay: 0.1s; }
-            .nav-links.open .nav-item:nth-child(2) { transition-delay: 0.15s; }
-            .nav-links.open .nav-item:nth-child(3) { transition-delay: 0.2s; }
-            .nav-links.open .nav-item:nth-child(4) { transition-delay: 0.25s; }
-            .nav-links.open .nav-item:nth-child(5) { transition-delay: 0.3s; }
-            .mobile-menu-btn { display: flex; opacity: 0.8; }
+            .nav-links-mobile.open .nav-item-mobile { opacity: 1; transform: translateY(0); }
+            .nav-links-mobile.open .nav-item-mobile:nth-child(1) { transition-delay: 0.1s; }
+            .nav-links-mobile.open .nav-item-mobile:nth-child(2) { transition-delay: 0.15s; }
+            .nav-links-mobile.open .nav-item-mobile:nth-child(3) { transition-delay: 0.2s; }
+            .nav-links-mobile.open .nav-item-mobile:nth-child(4) { transition-delay: 0.25s; }
+            .nav-links-mobile.open .nav-item-mobile:nth-child(5) { transition-delay: 0.3s; }
         }
 
         /* --- Page Sections --- */
@@ -214,7 +240,7 @@
             position: absolute; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); bottom: 40px; right: 30px;
         }
         @media (max-aspect-ratio: 16/9) {
-            .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 40px); right: 20px; } /* ヘッダー高さ変更に合わせて調整 */
+            .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 40px); right: 20px; }
         }
 
         /* Apple Buttons */
@@ -321,11 +347,11 @@
 </head>
 <body class="">
 
-    <!-- Version Info Overlay (Bottom Right) -->
+    <!-- Version Info Overlay -->
     <div class="fixed bottom-6 right-6 pointer-events-none z-[9999] select-none text-right">
-        <div class="bg-orange-600/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
+        <div class="bg-gray-800/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
             <p class="text-[8px] font-bold uppercase tracking-widest opacity-80">Build</p>
-            <p class="text-lg font-black font-mono tracking-tighter">v1.1.3</p>
+            <p class="text-lg font-black font-mono tracking-tighter">v1.1.6</p>
         </div>
         <p class="text-2xl font-black text-gray-900/20 dark:text-white/20 font-mono tracking-tighter block">TESTING</p>
     </div>
@@ -333,8 +359,8 @@
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
-            <a href="#" onclick="handleNavClick(event, 'home')" class="nav-item nav-logo" title="Home">
-                <!-- Apple-like SVG Logo -->
+            <!-- Logo Container -->
+            <a href="#" onclick="handleNavClick(event, 'home')" class="nav-icon-container" title="Home">
                 <svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" stroke="currentColor" stroke-width="2" fill="none"/>
                     <path d="M10 8H13C14.6569 8 16 9.34315 16 11C16 12.6569 14.6569 14 13 14H10V8Z" fill="currentColor"/>
@@ -342,17 +368,28 @@
                 </svg>
             </a>
             
-            <div class="nav-links flex gap-1" id="navLinks">
-                <a href="#singing" onclick="handleNavClick(event, 'singing')" class="nav-item">Singing</a>
-                <a href="#shorts" onclick="handleNavClick(event, 'shorts')" class="nav-item">Shorts</a>
-                <a href="#game" onclick="handleNavClick(event, 'game')" class="nav-item">Game</a>
-                <a href="#visual" onclick="handleNavClick(event, 'visual')" class="nav-item">Visual</a>
-                <a href="#" onclick="toggleMobileMenu(); openModal('pointModal')" class="nav-item text-[#2997ff]">Member's Program</a>
+            <!-- Desktop Menu -->
+            <div class="nav-links-desktop">
+                <a href="#singing" onclick="handleNavClick(event, 'singing')" class="nav-item-desktop">Singing</a>
+                <a href="#shorts" onclick="handleNavClick(event, 'shorts')" class="nav-item-desktop">Shorts</a>
+                <a href="#game" onclick="handleNavClick(event, 'game')" class="nav-item-desktop">Game</a>
+                <a href="#visual" onclick="handleNavClick(event, 'visual')" class="nav-item-desktop">Visual</a>
+                <a href="#" onclick="toggleMobileMenu(); openModal('pointModal')" class="nav-item-desktop text-[#2997ff]">Member's Program</a>
             </div>
 
-            <div class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <i data-lucide="menu" class="w-5 h-5"></i>
+            <!-- Mobile Menu Button -->
+            <div class="nav-icon-container mobile-menu-btn" onclick="toggleMobileMenu()">
+                <i data-lucide="menu" class="w-5 h-5"></i> <!-- アイコンサイズ20px -->
             </div>
+        </div>
+        
+        <!-- Mobile Menu Content -->
+        <div class="nav-links-mobile" id="mobileMenu">
+            <a href="#singing" onclick="handleNavClick(event, 'singing'); toggleMobileMenu()" class="nav-item-mobile">Singing</a>
+            <a href="#shorts" onclick="handleNavClick(event, 'shorts'); toggleMobileMenu()" class="nav-item-mobile">Shorts</a>
+            <a href="#game" onclick="handleNavClick(event, 'game'); toggleMobileMenu()" class="nav-item-mobile">Game</a>
+            <a href="#visual" onclick="handleNavClick(event, 'visual'); toggleMobileMenu()" class="nav-item-mobile">Visual</a>
+            <a href="#" onclick="toggleMobileMenu(); openModal('pointModal')" class="nav-item-mobile text-[#2997ff]">Member's Program</a>
         </div>
     </nav>
 
