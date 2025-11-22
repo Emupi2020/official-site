@@ -348,7 +348,7 @@
     <div class="fixed bottom-6 right-6 pointer-events-none z-[9999] select-none text-right">
         <div class="bg-rose-600/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
             <p class="text-[8px] font-bold uppercase tracking-widest opacity-80">Build</p>
-            <p class="text-lg font-black font-mono tracking-tighter">v1.1.9</p>
+            <p class="text-lg font-black font-mono tracking-tighter">v1.2.1</p>
         </div>
         <p class="text-2xl font-black text-gray-900/20 dark:text-white/20 font-mono tracking-tighter block">TESTING</p>
     </div>
@@ -359,11 +359,6 @@
             <!-- Logo Container (SVG with embedded text) -->
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-icon-container" title="Home">
                 <svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <!-- 
-                        修正: 
-                        1. font-sizeを20から17に縮小
-                        2. y座標を50%から48%に微調整（少し上に上げることで下切れを防止）
-                    -->
                     <text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text>
                 </svg>
             </a>
@@ -385,11 +380,12 @@
         
         <!-- Mobile Menu Content -->
         <div class="nav-links-mobile" id="mobileMenu">
-            <a href="#singing" onclick="handleNavClick(event, 'singing'); toggleMobileMenu()" class="nav-item-mobile">Singing</a>
-            <a href="#shorts" onclick="handleNavClick(event, 'shorts'); toggleMobileMenu()" class="nav-item-mobile">Shorts</a>
-            <a href="#game" onclick="handleNavClick(event, 'game'); toggleMobileMenu()" class="nav-item-mobile">Game</a>
-            <a href="#visual" onclick="handleNavClick(event, 'visual'); toggleMobileMenu()" class="nav-item-mobile">Visual</a>
-            <a href="#" onclick="toggleMobileMenu(); openModal('pointModal')" class="nav-item-mobile text-[#2997ff]">Member's Program</a>
+            <!-- 修正: onclickからtoggleMobileMenuを削除し、handleNavClickのみに -->
+            <a href="#singing" onclick="handleNavClick(event, 'singing')" class="nav-item-mobile">Singing</a>
+            <a href="#shorts" onclick="handleNavClick(event, 'shorts')" class="nav-item-mobile">Shorts</a>
+            <a href="#game" onclick="handleNavClick(event, 'game')" class="nav-item-mobile">Game</a>
+            <a href="#visual" onclick="handleNavClick(event, 'visual')" class="nav-item-mobile">Visual</a>
+            <a href="#" onclick="handleNavClick(event, 'home'); openModal('pointModal')" class="nav-item-mobile text-[#2997ff]">Member's Program</a>
         </div>
     </nav>
 
@@ -810,7 +806,10 @@
             
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             
-            document.querySelector('.nav-links').classList.remove('open');
+            // 修正: 正しいIDを使用してクラスを削除
+            const menu = document.getElementById('mobileMenu');
+            if (menu) menu.classList.remove('open');
+            
             window.scrollTo(0, 0);
 
             if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
@@ -842,7 +841,15 @@
             }
         });
 
-        function toggleMobileMenu() { document.getElementById('navLinks').classList.toggle('open'); }
+        function toggleMobileMenu() { 
+            // IDを正しく修正しました
+            const menu = document.getElementById('mobileMenu');
+            if(menu) {
+                menu.classList.toggle('open'); 
+            } else {
+                console.error("Mobile menu element not found");
+            }
+        }
 
         // Modal System
         function openModal(cardId, overlayId) {
@@ -918,4 +925,5 @@
     </script>
 </body>
 </html>
+
 
