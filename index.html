@@ -133,6 +133,7 @@
         
         @media (min-width: 835px) {
             .nav-links-desktop { display: flex; }
+            .nav-links-mobile { display: none !important; }
         }
 
         @media (max-width: 834px) {
@@ -241,11 +242,11 @@
             .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 40px); right: 20px; }
         }
 
-        /* --- Home Grid Layout (Apple Style) --- */
+        /* --- Home Grid Layout (Apple Style - Immersive) --- */
         .home-grid-section {
             background-color: var(--bg-color);
-            padding: 20px 20px 100px;
-            max-width: 1280px;
+            padding: 40px 20px 100px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         
@@ -262,29 +263,31 @@
             }
         }
 
-        /* Apple Style Tile */
+        /* Immersive Tile Card */
         .tile-card {
-            background: var(--card-bg);
-            border-radius: 30px; /* Apple rounded corners */
+            background: #000; 
+            border-radius: 28px;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between; /* Content top, Links bottom */
             text-align: center;
             cursor: pointer;
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
-            border: 1px solid var(--card-border);
-            min-height: 480px; /* Standard height */
+            border: 1px solid rgba(255,255,255,0.1);
+            height: 480px;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         
         .tile-card:hover {
             transform: scale(1.02);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             z-index: 10;
         }
 
+        /* Background Image (Full Cover) */
         .tile-bg {
             position: absolute;
             inset: 0;
@@ -292,51 +295,97 @@
             height: 100%;
             object-fit: cover;
             z-index: 0;
-            transition: opacity 0.4s ease;
+            transition: transform 0.8s ease, opacity 0.4s;
+            opacity: 0.6; /* Slightly darker for better text readability */
         }
         
+        /* Overlay Gradient */
+        .tile-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+        }
+
+        .tile-card:hover .tile-bg {
+            transform: scale(1.05);
+            opacity: 0.8;
+        }
+
+        /* Top Content */
         .tile-content {
             position: relative;
             z-index: 10;
-            padding: 40px;
-            width: 100%;
-            height: 100%;
+            padding: 40px 30px;
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
-        
-        .tile-top { justify-content: flex-start; padding-top: 60px; }
-        .tile-bottom { justify-content: flex-end; padding-bottom: 60px; }
-        .tile-center { justify-content: center; }
 
         .tile-eyebrow {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 8px;
+            opacity: 0.9;
         }
         
         .tile-title {
-            font-size: 40px;
+            font-size: 42px;
             font-weight: 700;
-            line-height: 1.1;
+            line-height: 1.05;
             letter-spacing: -0.01em;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         .tile-desc {
-            font-size: 19px;
+            font-size: 17px;
             font-weight: 400;
             line-height: 1.4;
-            max-width: 80%;
+            max-width: 320px;
             margin: 0 auto;
+            color: rgba(255,255,255,0.9);
         }
 
-        .tile-dark { color: white; text-shadow: 0 2px 20px rgba(0,0,0,0.3); }
-        .tile-light { color: #1d1d1f; }
+        /* Bottom Links */
+        .tile-links {
+            position: relative;
+            z-index: 20;
+            padding: 0 0 40px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            font-size: 15px;
+            font-weight: 500;
+        }
 
-        /* Apple Buttons */
+        .apple-link {
+            color: #2997ff; /* Apple Blue */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .apple-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        .apple-link.primary {
+            color: white;
+            background: #0071e3;
+        }
+        .apple-link.primary:hover {
+            background: #0077ED;
+        }
+
+        /* Apple Buttons (General) */
         .apple-btn-small {
             background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
             font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
@@ -444,7 +493,7 @@
     <div class="fixed bottom-6 right-6 pointer-events-none z-[9999] select-none text-right">
         <div class="bg-rose-600/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
             <p class="text-[8px] font-bold uppercase tracking-widest opacity-80">Build</p>
-            <p class="text-lg font-black font-mono tracking-tighter">v1.3.3</p>
+            <p class="text-lg font-black font-mono tracking-tighter">v1.4.0</p>
         </div>
         <p class="text-2xl font-black text-gray-900/20 dark:text-white/20 font-mono tracking-tighter block">TESTING</p>
     </div>
@@ -452,7 +501,7 @@
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
-            <!-- Logo Container (SVG with embedded text) -->
+            <!-- Logo Container -->
             <a href="#" onclick="handleNavClick(event, 'home')" class="nav-icon-container" title="Home">
                 <svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text>
@@ -508,7 +557,7 @@
                 </p>
                 <div class="flex flex-wrap justify-center gap-3">
                     <button onclick="document.getElementById('home-grid').scrollIntoView({ behavior: 'smooth' })" class="apple-btn-small">
-                        もっと見る <i data-lucide="arrow-down" class="w-4 h-4 ml-1"></i>
+                        もっと見る
                     </button>
                     <button onclick="copyToClipboard('🅿︎')" class="apple-btn-small-outline">
                         Fan Mark: 🅿︎ <i data-lucide="copy" class="w-3 h-3 ml-1"></i>
@@ -526,88 +575,110 @@
             </div>
         </div>
 
-        <!-- Apple Style Grid Navigation -->
+        <!-- Apple Style Grid Navigation (Immersive Design with Background Images) -->
         <div id="home-grid" class="home-grid-section">
             <div class="home-grid">
                 
                 <!-- 1. Singing Card -->
                 <div class="tile-card" onclick="switchPage('singing')">
-                    <div class="absolute inset-0 bg-black z-0">
-                        <img src="https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070&auto=format&fit=crop" class="tile-bg opacity-60 hover:opacity-80" alt="Singing">
-                    </div>
-                    <div class="tile-content tile-top tile-dark">
-                        <p class="tile-eyebrow">Performance</p>
+                    <!-- Changed image to a more reliable Microphone Image -->
+                    <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?q=80&w=2070&auto=format&fit=crop" class="tile-bg" alt="Singing">
+                    <div class="tile-overlay"></div>
+                    
+                    <div class="tile-content">
+                        <p class="tile-eyebrow text-blue-300">Performance</p>
                         <h3 class="tile-title">Singing</h3>
-                        <p class="tile-desc">声が織りなす<br>エンターテインメント。</p>
-                        <div class="mt-auto self-end">
-                            <div class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center">
-                                <i data-lucide="mic"></i>
-                            </div>
-                        </div>
+                        <p class="tile-desc">声が織りなすエンターテインメント。</p>
+                    </div>
+                    
+                    <div class="tile-links">
+                        <a href="#" onclick="event.preventDefault(); switchPage('singing')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="https://www.youtube.com/channel/UCX11WQxDo6ozr8QtomtFXkA" target="_blank" class="apple-link">YouTube <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                 </div>
 
                 <!-- 2. Shorts Card -->
-                <div class="tile-card" onclick="switchPage('shorts')" style="background-color: #f5f5f7;">
-                    <div class="tile-content tile-top tile-light">
-                        <p class="tile-eyebrow text-orange-500">Shorts</p>
+                <div class="tile-card" onclick="switchPage('shorts')">
+                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=2080&auto=format&fit=crop" class="tile-bg" alt="Shorts">
+                    <div class="tile-overlay"></div>
+                    
+                    <div class="tile-content">
+                        <p class="tile-eyebrow text-orange-300">Shorts</p>
                         <h3 class="tile-title">Short Clips</h3>
-                        <p class="tile-desc">日常の切り抜き、<br>ネタ動画、そして歌。</p>
-                        <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-auto shadow-2xl rounded-t-2xl" alt="App UI">
+                        <p class="tile-desc">日常の切り抜き、ネタ動画、そして歌。</p>
+                    </div>
+                    
+                    <div class="tile-links">
+                        <a href="#" onclick="event.preventDefault(); switchPage('shorts')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="apple-link">TikTok <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                 </div>
 
                 <!-- 3. Game Card -->
-                <div class="tile-card bg-black text-white" onclick="switchPage('game')">
-                    <div class="absolute inset-0 bg-gradient-to-br from-red-900 to-black z-0"></div>
-                    <div class="tile-content tile-bottom tile-dark">
-                        <i data-lucide="gamepad-2" class="w-16 h-16 mb-4 text-red-500 mx-auto"></i>
-                        <p class="tile-eyebrow text-red-500">Gaming</p>
-                        <h3 class="tile-title">サンちゃん。</h3>
-                        <p class="tile-desc">IQ3な実況スタイル。<br>絶叫注意。</p>
+                <div class="tile-card" onclick="switchPage('game')">
+                    <!-- Changed to a reliable Gaming Setup Image -->
+                    <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop" class="tile-bg" alt="Gaming">
+                    <div class="tile-overlay"></div>
+                    
+                    <div class="tile-content">
+                        <p class="tile-eyebrow text-red-400">Gaming</p>
+                        <h3 class="tile-title">Game</h3>
+                        <p class="tile-desc">サンちゃん。IQ3な実況スタイル。絶叫注意。</p>
+                    </div>
+                    
+                    <div class="tile-links">
+                        <a href="#" onclick="event.preventDefault(); switchPage('game')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="https://youtube.com/channel/UCPBdgz2voCaNPjyEVWvswyQ" target="_blank" class="apple-link">Channel <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                 </div>
 
                 <!-- 4. Visual Card -->
                 <div class="tile-card" onclick="switchPage('visual')">
-                    <div class="absolute inset-0 bg-black z-0">
-                        <img src="./assets/images/emuko.jpg" class="tile-bg opacity-70" alt="Visual" onerror="this.src='https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop'">
-                    </div>
-                    <div class="tile-content tile-center tile-dark items-start text-left p-8">
+                    <img src="./assets/images/emuko.jpg" class="tile-bg" alt="Visual" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop'">
+                    <div class="tile-overlay"></div>
+                    
+                    <div class="tile-content">
                         <p class="tile-eyebrow text-pink-400">Visual & SNS</p>
-                        <h3 class="tile-title text-4xl">Visual</h3>
-                        <p class="tile-desc ml-0 max-w-sm">もうひとつの顔、そして日常。<br>Creator Mode "Emuko"</p>
-                        <div class="mt-6 flex items-center gap-2 text-white font-medium">
-                            Explore <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </div>
+                        <h3 class="tile-title">Visual</h3>
+                        <p class="tile-desc">もうひとつの顔、そして日常。</p>
+                    </div>
+                    
+                    <div class="tile-links">
+                        <a href="#" onclick="event.preventDefault(); switchPage('visual')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="https://www.instagram.com/emuko202020" target="_blank" class="apple-link">Instagram <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                 </div>
 
                 <!-- 5. Classic Card -->
-                <div class="tile-card bg-gray-100" onclick="window.open('https://beacons.ai/emupi2020', '_blank')">
-                    <div class="tile-content tile-center items-center text-center">
-                        <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 mb-4">
-                            <i data-lucide="history" class="w-8 h-8"></i>
-                        </div>
-                        <h3 class="tile-title text-gray-900" style="font-size: 32px;">Classic</h3>
-                        <p class="tile-desc text-gray-500">The original link-in-bio page.</p>
-                        <div class="mt-6 flex items-center gap-2 text-blue-500 font-medium text-sm">
-                            View Archive <i data-lucide="external-link" class="w-3 h-3"></i>
-                        </div>
+                <div class="tile-card" onclick="window.open('https://beacons.ai/emupi2020', '_blank')">
+                    <img src="https://images.unsplash.com/photo-1495364141860-b0d03eccd065?q=80&w=2076&auto=format&fit=crop" class="tile-bg" alt="Classic" style="opacity: 0.6;">
+                    <div class="tile-overlay"></div>
+                    
+                    <div class="tile-content">
+                        <p class="tile-eyebrow text-gray-400">Archive</p>
+                        <h3 class="tile-title">Classic</h3>
+                        <p class="tile-desc">The original link-in-bio page.</p>
+                    </div>
+                    
+                    <div class="tile-links">
+                         <a href="https://beacons.ai/emupi2020" target="_blank" class="apple-link primary">サイトを開く <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                 </div>
 
                 <!-- 6. P's Program Card -->
                 <div class="tile-card" onclick="openModal('pointModal')">
-                    <div class="absolute inset-0 bg-gradient-to-br from-blue-900 to-black z-0"></div>
-                    <div class="tile-content tile-center tile-dark">
-                        <div class="mb-4 text-[#2997ff]">
-                            <i data-lucide="crown" class="w-12 h-12 mx-auto"></i>
-                        </div>
+                    <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1974&auto=format&fit=crop" class="tile-bg" alt="Membership">
+                    <div class="tile-overlay"></div>
+                    
+                    <div class="tile-content">
                         <p class="tile-eyebrow text-[#2997ff]">Membership</p>
                         <h3 class="tile-title">P's Program</h3>
-                        <p class="tile-desc">ファンとの特別な繋がり。<br>ポイントで限定特典をゲット。</p>
-                        <button class="mt-6 apple-btn-small bg-[#2997ff]">詳細を見る</button>
+                        <p class="tile-desc">ファンとの特別な繋がり。<br>限定特典をゲット。</p>
+                    </div>
+                    
+                    <div class="tile-links">
+                        <a href="#" onclick="event.preventDefault(); openModal('pointModal')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="https://lin.ee/midzOGy" target="_blank" class="apple-link">公式LINE <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                 </div>
 
