@@ -17,28 +17,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- テーマ設定 --- */
+        /* --- テーマ設定 (CSS変数で管理) --- */
         :root {
-            /* ライトモード */
+            /* ライトモード (白基調) */
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
             --header-height: 44px;
-            --nav-bg: rgba(0, 0, 0, 0.8); 
-            --nav-text: #f5f5f7;
-            --card-bg: #000000;
-            --card-border: rgba(255, 255, 255, 0.1);
-            --accent-blue: #2997ff;
-            --list-hover: rgba(255, 255, 255, 0.1);
-            --modal-bg: rgba(28, 28, 30, 0.95);
-            --modal-text: #f5f5f7;
-            --modal-shadow: rgba(0, 0, 0, 0.5);
+            --nav-bg: rgba(251, 251, 253, 0.8);
+            --nav-text: #1d1d1f;
+            --card-bg: #ffffff;
+            --card-border: rgba(0, 0, 0, 0.1);
+            --accent-blue: #0071e3;
+            --list-hover: rgba(0, 0, 0, 0.05);
+            --modal-bg: rgba(255, 255, 255, 0.95);
+            --modal-text: #1d1d1f;
+            --modal-shadow: rgba(0, 0, 0, 0.15);
+            
+            /* タイルカード用 */
+            --tile-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --tile-shadow-hover: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* ダークモード (黒基調) */
+                --bg-color: #000000;
+                --text-primary: #f5f5f7;
+                --text-secondary: #86868b;
+                --nav-bg: rgba(0, 0, 0, 0.8);
+                --nav-text: #e8e8ed;
+                --card-bg: #1c1c1e;
+                --card-border: rgba(255, 255, 255, 0.1);
+                --accent-blue: #2997ff;
+                --list-hover: rgba(255, 255, 255, 0.1);
+                --modal-bg: rgba(28, 28, 30, 0.95);
+                --modal-text: #f5f5f7;
+                --modal-shadow: rgba(0, 0, 0, 0.5);
+
+                --tile-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                --tile-shadow-hover: 0 20px 40px rgba(0,0,0,0.7);
+            }
         }
 
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: #000;
-            color: #f5f5f7;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.3s, color 0.3s;
@@ -55,7 +80,7 @@
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             z-index: 100; 
             display: block;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--card-border);
             transition: background 0.5s;
         }
         
@@ -113,7 +138,7 @@
             .nav-links-mobile {
                 position: fixed; top: 0; left: 0; width: 100%; height: 0;
                 padding-top: calc(44px + env(safe-area-inset-top)); 
-                background: #000; 
+                background: var(--bg-color); 
                 flex-direction: column; align-items: flex-start; overflow: hidden;
                 visibility: hidden; opacity: 0;
                 transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, visibility 0.4s;
@@ -124,9 +149,9 @@
             
             .nav-item-mobile {
                 font-size: 28px; font-weight: 600; padding: 15px 0; 
-                border-bottom: 1px solid rgba(255,255,255,0.1);
+                border-bottom: 1px solid var(--card-border);
                 width: 100%; display: block; height: auto;
-                color: #fff; text-decoration: none;
+                color: var(--text-primary); text-decoration: none;
                 opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s;
             }
             .nav-links-mobile.open .nav-item-mobile { opacity: 1; transform: translateY(0); }
@@ -145,24 +170,28 @@
         /* --- Hero --- */
         .hero-container {
             position: relative; height: 100vh; height: 100dvh; width: 100%;
-            overflow: hidden; background-color: #000;
+            overflow: hidden; background-color: #000; /* Heroは常に黒背景 */
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         .video-foreground iframe {
             position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw;
             transform: translate(-50%, -50%); 
-            opacity: 1.0; /* 完全不透明でクリアに */
+            opacity: 1.0;
             pointer-events: none;
         }
         
-        /* グラデーションオーバーレイ: 下部を黒くして文字を読みやすく */
+        /* Hero Text Overlay */
         .hero-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.9) 100%);
-            z-index: 1;
-            pointer-events: none;
+            position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 80%, rgba(0,0,0,0.9) 100%);
+            z-index: 1; pointer-events: none;
+        }
+        /* Background Transition to Page */
+        .hero-fade-bottom {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--bg-color));
+            z-index: 2; pointer-events: none;
         }
 
         @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100vw; height: 56.25vw; } }
@@ -173,14 +202,14 @@
             display: flex; flex-direction: column; align-items: center;
             padding: 0 20px; margin-bottom: 15vh; width: 100%;
         }
-        /* 文字の視認性: ドロップシャドウ（ぼかし）を強化 */
+        /* Hero Text is always white */
         .hero-title { 
             font-size: 48px; font-weight: 700; line-height: 1.05; margin-bottom: 8px; color: #fff; 
-            text-shadow: 0 0 30px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.9);
+            text-shadow: 0 4px 30px rgba(0,0,0,0.8), 0 2px 10px rgba(0,0,0,1);
         }
         .hero-desc { 
             font-size: 17px; font-weight: 400; margin-bottom: 24px; color: #f5f5f7; max-width: 600px; 
-            text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 5px rgba(0,0,0,0.9);
+            text-shadow: 0 2px 20px rgba(0,0,0,0.8), 0 1px 5px rgba(0,0,0,1);
         }
 
         .controls-wrapper {
@@ -203,7 +232,6 @@
             grid-template-columns: repeat(1, 1fr);
             gap: 20px;
         }
-        
         @media (min-width: 768px) {
             .home-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -211,9 +239,9 @@
             }
         }
 
-        /* Unified Apple Tile Card */
+        /* Unified Tile Card (Theme Aware) */
         .tile-card {
-            background: #000;
+            background-color: var(--card-bg);
             border-radius: 28px;
             overflow: hidden;
             position: relative;
@@ -222,47 +250,51 @@
             align-items: center;
             text-align: center;
             cursor: pointer;
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
-            border: 1px solid rgba(255,255,255,0.1);
-            min-height: 480px; 
-            color: white;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease, background-color 0.3s;
+            border: 1px solid var(--card-border);
+            min-height: 480px;
             padding-top: 40px;
+            box-shadow: var(--tile-shadow);
         }
         
         .tile-card:hover {
             transform: scale(1.02);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            box-shadow: var(--tile-shadow-hover);
             z-index: 10;
-            border-color: rgba(255,255,255,0.2);
         }
 
+        /* Text Area */
         .tile-text-area {
             position: relative; z-index: 20; padding: 0 20px; margin-bottom: 20px;
         }
 
         .tile-eyebrow {
             font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
-            margin-bottom: 8px; opacity: 0.7;
+            margin-bottom: 8px; opacity: 0.7; color: var(--text-secondary);
         }
         
         .tile-title {
             font-size: 36px; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; margin-bottom: 8px;
+            color: var(--text-primary);
         }
         
         .tile-desc {
-            font-size: 17px; font-weight: 400; line-height: 1.4; max-width: 320px; margin: 0 auto; color: #86868b;
+            font-size: 17px; font-weight: 400; line-height: 1.4; max-width: 320px; margin: 0 auto;
+            color: var(--text-secondary);
         }
 
+        /* Links Area */
         .tile-links {
             position: relative; z-index: 20; display: flex; justify-content: center; gap: 24px;
             font-size: 15px; font-weight: 400; margin-bottom: 20px;
         }
 
         .apple-link {
-            color: #2997ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.2s;
+            color: var(--accent-blue); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.2s;
         }
         .apple-link:hover { text-decoration: underline; opacity: 0.8; }
 
+        /* Image Area */
         .tile-image-container {
             width: 100%; height: 240px; position: absolute; bottom: 0; left: 0;
             display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
@@ -270,37 +302,33 @@
 
         .tile-img-cover {
             width: 100%; height: 100%; object-fit: cover; object-position: center;
-            transition: transform 0.5s ease; opacity: 0.9;
-            /* 画像上部のフェード */
-            mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+            transition: transform 0.5s ease;
+            /* フェード処理: テーマによって微調整が必要だが、基本は透明へ */
+            mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
         }
-        
-        .tile-card:hover .tile-img-cover { transform: scale(1.05); opacity: 1; }
+
+        .tile-card:hover .tile-img-cover { transform: scale(1.05); }
 
         /* Buttons */
         .apple-btn-small {
-            background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
+            background: var(--accent-blue); color: white; padding: 8px 16px; border-radius: 980px;
             font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .apple-btn-small:hover { background: #0077ED; transform: scale(1.02); }
+        .apple-btn-small:hover { opacity: 0.9; transform: scale(1.02); }
         
         .apple-btn-small-outline {
-            background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);
-            color: #1d1d1f; padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
+            color: #fff; padding: 8px 16px; border-radius: 980px; font-size: 14px; font-weight: 400;
             transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.3);
         }
-        @media (prefers-color-scheme: dark) {
-            .apple-btn-small-outline { background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        }
-        .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.8); }
+        .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.3); }
 
         /* Category Header */
         .category-header { text-align: center; padding: 100px 20px 60px; background: var(--bg-color); }
-        .category-title { font-size: 48px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.003em; margin-bottom: 10px; }
+        .category-title { font-size: 48px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
         .category-desc { font-size: 21px; font-weight: 400; color: var(--text-secondary); line-height: 1.4; max-width: 600px; margin: 0 auto; }
 
         /* --- Bento Grid (Sub Pages) --- */
@@ -315,9 +343,9 @@
             background: var(--card-bg); border-radius: 30px; overflow: hidden; position: relative;
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column;
             border: 1px solid var(--card-border);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            box-shadow: var(--tile-shadow);
         }
-        .bento-card:hover { transform: scale(1.02); z-index: 5; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        .bento-card:hover { transform: scale(1.02); z-index: 5; box-shadow: var(--tile-shadow-hover); }
 
         .card-img-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: opacity 0.4s; }
         .bento-card:hover .card-img-bg { opacity: 0.8; transform: scale(1.03); }
@@ -331,7 +359,10 @@
         .card-heading { font-size: 32px; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin-bottom: 10px; }
         .card-text { font-size: 17px; color: var(--text-secondary); font-weight: 400; margin-bottom: 20px; }
         
-        .bento-card.has-bg .card-heading, .bento-card.has-bg .card-text, .bento-card.has-bg .card-eyebrow { color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        /* Bento Card with Background Image specific text colors (Always White) */
+        .bento-card.has-bg .card-heading, 
+        .bento-card.has-bg .card-text, 
+        .bento-card.has-bg .card-eyebrow { color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
 
         .link-list { margin-top: auto; }
         .link-item {
@@ -343,23 +374,21 @@
 
         /* Modals */
         .overlay-bg {
-            position: fixed; inset: 0; z-index: 150; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px);
+            position: fixed; inset: 0; z-index: 150; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px);
             opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
         }
         .overlay-bg.active { opacity: 1; pointer-events: auto; }
 
         .modal-card {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -45%) scale(0.95);
-            width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 50px 40px;
-            border-radius: 40px; background: var(--modal-bg); box-shadow: 0 25px 50px var(--modal-shadow);
+            width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 40px;
+            border-radius: 30px; background: var(--modal-bg); box-shadow: 0 25px 50px var(--modal-shadow);
             z-index: 160; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            color: var(--modal-text);
+            color: var(--modal-text); border: 1px solid var(--card-border);
         }
         .modal-card.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-        .modal-card.wide { max-width: 800px; }
-        .modal-card::-webkit-scrollbar { display: none; }
 
-        /* Tab System */
+        /* Tabs */
         .tabs { display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
         .tab-btn { background: none; border: none; color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer; padding: 8px 0; position: relative; }
         .tab-btn.active { color: var(--text-primary); }
@@ -372,7 +401,7 @@
         .toast {
             position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: var(--text-primary); color: var(--bg-color); padding: 12px 24px; border-radius: 50px;
-            font-size: 14px; font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            font-size: 14px; font-weight: 600; box-shadow: var(--tile-shadow);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 200; display: flex; align-items: center; gap: 10px;
             opacity: 0; visibility: hidden;
         }
@@ -386,7 +415,7 @@
     <div class="fixed bottom-6 right-6 pointer-events-none z-[9999] select-none text-right">
         <div class="bg-rose-600/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
             <p class="text-[8px] font-bold uppercase tracking-widest opacity-80">Build</p>
-            <p class="text-lg font-black font-mono tracking-tighter">v1.4.4</p>
+            <p class="text-lg font-black font-mono tracking-tighter">v1.4.7</p>
         </div>
         <p class="text-2xl font-black text-gray-900/20 dark:text-white/20 font-mono tracking-tighter block">TESTING</p>
     </div>
@@ -444,6 +473,8 @@
             
             <!-- Gradient Overlay for better text visibility -->
             <div class="hero-overlay"></div>
+            <!-- Smooth transition to page content -->
+            <div class="hero-fade-bottom"></div>
             
             <div class="hero-content">
                 <h1 class="hero-title">Emupi</h1>
@@ -471,11 +502,11 @@
             </div>
         </div>
 
-        <!-- Apple Style Grid Navigation (Unified Design with Photos) -->
+        <!-- Apple Style Grid Navigation (Theme Aware) -->
         <div id="home-grid" class="home-grid-section">
             <div class="home-grid">
                 
-                <!-- 1. Singing Card (Cassette/Orange) -->
+                <!-- 1. Singing Card -->
                 <div class="tile-card" onclick="switchPage('singing')">
                     <div class="tile-text-area">
                         <p class="tile-eyebrow text-blue-400">Performance</p>
@@ -487,12 +518,12 @@
                         <a href="https://www.youtube.com/channel/UCX11WQxDo6ozr8QtomtFXkA" target="_blank" class="apple-link">YouTube <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                     <div class="tile-image-container">
-                        <!-- 指定されたカセットテープのイメージに近い画像 -->
+                        <!-- Singing Image (Orange Cassette) -->
                         <img src="https://images.unsplash.com/photo-1594433550754-461410524132?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Singing">
                     </div>
                 </div>
 
-                <!-- 2. Shorts Card (Smartphone) -->
+                <!-- 2. Shorts Card -->
                 <div class="tile-card" onclick="switchPage('shorts')">
                     <div class="tile-text-area">
                         <p class="tile-eyebrow text-orange-400">Shorts</p>
@@ -504,12 +535,12 @@
                         <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="apple-link">TikTok <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                     <div class="tile-image-container">
-                        <!-- 指定されたスマホアプリアイコンのイメージに近い画像 -->
-                        <img src="https://images.unsplash.com/photo-1512428559087-560fa5ce7d87?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Shorts UI">
+                        <!-- Shorts Image (Smartphone App Screen) -->
+                         <img src="https://images.unsplash.com/photo-1611162616475-46b635cb6868?q=80&w=1974&auto=format&fit=crop" class="tile-img-cover" alt="Shorts UI">
                     </div>
                 </div>
 
-                <!-- 3. Game Card (Controller) -->
+                <!-- 3. Game Card -->
                 <div class="tile-card" onclick="switchPage('game')">
                     <div class="tile-text-area">
                         <p class="tile-eyebrow text-red-500">Gaming</p>
@@ -521,7 +552,7 @@
                         <a href="https://youtube.com/channel/UCPBdgz2voCaNPjyEVWvswyQ" target="_blank" class="apple-link">Channel <i data-lucide="external-link" class="w-4 h-4"></i></a>
                     </div>
                     <div class="tile-image-container">
-                        <!-- コントローラーとライティングの画像 -->
+                        <!-- Game Image (Controller) -->
                         <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Gaming">
                     </div>
                 </div>
@@ -585,86 +616,55 @@
             <p class="category-desc">歌マネ、ライブ配信、そしてオリジナル楽曲。<br>声が織りなすエンターテインメント。</p>
         </div>
         
-        <div class="bento-grid">
-            
-            <!-- 1. TikTok Live -->
-            <div class="bento-card col-span-1 md:col-span-2 has-bg bg-black text-white h-[450px] group">
-                <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black z-0"></div>
-                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070&auto=format&fit=crop')] opacity-30 bg-cover bg-center z-0 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"></div>
+        <div class="home-grid-section">
+            <div class="home-grid">
+                <!-- TikTok Live -->
+                <div class="tile-card">
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-blue-400">Live Streaming</p>
+                        <h3 class="tile-title">TikTok Live</h3>
+                        <p class="tile-desc">心に響く、歌まねパフォーマンス。</p>
+                    </div>
+                    <div class="tile-links">
+                         <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="apple-link">配信を見る <i data-lucide="play" class="w-4 h-4"></i></a>
+                         <a href="#" onclick="event.preventDefault(); openModal('guidelineModal')" class="apple-link">使用音源 <i data-lucide="info" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                         <img src="https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Live">
+                    </div>
+                </div>
+
+                <!-- YouTube -->
+                <div class="tile-card">
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-red-500">Videos</p>
+                        <h3 class="tile-title">YouTube</h3>
+                        <p class="tile-desc">歌ってみた動画やMVを高画質でお届け。</p>
+                    </div>
+                    <div class="tile-links">
+                         <a href="https://www.youtube.com/channel/UCX11WQxDo6ozr8QtomtFXkA" target="_blank" class="apple-link">Go to Channel <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                         <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="YouTube">
+                    </div>
+                </div>
                 
-                <div class="card-content flex flex-col items-center justify-center text-center relative z-10 h-full p-8">
-                    <div class="relative w-24 h-24 mb-6 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-[#00f2ea] to-[#ff0050] rounded-full blur-2xl opacity-40"></div>
-                        <div class="relative w-20 h-20 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-2xl">
-                             <!-- TikTok SVG -->
-                             <svg class="w-10 h-10 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.03 5.84-.02 8.75-.08 1.89-.5 3.76-1.44 5.42-1.25 2.19-3.23 3.8-5.59 4.67-2.61.93-5.46.72-7.96-.56-2.64-1.39-4.32-3.87-4.68-6.86-.39-3.29 1.07-6.4 3.79-8.37 2.37-1.74 5.6-1.92 8.16-.62.03 1.52.03 3.04.03 4.56-1.28-.52-2.73-.59-4.04.09-1.28.69-2.09 2.06-2.12 3.52.01 1.55.93 2.92 2.27 3.52 1.25.55 2.73.43 3.91-.32 1.15-.75 1.83-2.06 1.81-3.43.02-4.63.01-9.25.01-13.88.02-1.48-.01-2.97-.02-4.45z"/></svg>
-                        </div>
-                        <div class="absolute bottom-0 right-0 w-8 h-8 bg-black border border-gray-700 rounded-full flex items-center justify-center shadow-lg">
-                            <i data-lucide="music-2" class="w-4 h-4 text-[#00f2ea]"></i>
-                        </div>
+                <!-- Vida Loca (Span 2) -->
+                <div class="tile-card col-span-1 md:col-span-2">
+                     <div class="tile-text-area">
+                        <p class="tile-eyebrow text-purple-400">Latest Single</p>
+                        <h3 class="tile-title">Vida Loca</h3>
+                        <p class="tile-desc">熱い夏の夜、燃え上がるような恋愛模様を描いた一曲。</p>
                     </div>
-
-                    <h3 class="text-4xl font-bold mb-2 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">TikTok Live</h3>
-                    <p class="text-gray-300 text-lg font-light mb-6">心に響く、歌まねパフォーマンス。</p>
-                    
-                    <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="apple-btn-small bg-white text-black hover:bg-gray-100 border-none px-6 py-3 text-base shadow-xl transform transition hover:scale-105">
-                        <i data-lucide="play" class="w-4 h-4 fill-black"></i> 配信を見る
-                    </a>
-                    
-                    <div class="absolute bottom-4 right-4">
-                         <p class="text-[10px] text-gray-500">
-                             ※<button onclick="openModal('guidelineModal')" class="text-white/60 hover:text-white underline decoration-1 underline-offset-2 transition-colors">使用音源</button>はガイドラインを遵守しています。
-                         </p>
+                    <div class="tile-links">
+                         <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-link">Watch MV <i data-lucide="play-circle" class="w-4 h-4"></i></a>
+                         <button onclick="openModal('musicCard', 'musicModal')" class="apple-link">Streaming <i data-lucide="music" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="tile-image-container">
+                         <img src="./assets/images/IMG_0365.webp" class="tile-img-cover" alt="Vida Loca" onerror="this.style.display='none'">
                     </div>
                 </div>
             </div>
-
-            <!-- 2. YouTube -->
-             <div class="bento-card col-span-1 has-bg bg-black text-white h-[450px] group">
-                <div class="absolute inset-0 bg-gradient-to-bl from-red-900 via-gray-900 to-black z-0"></div>
-                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2070&auto=format&fit=crop')] opacity-40 bg-cover bg-center z-0 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"></div>
-
-                <div class="card-content flex flex-col items-center justify-center text-center relative z-10 h-full p-8">
-                    <div class="relative w-24 h-24 mb-6 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-red-600 rounded-full blur-2xl opacity-30"></div>
-                        <div class="relative w-20 h-20 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-2xl">
-                             <!-- YouTube SVG -->
-                             <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                        </div>
-                    </div>
-
-                    <h3 class="text-4xl font-bold mb-2 tracking-tight text-white">YouTube</h3>
-                    <p class="text-gray-300 text-sm font-light mb-6">歌ってみた動画やMVを<br>高画質でお届け。</p>
-                    
-                    <a href="https://www.youtube.com/channel/UCX11WQxDo6ozr8QtomtFXkA" target="_blank" class="apple-btn-small bg-red-600 text-white hover:bg-red-500 border-none px-6 py-3 text-base shadow-xl transform transition hover:scale-105">
-                         Go to Channel <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
-                    </a>
-                </div>
-            </div>
-
-            <!-- 3. Vida Loca -->
-            <div class="bento-card col-span-1 md:col-span-3 h-[500px] has-bg group bg-black">
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-80"></div>
-                <img src="./assets/images/IMG_0365.webp" class="card-img-bg transition-transform duration-700 group-hover:scale-105 opacity-60" alt="Vida Loca" onerror="this.style.display='none'">
-                
-                <div class="card-content flex flex-col items-center justify-center text-center relative z-20 h-full">
-                    <p class="text-sm font-bold tracking-[0.3em] text-white/70 mb-2 uppercase">Latest Single</p>
-                    <h3 class="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter drop-shadow-2xl">Vida Loca</h3>
-                    <p class="text-gray-200 text-lg max-w-lg mb-8 font-light drop-shadow-md">
-                        熱い夏の夜、燃え上がるような恋愛模様を描いた一曲。
-                    </p>
-                    
-                    <div class="flex flex-col sm:flex-row gap-4 items-center">
-                        <a href="https://www.youtube.com/watch?v=X3uVT49d5TI" target="_blank" class="apple-btn-small bg-white text-black hover:bg-gray-200 border-none px-8 py-4 text-base font-bold shadow-2xl hover:scale-105">
-                            <i data-lucide="play-circle" class="w-5 h-5 fill-current mr-2"></i> Watch MV
-                        </a>
-                        <button onclick="openModal('musicCard', 'musicModal')" class="apple-btn-small-outline text-white border-white/30 hover:bg-white/10 px-8 py-4 text-base font-bold">
-                            <i data-lucide="music" class="w-5 h-5 mr-2"></i> Streaming
-                        </button>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </main>
 
@@ -674,39 +674,35 @@
             <h2 class="category-title">Shorts</h2>
             <p class="category-desc">日常の切り抜き、ネタ動画、そして歌。</p>
         </div>
-        <div class="bento-grid">
-             <!-- Accounts -->
-            <div class="bento-card">
-                <div class="card-content">
-                    <p class="card-eyebrow">Accounts</p>
-                    <h3 class="card-heading text-2xl mb-6">TikTok</h3>
-                    <div class="link-list">
-                        <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="link-item">
-                            <span class="flex items-center gap-2">
-                                <!-- TikTok SVG -->
-                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.03 5.84-.02 8.75-.08 1.89-.5 3.76-1.44 5.42-1.25 2.19-3.23 3.8-5.59 4.67-2.61.93-5.46.72-7.96-.56-2.64-1.39-4.32-3.87-4.68-6.86-.39-3.29 1.07-6.4 3.79-8.37 2.37-1.74 5.6-1.92 8.16-.62.03 1.52.03 3.04.03 4.56-1.28-.52-2.73-.59-4.04.09-1.28.69-2.09 2.06-2.12 3.52.01 1.55.93 2.92 2.27 3.52 1.25.55 2.73.43 3.91-.32 1.15-.75 1.83-2.06 1.81-3.43.02-4.63.01-9.25.01-13.88.02-1.48-.01-2.97-.02-4.45z"/></svg> 
-                                Main Account
-                            </span> Open
-                        </a>
-                        <a href="https://www.tiktok.com/@emupi202020_2nd" target="_blank" class="link-item">
-                            <span class="flex items-center gap-2">
-                                <!-- TikTok SVG -->
-                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.03 5.84-.02 8.75-.08 1.89-.5 3.76-1.44 5.42-1.25 2.19-3.23 3.8-5.59 4.67-2.61.93-5.46.72-7.96-.56-2.64-1.39-4.32-3.87-4.68-6.86-.39-3.29 1.07-6.4 3.79-8.37 2.37-1.74 5.6-1.92 8.16-.62.03 1.52.03 3.04.03 4.56-1.28-.52-2.73-.59-4.04.09-1.28.69-2.09 2.06-2.12 3.52.01 1.55.93 2.92 2.27 3.52 1.25.55 2.73.43 3.91-.32 1.15-.75 1.83-2.06 1.81-3.43.02-4.63.01-9.25.01-13.88.02-1.48-.01-2.97-.02-4.45z"/></svg>
-                                Sub Account
-                            </span> Open
-                        </a>
+        <div class="home-grid-section">
+            <div class="home-grid">
+                <!-- Main Account -->
+                <div class="tile-card">
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-orange-400">TikTok</p>
+                        <h3 class="tile-title">Main Account</h3>
+                        <p class="tile-desc">歌、ネタ、メインの活動。</p>
+                    </div>
+                    <div class="tile-links">
+                        <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="apple-link">Open TikTok <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                     <div class="tile-image-container">
+                        <img src="https://images.unsplash.com/photo-1611162616475-46b635cb6868?q=80&w=1974&auto=format&fit=crop" class="tile-img-cover" alt="TikTok">
                     </div>
                 </div>
-            </div>
-            
-            <!-- Recommended -->
-            <div class="bento-card col-span-1 md:col-span-2 h-[400px] has-bg bg-[#1c1c1e]">
-                <div class="card-content items-center justify-center text-center">
-                    <i data-lucide="star" class="w-12 h-12 text-amber-400 mb-4 fill-current"></i>
-                    <p class="card-eyebrow text-amber-400">Recommended</p>
-                    <h3 class="card-heading">Must Watch</h3>
-                    <p class="card-text">個人的にお気に入りの一本。<br>まずはこれを見てください。</p>
-                    <button onclick="playRandomTikTok()" class="apple-btn mt-4 inline-flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full font-medium hover:bg-gray-100"><i data-lucide="play" class="w-4 h-4 fill-current"></i> 再生する</button>
+                <!-- Sub Account -->
+                <div class="tile-card">
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-orange-400">TikTok</p>
+                        <h3 class="tile-title">Sub Account</h3>
+                        <p class="tile-desc">日常、ゆるい動画。</p>
+                    </div>
+                    <div class="tile-links">
+                         <a href="https://www.tiktok.com/@emupi202020_2nd" target="_blank" class="apple-link">Open TikTok <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                     <div class="tile-image-container">
+                        <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1974&auto=format&fit=crop" class="tile-img-cover" alt="TikTok Sub">
+                    </div>
                 </div>
             </div>
         </div>
@@ -718,21 +714,21 @@
             <h2 class="category-title">Game</h2>
             <p class="category-desc">叫び声注意！？<br>FPSからホラーまで、全力で楽しむ実況スタイル。</p>
         </div>
-        <div class="bento-grid">
-             <div class="bento-card col-span-1 md:col-span-2 bg-gradient-to-br from-red-900/20 to-black h-[450px] has-bg">
-                <div class="card-content">
-                    <div class="flex items-center gap-2 mb-2">
-                         <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-                         <p class="card-eyebrow text-red-500 mb-0">YouTube Gaming</p>
+        <div class="home-grid-section">
+             <div class="home-grid">
+                <div class="tile-card col-span-1 md:col-span-2">
+                     <div class="tile-text-area">
+                        <p class="tile-eyebrow text-red-500">YouTube Gaming</p>
+                        <h3 class="tile-title">サンちゃん。【IQ3な実況】</h3>
+                        <p class="tile-desc">IQ3という別キャラクターで活動中。<br>裏アカ感覚で楽しむ、自由気ままなゲーム実況。</p>
                     </div>
-                    <h3 class="card-heading">サンちゃん。【IQ3な実況】</h3>
-                    <p class="card-text max-w-md">
-                        IQ3という別キャラクターで活動中。<br>
-                        裏アカ感覚で楽しむ、自由気ままなゲーム実況。
-                    </p>
-                    <a href="https://youtube.com/channel/UCPBdgz2voCaNPjyEVWvswyQ" target="_blank" class="apple-btn bg-red-600 hover:bg-red-500 mt-auto w-fit text-white border-none px-4 py-2 rounded-full font-medium inline-block">チャンネル登録</a>
+                    <div class="tile-links">
+                        <a href="https://youtube.com/channel/UCPBdgz2voCaNPjyEVWvswyQ" target="_blank" class="apple-link">チャンネル登録 <i data-lucide="youtube" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Gaming">
+                    </div>
                 </div>
-                <i data-lucide="gamepad-2" class="absolute -bottom-10 -right-10 w-80 h-80 text-red-600/10 rotate-12"></i>
             </div>
         </div>
     </main>
@@ -743,50 +739,41 @@
             <h2 class="category-title">Visual & SNS</h2>
             <p class="category-desc">もうひとつの顔、そして日常。</p>
         </div>
-        <div class="bento-grid">
-            <!-- Visual Account -->
-            <div class="bento-card col-span-1 h-[450px] has-bg">
-                 <img src="./assets/images/emuko.jpg" class="card-img-bg" onerror="this.src='https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=2020&auto=format&fit=crop'">
-
-                 <div class="card-content justify-end">
-                     <div class="bg-black/60 backdrop-blur-md p-6 rounded-3xl border border-white/10">
-                        <p class="card-eyebrow text-pink-400">Crossdress / Visual</p>
-                        <h3 class="card-heading text-white">Emuko</h3>
-                        <p class="card-text text-white/80 text-sm">Creator Mode</p>
-                        <a href="https://www.instagram.com/emuko202020" target="_blank" class="apple-btn-outline text-white hover:text-white mt-2 px-0 inline-flex items-center">View Gallery <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i></a>
-                     </div>
-                 </div>
-            </div>
-
-            <!-- Main SNS List -->
-            <div class="bento-card">
-                <div class="card-content">
-                    <h3 class="card-heading text-2xl mb-6">Socials</h3>
-                    <div class="link-list">
-                        <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="link-item">
-                            <span class="flex items-center gap-2">
-                                <!-- Instagram SVG -->
-                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
-                                Instagram (Main)
-                            </span> Follow
-                        </a>
-                        <a href="https://twitter.com/emupi2020" target="_blank" class="link-item">
-                            <span class="flex items-center gap-2">
-                                <!-- X SVG -->
-                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
-                                X (Twitter)
-                            </span> Follow
-                        </a>
-                        <a href="#" target="_blank" class="link-item">
-                            <span class="flex items-center gap-2 text-green-500">
-                                <!-- LINE SVG -->
-                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .648.256.717.58a.75.75 0 0 1-.717.919h-1.964a.02.02 0 0 0-.022.022v4.067a.75.75 0 0 1-1.493.102V9.863h2.723.756Zm-5.32 0a.75.75 0 0 1 .743.648l.007.102v5.63a.75.75 0 0 1-1.493.102v-5.63a.75.75 0 0 1 .743-.852Zm-3.23 0a.75.75 0 0 1 .743.648l.007.102v3.754l2.224-3.056a.75.75 0 0 1 1.137-.08l.068.08.06.095.006.012.005.011a.756.756 0 0 1 .054.128l.011.042.012.062c.003.018.004.037.004.056v5.63a.75.75 0 0 1-1.493.102v-3.79l-2.223 3.056a.75.75 0 0 1-1.348-.372v-5.63a.75.75 0 0 1 .733-.852ZM5.96 9.863a.75.75 0 0 1 .743.648l.007.102v4.067a.02.02 0 0 0 .022.022h1.964a.75.75 0 0 1 .102 1.493h-2.723a.75.75 0 0 1-.743-.648l-.007-.102v-4.83a.75.75 0 0 1 .635-.752Z M12 0C5.373 0 0 4.973 0 11.108c0 3.397 1.666 6.425 4.316 8.441.564.429.626 1.096.395 1.761-.252.726-.793 2.65-.89 2.946-.145.44.227.832.61.64.42-.211 2.396-1.205 3.368-1.782.355-.21.758-.29 1.157-.22 1.002.176 2.038.27 3.096.27 6.628 0 12-4.973 12-11.108S18.628 0 12 0Z"/></svg>
-                                Official LINE
-                            </span> Add
-                        </a>
-                        <a href="mailto:contact@example.com" class="link-item">
-                            <span><i data-lucide="mail"></i> Contact</span> Mail
-                        </a>
+        <div class="home-grid-section">
+            <div class="home-grid">
+                <!-- Emuko -->
+                <div class="tile-card">
+                     <div class="tile-text-area">
+                        <p class="tile-eyebrow text-pink-400">Crossdress</p>
+                        <h3 class="tile-title">Emuko</h3>
+                        <p class="tile-desc">Creator Mode "Emuko"</p>
+                    </div>
+                    <div class="tile-links">
+                        <a href="https://www.instagram.com/emuko202020" target="_blank" class="apple-link">View Gallery <i data-lucide="instagram" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                         <img src="./assets/images/emuko.jpg" class="tile-img-cover" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop'">
+                    </div>
+                </div>
+                
+                <!-- SNS List -->
+                <div class="tile-card" style="justify-content: center;">
+                    <div class="tile-content" style="padding-bottom: 40px;">
+                        <h3 class="tile-title mb-8">Socials</h3>
+                        <div class="flex flex-col gap-4 w-full max-w-xs mx-auto px-4 relative z-20">
+                            <a href="https://www.instagram.com/emupi20202020/" target="_blank" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--list-hover)] hover:bg-gray-500/20 transition-colors text-left text-[var(--text-primary)]">
+                                <i data-lucide="instagram" class="w-6 h-6"></i>
+                                <div><p class="text-sm font-bold">Instagram</p><p class="text-xs opacity-60">Main</p></div>
+                            </a>
+                            <a href="https://twitter.com/emupi2020" target="_blank" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--list-hover)] hover:bg-gray-500/20 transition-colors text-left text-[var(--text-primary)]">
+                                <i data-lucide="twitter" class="w-6 h-6"></i>
+                                <div><p class="text-sm font-bold">X (Twitter)</p><p class="text-xs opacity-60">Follow me</p></div>
+                            </a>
+                            <a href="#" target="_blank" class="flex items-center gap-4 p-3 rounded-xl bg-[var(--list-hover)] hover:bg-gray-500/20 transition-colors text-left text-green-500">
+                                <i data-lucide="message-circle" class="w-6 h-6"></i>
+                                <div><p class="text-sm font-bold">Official LINE</p><p class="text-xs opacity-60">Add Friend</p></div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -830,31 +817,6 @@
                         この度、応援いただくピーズの皆様へお気持ち程度ではございますが、お返しをご用意させていただきたく、<br>
                         <span class="font-bold text-blue-500">🅿︎ポイント(ピーズポイント)</span> という制度を導入いたします😌
                     </p>
-                </div>
-                <!-- Profile Link List in About Tab -->
-                <div class="mt-6 grid grid-cols-1 gap-4">
-                    <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-[var(--list-hover)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <div class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center flex-shrink-0">
-                            <!-- TikTok SVG -->
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.03 5.84-.02 8.75-.08 1.89-.5 3.76-1.44 5.42-1.25 2.19-3.23 3.8-5.59 4.67-2.61.93-5.46.72-7.96-.56-2.64-1.39-4.32-3.87-4.68-6.86-.39-3.29 1.07-6.4 3.79-8.37 2.37-1.74 5.6-1.92 8.16-.62.03 1.52.03 3.04.03 4.56-1.28-.52-2.73-.59-4.04.09-1.28.69-2.09 2.06-2.12 3.52.01 1.55.93 2.92 2.27 3.52 1.25.55 2.73.43 3.91-.32 1.15-.75 1.83-2.06 1.81-3.43.02-4.63.01-9.25.01-13.88.02-1.48-.01-2.97-.02-4.45z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm">TikTok</h4>
-                            <p class="text-xs opacity-60">Main Platform</p>
-                        </div>
-                        <i data-lucide="external-link" class="w-4 h-4 ml-auto opacity-40"></i>
-                    </a>
-                    <a href="https://www.youtube.com/channel/UCX11WQxDo6ozr8QtomtFXkA" target="_blank" class="flex items-center gap-4 p-4 rounded-2xl bg-[var(--list-hover)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <div class="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center flex-shrink-0">
-                            <!-- YouTube SVG -->
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-sm">YouTube</h4>
-                            <p class="text-xs opacity-60">Full Videos</p>
-                        </div>
-                        <i data-lucide="external-link" class="w-4 h-4 ml-auto opacity-40"></i>
-                    </a>
                 </div>
             </div>
 
