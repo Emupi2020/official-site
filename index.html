@@ -23,57 +23,39 @@
             --bg-color: #f5f5f7;
             --text-primary: #1d1d1f;
             --text-secondary: #86868b;
-            --header-height: 44px; /* Apple Standard */
-            --nav-bg: rgba(251, 251, 253, 0.8);
-            --nav-text: #1d1d1f;
-            --card-bg: #ffffff;
-            --card-border: rgba(0, 0, 0, 0.1);
-            --accent-blue: #0071e3;
-            --list-hover: rgba(0, 0, 0, 0.05);
-            --modal-bg: rgba(255, 255, 255, 0.95);
-            --modal-text: #1d1d1f;
-            --modal-shadow: rgba(0, 0, 0, 0.15);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                /* ダークモード */
-                --bg-color: #000000;
-                --text-primary: #f5f5f7;
-                --text-secondary: #86868b;
-                --nav-bg: rgba(0, 0, 0, 0.8);
-                --nav-text: #e8e8ed;
-                --card-bg: #161617;
-                --card-border: rgba(255, 255, 255, 0.1);
-                --accent-blue: #2997ff;
-                --list-hover: rgba(255, 255, 255, 0.1);
-                --modal-bg: rgba(28, 28, 30, 0.95);
-                --modal-text: #f5f5f7;
-                --modal-shadow: rgba(0, 0, 0, 0.5);
-            }
+            --header-height: 44px;
+            --nav-bg: rgba(0, 0, 0, 0.8); 
+            --nav-text: #f5f5f7;
+            --card-bg: #000000;
+            --card-border: rgba(255, 255, 255, 0.1);
+            --accent-blue: #2997ff;
+            --list-hover: rgba(255, 255, 255, 0.1);
+            --modal-bg: rgba(28, 28, 30, 0.95);
+            --modal-text: #f5f5f7;
+            --modal-shadow: rgba(0, 0, 0, 0.5);
         }
 
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+            background-color: #000;
+            color: #f5f5f7;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* --- Navigation Bar (Apple Style - Ultra Slim) --- */
+        /* --- Navigation Bar --- */
         .global-nav {
             position: fixed; top: 0; left: 0; width: 100%; 
             height: auto;
-            
             padding-top: env(safe-area-inset-top);
             padding-bottom: 0;
-
-            background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+            background: var(--nav-bg); 
+            backdrop-filter: saturate(180%) blur(20px); 
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
             z-index: 100; 
             display: block;
-            border-bottom: none;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             transition: background 0.5s;
         }
         
@@ -81,16 +63,13 @@
             max-width: 1024px; 
             margin: 0 auto;
             width: 100%; 
-            height: 44px; /* Apple標準の44pxに固定 */
-            
+            height: 44px; 
             display: flex;
             justify-content: space-between;
             align-items: center;
-            
             padding: 0 12px;
         }
 
-        /* アイコンコンテナ: 44x44の正方形で中央揃え */
         .nav-icon-container {
             width: 44px;
             height: 44px;
@@ -98,20 +77,13 @@
             place-items: center;
             cursor: pointer;
             color: var(--nav-text);
-            margin: 0; padding: 0;
         }
         
-        /* SVGロゴサイズ調整 */
         .nav-logo-svg {
-            width: 24px; /* アイコン描画領域 */
-            height: 24px;
-            fill: currentColor;
-            display: block;
-            /* SVG内のテキストがAppleフォントになるように指定 */
+            width: 24px; height: 24px; fill: currentColor; display: block;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* PCメニュー */
         .nav-links-desktop {
             display: none;
             height: 100%;
@@ -128,7 +100,6 @@
         }
         .nav-item-desktop:hover { opacity: 1; }
 
-        /* スマホメニューボタン */
         .mobile-menu-btn { display: none; }
         
         @media (min-width: 835px) {
@@ -139,34 +110,23 @@
         @media (max-width: 834px) {
             .mobile-menu-btn { display: grid; }
 
-            /* Mobile Menu Overlay */
             .nav-links-mobile {
-                position: fixed; 
-                top: 0; 
-                left: 0; width: 100%; 
-                height: 0;
-                
+                position: fixed; top: 0; left: 0; width: 100%; height: 0;
                 padding-top: calc(44px + env(safe-area-inset-top)); 
-                
-                background: var(--bg-color); 
+                background: #000; 
                 flex-direction: column; align-items: flex-start; overflow: hidden;
-                
                 visibility: hidden; opacity: 0;
                 transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, visibility 0.4s;
                 padding-left: 40px; padding-right: 40px;
-                border-bottom: none; 
-                z-index: -1;
+                border-bottom: none; z-index: -1;
             }
-            .nav-links-mobile.open { 
-                height: 100vh; 
-                visibility: visible; 
-                opacity: 1;
-            }
+            .nav-links-mobile.open { height: 100vh; visibility: visible; opacity: 1; }
             
             .nav-item-mobile {
-                font-size: 28px; font-weight: 600; padding: 15px 0; border-bottom: 1px solid var(--card-border);
+                font-size: 28px; font-weight: 600; padding: 15px 0; 
+                border-bottom: 1px solid rgba(255,255,255,0.1);
                 width: 100%; display: block; height: auto;
-                color: var(--text-primary); text-decoration: none;
+                color: #fff; text-decoration: none;
                 opacity: 0; transform: translateY(-20px); transition: opacity 0.4s, transform 0.4s;
             }
             .nav-links-mobile.open .nav-item-mobile { opacity: 1; transform: translateY(0); }
@@ -182,67 +142,55 @@
         .page-section { display: none; min-height: 100vh; padding-top: var(--header-height); opacity: 0; transition: opacity 0.6s ease; }
         .page-section.active { display: block; opacity: 1; }
 
-        /* --- Hero Section (Full Screen Cover) --- */
+        /* --- Hero --- */
         .hero-container {
-            position: relative;
-            height: 100vh;
-            height: 100dvh; 
-            width: 100%;
-            overflow: hidden;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
+            position: relative; height: 100vh; height: 100dvh; width: 100%;
+            overflow: hidden; background-color: #000;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        
         .video-foreground iframe {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 100vw; 
-            height: 56.25vw; /* 16:9 */
-            transform: translate(-50%, -50%);
-            opacity: 0.7;
+            position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw;
+            transform: translate(-50%, -50%); 
+            opacity: 1.0; /* 完全不透明でクリアに */
             pointer-events: none;
         }
+        
+        /* グラデーションオーバーレイ: 下部を黒くして文字を読みやすく */
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 60%, rgba(0,0,0,0.9) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
         @media (min-aspect-ratio: 16/9) { .video-foreground iframe { width: 100vw; height: 56.25vw; } }
         @media (max-aspect-ratio: 16/9) { .video-foreground iframe { width: 213.33vh; height: 120vh; } }
 
         .hero-content {
-            position: relative; z-index: 10;
-            text-align: center;
+            position: relative; z-index: 10; text-align: center;
             display: flex; flex-direction: column; align-items: center;
-            padding: 0 20px;
-            margin-bottom: 15vh; 
-            width: 100%;
+            padding: 0 20px; margin-bottom: 15vh; width: 100%;
         }
-        .hero-title {
-            font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.015em; margin-bottom: 8px;
-            color: #1d1d1f; text-shadow: none;
+        /* 文字の視認性: ドロップシャドウ（ぼかし）を強化 */
+        .hero-title { 
+            font-size: 48px; font-weight: 700; line-height: 1.05; margin-bottom: 8px; color: #fff; 
+            text-shadow: 0 0 30px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.9);
         }
-        .hero-desc {
-            font-size: 17px; font-weight: 400; line-height: 1.47059; letter-spacing: -0.022em; margin-bottom: 24px;
-            color: #1d1d1f; max-width: 600px; text-shadow: none;
-        }
-        @media (prefers-color-scheme: dark) {
-            .hero-title { color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,0.8); }
-            .hero-desc { color: #f5f5f7; text-shadow: 0 2px 20px rgba(0,0,0,0.8); }
-        }
-        @media (max-width: 768px) {
-            .hero-title { font-size: 36px; }
-            .hero-desc { font-size: 15px; }
-            .hero-content { margin-bottom: 18vh; }
+        .hero-desc { 
+            font-size: 17px; font-weight: 400; margin-bottom: 24px; color: #f5f5f7; max-width: 600px; 
+            text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 5px rgba(0,0,0,0.9);
         }
 
         .controls-wrapper {
-            position: absolute; z-index: 20; display: flex; gap: 12px; transform: translateZ(0); bottom: 40px; right: 30px;
+            position: absolute; z-index: 20; display: flex; gap: 12px; bottom: 40px; right: 30px;
         }
         @media (max-aspect-ratio: 16/9) {
             .controls-wrapper { bottom: auto; top: calc(var(--header-height) + 40px); right: 20px; }
         }
 
-        /* --- Home Grid Layout (Apple Style - Immersive) --- */
+        /* --- Grid System --- */
         .home-grid-section {
             background-color: var(--bg-color);
             padding: 40px 20px 100px;
@@ -263,129 +211,74 @@
             }
         }
 
-        /* Immersive Tile Card */
+        /* Unified Apple Tile Card */
         .tile-card {
-            background: #000; 
+            background: #000;
             border-radius: 28px;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Content top, Links bottom */
+            align-items: center;
             text-align: center;
             cursor: pointer;
             transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
             border: 1px solid rgba(255,255,255,0.1);
-            height: 480px;
+            min-height: 480px; 
             color: white;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            padding-top: 40px;
         }
         
         .tile-card:hover {
             transform: scale(1.02);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             z-index: 10;
+            border-color: rgba(255,255,255,0.2);
         }
 
-        /* Background Image (Full Cover) */
-        .tile-bg {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
-            transition: transform 0.8s ease, opacity 0.4s;
-            opacity: 0.6; /* Slightly darker for better text readability */
-        }
-        
-        /* Overlay Gradient */
-        .tile-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
-            pointer-events: none;
-        }
-
-        .tile-card:hover .tile-bg {
-            transform: scale(1.05);
-            opacity: 0.8;
-        }
-
-        /* Top Content */
-        .tile-content {
-            position: relative;
-            z-index: 10;
-            padding: 40px 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .tile-text-area {
+            position: relative; z-index: 20; padding: 0 20px; margin-bottom: 20px;
         }
 
         .tile-eyebrow {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
-            opacity: 0.9;
+            font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+            margin-bottom: 8px; opacity: 0.7;
         }
         
         .tile-title {
-            font-size: 42px;
-            font-weight: 700;
-            line-height: 1.05;
-            letter-spacing: -0.01em;
-            margin-bottom: 10px;
+            font-size: 36px; font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; margin-bottom: 8px;
         }
         
         .tile-desc {
-            font-size: 17px;
-            font-weight: 400;
-            line-height: 1.4;
-            max-width: 320px;
-            margin: 0 auto;
-            color: rgba(255,255,255,0.9);
+            font-size: 17px; font-weight: 400; line-height: 1.4; max-width: 320px; margin: 0 auto; color: #86868b;
         }
 
-        /* Bottom Links */
         .tile-links {
-            position: relative;
-            z-index: 20;
-            padding: 0 0 40px;
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            font-size: 15px;
-            font-weight: 500;
+            position: relative; z-index: 20; display: flex; justify-content: center; gap: 24px;
+            font-size: 15px; font-weight: 400; margin-bottom: 20px;
         }
 
         .apple-link {
-            color: #2997ff; /* Apple Blue */
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 8px 16px;
-            border-radius: 20px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            color: #2997ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.2s;
         }
-        .apple-link:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        .apple-link.primary {
-            color: white;
-            background: #0071e3;
-        }
-        .apple-link.primary:hover {
-            background: #0077ED;
+        .apple-link:hover { text-decoration: underline; opacity: 0.8; }
+
+        .tile-image-container {
+            width: 100%; height: 240px; position: absolute; bottom: 0; left: 0;
+            display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
         }
 
-        /* Apple Buttons (General) */
+        .tile-img-cover {
+            width: 100%; height: 100%; object-fit: cover; object-position: center;
+            transition: transform 0.5s ease; opacity: 0.9;
+            /* 画像上部のフェード */
+            mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+        }
+        
+        .tile-card:hover .tile-img-cover { transform: scale(1.05); opacity: 1; }
+
+        /* Buttons */
         .apple-btn-small {
             background: #0071e3; color: white; padding: 8px 16px; border-radius: 980px;
             font-size: 14px; font-weight: 400; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px;
@@ -405,7 +298,7 @@
         }
         .apple-btn-small-outline:hover { background: rgba(255, 255, 255, 0.8); }
 
-        /* --- Category Header --- */
+        /* Category Header */
         .category-header { text-align: center; padding: 100px 20px 60px; background: var(--bg-color); }
         .category-title { font-size: 48px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.003em; margin-bottom: 10px; }
         .category-desc { font-size: 21px; font-weight: 400; color: var(--text-secondary); line-height: 1.4; max-width: 600px; margin: 0 auto; }
@@ -493,7 +386,7 @@
     <div class="fixed bottom-6 right-6 pointer-events-none z-[9999] select-none text-right">
         <div class="bg-rose-600/90 backdrop-blur text-white px-3 py-2 rounded-lg shadow-2xl border border-white/20 mb-2 inline-block">
             <p class="text-[8px] font-bold uppercase tracking-widest opacity-80">Build</p>
-            <p class="text-lg font-black font-mono tracking-tighter">v1.4.0</p>
+            <p class="text-lg font-black font-mono tracking-tighter">v1.4.4</p>
         </div>
         <p class="text-2xl font-black text-gray-900/20 dark:text-white/20 font-mono tracking-tighter block">TESTING</p>
     </div>
@@ -549,6 +442,9 @@
                 </div>
             </div>
             
+            <!-- Gradient Overlay for better text visibility -->
+            <div class="hero-overlay"></div>
+            
             <div class="hero-content">
                 <h1 class="hero-title">Emupi</h1>
                 <p class="hero-desc">
@@ -575,110 +471,106 @@
             </div>
         </div>
 
-        <!-- Apple Style Grid Navigation (Immersive Design with Background Images) -->
+        <!-- Apple Style Grid Navigation (Unified Design with Photos) -->
         <div id="home-grid" class="home-grid-section">
             <div class="home-grid">
                 
-                <!-- 1. Singing Card -->
+                <!-- 1. Singing Card (Cassette/Orange) -->
                 <div class="tile-card" onclick="switchPage('singing')">
-                    <!-- Changed image to a more reliable Microphone Image -->
-                    <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?q=80&w=2070&auto=format&fit=crop" class="tile-bg" alt="Singing">
-                    <div class="tile-overlay"></div>
-                    
-                    <div class="tile-content">
-                        <p class="tile-eyebrow text-blue-300">Performance</p>
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-blue-400">Performance</p>
                         <h3 class="tile-title">Singing</h3>
                         <p class="tile-desc">声が織りなすエンターテインメント。</p>
                     </div>
-                    
                     <div class="tile-links">
-                        <a href="#" onclick="event.preventDefault(); switchPage('singing')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" onclick="event.preventDefault(); switchPage('singing')" class="apple-link">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
                         <a href="https://www.youtube.com/channel/UCX11WQxDo6ozr8QtomtFXkA" target="_blank" class="apple-link">YouTube <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <!-- 指定されたカセットテープのイメージに近い画像 -->
+                        <img src="https://images.unsplash.com/photo-1594433550754-461410524132?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Singing">
                     </div>
                 </div>
 
-                <!-- 2. Shorts Card -->
+                <!-- 2. Shorts Card (Smartphone) -->
                 <div class="tile-card" onclick="switchPage('shorts')">
-                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=2080&auto=format&fit=crop" class="tile-bg" alt="Shorts">
-                    <div class="tile-overlay"></div>
-                    
-                    <div class="tile-content">
-                        <p class="tile-eyebrow text-orange-300">Shorts</p>
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-orange-400">Shorts</p>
                         <h3 class="tile-title">Short Clips</h3>
                         <p class="tile-desc">日常の切り抜き、ネタ動画、そして歌。</p>
                     </div>
-                    
                     <div class="tile-links">
-                        <a href="#" onclick="event.preventDefault(); switchPage('shorts')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" onclick="event.preventDefault(); switchPage('shorts')" class="apple-link">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
                         <a href="https://tiktok.com/embed/6974714918264130818" target="_blank" class="apple-link">TikTok <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <!-- 指定されたスマホアプリアイコンのイメージに近い画像 -->
+                        <img src="https://images.unsplash.com/photo-1512428559087-560fa5ce7d87?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Shorts UI">
                     </div>
                 </div>
 
-                <!-- 3. Game Card -->
+                <!-- 3. Game Card (Controller) -->
                 <div class="tile-card" onclick="switchPage('game')">
-                    <!-- Changed to a reliable Gaming Setup Image -->
-                    <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop" class="tile-bg" alt="Gaming">
-                    <div class="tile-overlay"></div>
-                    
-                    <div class="tile-content">
-                        <p class="tile-eyebrow text-red-400">Gaming</p>
+                    <div class="tile-text-area">
+                        <p class="tile-eyebrow text-red-500">Gaming</p>
                         <h3 class="tile-title">Game</h3>
                         <p class="tile-desc">サンちゃん。IQ3な実況スタイル。絶叫注意。</p>
                     </div>
-                    
                     <div class="tile-links">
-                        <a href="#" onclick="event.preventDefault(); switchPage('game')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" onclick="event.preventDefault(); switchPage('game')" class="apple-link">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
                         <a href="https://youtube.com/channel/UCPBdgz2voCaNPjyEVWvswyQ" target="_blank" class="apple-link">Channel <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <!-- コントローラーとライティングの画像 -->
+                        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop" class="tile-img-cover" alt="Gaming">
                     </div>
                 </div>
 
                 <!-- 4. Visual Card -->
                 <div class="tile-card" onclick="switchPage('visual')">
-                    <img src="./assets/images/emuko.jpg" class="tile-bg" alt="Visual" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop'">
-                    <div class="tile-overlay"></div>
-                    
-                    <div class="tile-content">
+                    <div class="tile-text-area">
                         <p class="tile-eyebrow text-pink-400">Visual & SNS</p>
                         <h3 class="tile-title">Visual</h3>
-                        <p class="tile-desc">もうひとつの顔、そして日常。</p>
+                        <p class="tile-desc">もうひとつの顔、そして日常。<br>Creator Mode "Emuko"</p>
                     </div>
-                    
                     <div class="tile-links">
-                        <a href="#" onclick="event.preventDefault(); switchPage('visual')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" onclick="event.preventDefault(); switchPage('visual')" class="apple-link">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
                         <a href="https://www.instagram.com/emuko202020" target="_blank" class="apple-link">Instagram <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <img src="./assets/images/emuko.jpg" class="tile-img-cover" alt="Visual" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=2000&auto=format&fit=crop'">
                     </div>
                 </div>
 
                 <!-- 5. Classic Card -->
                 <div class="tile-card" onclick="window.open('https://beacons.ai/emupi2020', '_blank')">
-                    <img src="https://images.unsplash.com/photo-1495364141860-b0d03eccd065?q=80&w=2076&auto=format&fit=crop" class="tile-bg" alt="Classic" style="opacity: 0.6;">
-                    <div class="tile-overlay"></div>
-                    
-                    <div class="tile-content">
+                    <div class="tile-text-area">
                         <p class="tile-eyebrow text-gray-400">Archive</p>
                         <h3 class="tile-title">Classic</h3>
                         <p class="tile-desc">The original link-in-bio page.</p>
                     </div>
-                    
                     <div class="tile-links">
-                         <a href="https://beacons.ai/emupi2020" target="_blank" class="apple-link primary">サイトを開く <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                        <a href="#" onclick="event.preventDefault(); copyToClipboard('https://beacons.ai/emupi2020')" class="apple-link">コピー <i data-lucide="copy" class="w-4 h-4"></i></a>
+                        <a href="https://beacons.ai/emupi2020" target="_blank" class="apple-link">サイトを開く <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <img src="https://images.unsplash.com/photo-1495364141860-b0d03eccd065?q=80&w=2076&auto=format&fit=crop" class="tile-img-cover" style="opacity: 0.6;" alt="Classic">
                     </div>
                 </div>
 
                 <!-- 6. P's Program Card -->
                 <div class="tile-card" onclick="openModal('pointModal')">
-                    <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1974&auto=format&fit=crop" class="tile-bg" alt="Membership">
-                    <div class="tile-overlay"></div>
-                    
-                    <div class="tile-content">
+                    <div class="tile-text-area">
                         <p class="tile-eyebrow text-[#2997ff]">Membership</p>
                         <h3 class="tile-title">P's Program</h3>
-                        <p class="tile-desc">ファンとの特別な繋がり。<br>限定特典をゲット。</p>
+                        <p class="tile-desc">ファンとの特別な繋がり。<br>ポイントで限定特典をゲット。</p>
                     </div>
-                    
                     <div class="tile-links">
-                        <a href="#" onclick="event.preventDefault(); openModal('pointModal')" class="apple-link primary">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+                        <a href="#" onclick="event.preventDefault(); openModal('pointModal')" class="apple-link">さらに詳しく <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
                         <a href="https://lin.ee/midzOGy" target="_blank" class="apple-link">公式LINE <i data-lucide="external-link" class="w-4 h-4"></i></a>
+                    </div>
+                    <div class="tile-image-container">
+                        <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1974&auto=format&fit=crop" class="tile-img-cover" style="opacity: 0.6;" alt="Membership">
                     </div>
                 </div>
 
