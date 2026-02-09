@@ -64,9 +64,14 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* メンテナンス用スタイル */
-        .maintenance-mode {
-            overflow: hidden !important; /* スクロール禁止 */
+        /* メンテナンス用: 最初はスクロール禁止 */
+        body.maintenance-active {
+            overflow: hidden !important;
+        }
+
+        /* メンテナンス画面 (デフォルトで表示) */
+        #maintenance-overlay {
+            display: flex; /* 最初は表示 */
         }
 
         /* --- Navigation Bar --- */
@@ -130,10 +135,15 @@
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
         }
         .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        
+        .video-foreground {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+        }
         .video-foreground iframe {
             position: absolute; top: 50%; left: 50%; width: 100vw; height: 56.25vw;
             transform: translate(-50%, -50%); opacity: 1.0; pointer-events: none;
         }
+        
         .hero-overlay {
             position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 80%, rgba(0,0,0,0.9) 100%); z-index: 1; pointer-events: none;
         }
@@ -232,6 +242,33 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body class="maintenance-mode">
+
+    <!-- ▼▼▼ メンテナンス画面 (合言葉を知らない人にはこれだけ表示) ▼▼▼ -->
+    <div id="maintenance-overlay" class="fixed inset-0 z-[9999] bg-black text-white flex flex-col items-center justify-center p-6 text-center">
+        <!-- Icon -->
+        <div class="mb-8 p-6 rounded-3xl bg-white/5 border border-white/10 shadow-2xl animate-pulse">
+            <svg class="w-16 h-16 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+            </svg>
+        </div>
+        
+        <!-- Title -->
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight">Maintenance</h1>
+        
+        <!-- Message -->
+        <p class="text-lg text-gray-400 max-w-md leading-relaxed mb-8">
+            現在、システムメンテナンスを行っております。<br>
+            ご不便をおかけしますが、しばらくお待ちください。
+        </p>
+        
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+            <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+            <span class="text-xs font-mono text-gray-400">Emupi Official</span>
+        </div>
+    </div>
+    <!-- ▲▲▲ メンテナンス画面 ▲▲▲ -->
+
     <!-- Global Navigation -->
     <nav class="global-nav">
         <div class="nav-content">
@@ -968,6 +1005,26 @@
             isPlaying = !isPlaying;
             lucide.createIcons();
         }
+
+        // Maintenance Override Logic
+        (function() {
+            const overlay = document.getElementById('maintenance-overlay');
+            const body = document.body;
+            
+            // 1. Check URL param "?key=open"
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('key') === 'open') {
+                localStorage.setItem('emupi_access', 'granted');
+            }
+
+            // 2. Check LocalStorage
+            if (localStorage.getItem('emupi_access') === 'granted') {
+                overlay.style.display = 'none';
+                body.classList.remove('maintenance-mode');
+            }
+        })();
     </script>
 </body>
 </html>
+
+
