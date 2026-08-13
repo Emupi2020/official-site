@@ -882,23 +882,24 @@ window.addEventListener('popstate', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.substring(1);
 
     // 🅿 P's Programへの直リンク
-    if (hash === 'points') {
+    if (params.get('points') === '1') {
         switchPage('home', false);
 
         setTimeout(() => {
             openModal('pointModal');
-        }, 0);
+        }, 100);
 
         return;
     }
 
     if (hash && document.getElementById(hash)) {
-        switchPage(hash);
+        switchPage(hash, false);
     } else {
-        switchPage('home');
+        switchPage('home', false);
     }
 });
 
