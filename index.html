@@ -843,13 +843,15 @@ function switchPage(pageId, updateHash = true) {
 
     window.scrollTo(0, 0);
 
-    if (updateHash) {
-        if (history.pushState) {
-            history.pushState(null, null, '#' + pageId);
-        } else {
-            location.hash = '#' + pageId;
-        }
+const params = new URLSearchParams(window.location.search);
+
+if (updateHash && params.get('points') !== '1') {
+    if (history.pushState) {
+        history.pushState(null, null, '#' + pageId);
+    } else {
+        location.hash = '#' + pageId;
     }
+}
 
     document.body.style.overflow = '';
 }
