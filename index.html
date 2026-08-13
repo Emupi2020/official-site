@@ -858,14 +858,28 @@ function switchPage(pageId, updateHash = true) {
             switchPage(pageId);
         }
 
-        window.addEventListener('popstate', () => {
-            const hash = window.location.hash.substring(1);
-            if (hash && document.getElementById(hash)) {
-                switchPage(hash);
-            } else {
-                switchPage('home');
-            }
-        });
+window.addEventListener('popstate', () => {
+    const hash = window.location.hash.substring(1);
+
+    // 🅿 P's Programへの直リンク
+    if (hash === 'points') {
+        switchPage('home', false);
+
+        setTimeout(() => {
+            openModal('pointModal');
+        }, 0);
+
+        return;
+    }
+
+    closeAllModals();
+
+    if (hash && document.getElementById(hash)) {
+        switchPage(hash, false);
+    } else {
+        switchPage('home', false);
+    }
+});
 
 window.addEventListener('DOMContentLoaded', () => {
     const hash = window.location.hash.substring(1);
