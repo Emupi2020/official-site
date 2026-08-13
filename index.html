@@ -832,23 +832,27 @@
         }
 
         // --- SPA Logic ---
-        function switchPage(pageId) {
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            const menu = document.getElementById('mobileMenu');
-            if (menu) menu.classList.remove('open');
-            
-            window.scrollTo(0, 0);
+function switchPage(pageId, updateHash = true) {
+    document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
 
-            if (history.pushState) { history.pushState(null, null, '#' + pageId); } 
-            else { location.hash = '#' + pageId; }
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-            document.body.style.overflow = ''; 
+    const menu = document.getElementById('mobileMenu');
+    if (menu) menu.classList.remove('open');
+
+    window.scrollTo(0, 0);
+
+    if (updateHash) {
+        if (history.pushState) {
+            history.pushState(null, null, '#' + pageId);
+        } else {
+            location.hash = '#' + pageId;
         }
+    }
 
+    document.body.style.overflow = '';
+}
         function handleNavClick(event, pageId) {
             event.preventDefault();
             switchPage(pageId);
@@ -863,14 +867,26 @@
             }
         });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const hash = window.location.hash.substring(1);
-            if (hash && document.getElementById(hash)) { 
-                switchPage(hash); 
-            } else {
-                switchPage('home');
-            }
-        });
+window.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.substring(1);
+
+    // 🅿 P's Programへの直リンク
+    if (hash === 'points') {
+        switchPage('home', false);
+
+        setTimeout(() => {
+            openModal('pointModal');
+        }, 0);
+
+        return;
+    }
+
+    if (hash && document.getElementById(hash)) {
+        switchPage(hash);
+    } else {
+        switchPage('home');
+    }
+});
 
         function toggleMobileMenu() { 
             const menu = document.getElementById('mobileMenu');
