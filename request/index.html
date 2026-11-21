@@ -1,11 +1,13 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。曲名と歌手名を入力して応募できます。"><link rel="stylesheet" href="./style.css"><script src="./config.js"></script><script type="module" src="./listener.mjs"></script><link rel="icon" href="./favicon.svg"></head><body>
-<main><h1>歌まねリクエスト</h1><span id="status" class="status" role="status">確認中</span>
+<main class="request-page"><h1>歌まねリクエスト</h1><span id="status" class="status" role="status">確認中</span>
 <div id="message" class="message" role="status" hidden></div>
 <section id="waiting" class="card" hidden><p>次のリクエスト受付をお待ちください。</p></section>
 <section id="form-card" class="card" hidden><form id="request-form">
-<label for="name">Pocochaの名前</label><input id="name" name="name" maxlength="50" autocomplete="nickname" required>
-<label for="artist">歌手名</label><div class="sug-wrap"><input id="artist" name="artist" maxlength="100" autocomplete="off" aria-controls="artist-suggestions" aria-expanded="false" required><div id="artist-suggestions" class="suggestions" hidden></div></div>
-<label for="song">曲名</label><div class="sug-wrap"><input id="song" name="song" maxlength="100" autocomplete="off" aria-controls="song-suggestions" aria-expanded="false" required><div id="song-suggestions" class="suggestions" hidden></div></div>
+<div class="input-group">
+<div class="request-field"><label for="name">Pocochaの名前</label><input id="name" name="name" maxlength="50" autocomplete="nickname" required></div>
+<div class="request-field"><label for="artist">歌手名</label><div class="sug-wrap"><input id="artist" name="artist" maxlength="100" autocomplete="off" aria-controls="artist-suggestions" aria-expanded="false" required><div id="artist-suggestions" class="suggestions" hidden></div></div></div>
+<div class="request-field"><label for="song">曲名</label><div class="sug-wrap"><input id="song" name="song" maxlength="100" autocomplete="off" aria-controls="song-suggestions" aria-expanded="false" required><div id="song-suggestions" class="suggestions" hidden></div></div></div>
+</div>
 <button class="primary" id="submit" type="submit">応募する</button>
 <p class="note">1人1件。名前は配信者だけに表示されます。</p>
 <details><summary>注意事項</summary><div class="note"><p>Pocochaと同じ名前で、その回につき1人1件。途中参加もOK。</p><p>本名・連絡先は入力しないでください。</p><p>曲名・歌手名は公開され、今後の入力候補にも使われます。応募者名は配信者だけが確認できます。</p><p>この配信ですでに歌った曲は、次回配信に持ち越します。</p><p>応募履歴は30日で削除します。入力候補は名前と切り離して保存します。</p></div></details></form></section>
