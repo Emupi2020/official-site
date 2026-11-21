@@ -41,7 +41,7 @@ async function handle(req, env) {
   if (path.startsWith('/auth/')) return auth(req, env);
   if (path === '/config.js') return new Response('window.EMUPI_API = location.origin;', { headers: { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' } });
   if (!path.startsWith('/api/')) {
-    if (path === '/admin' || path === '/admin/') return env.ASSETS.fetch(new Request(new URL('/admin.html', req.url), req));
+    if (path === '/admin' || path === '/admin/') return env.ASSETS.fetch(new Request(new URL('/admin', req.url), req));
     return env.ASSETS.fetch(req);
   }
   if (!env.DB) throw new Problem('応募受付の準備中です。', 503);

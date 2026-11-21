@@ -7,7 +7,7 @@ const port = Number(process.env.PORT || 8787), origin=`http://127.0.0.1:${port}`
 const root=resolve('request');
 const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8'};
 const env={DB:database(),LOCAL_DEV:'1',PUBLIC_ORIGIN:origin,SESSION_SECRET:crypto.randomUUID()+crypto.randomUUID(),ASSETS:{async fetch(req){
-  const path=decodeURIComponent(new URL(req.url).pathname), file=resolve(root,`.${path.endsWith('/')?`${path}index.html`:path}`);
+  const path=decodeURIComponent(new URL(req.url).pathname), file=resolve(root,`.${path.endsWith('/')?`${path}index.html`:extname(path)?path:`${path}.html`}`);
   if(!file.startsWith(root+'\\')&&!file.startsWith(root+'/'))return new Response('Not found',{status:404});
   try{return new Response(await readFile(file),{headers:{'Content-Type':types[extname(file)]||'application/octet-stream'}});}catch{return new Response('Not found',{status:404});}
 }}};
