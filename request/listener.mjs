@@ -8,8 +8,7 @@ function tokenFor(round) {
 }
 $('name').value = safeGet('emupi-request-name') || '';
 function render() {
-  $('round').textContent = `第${state.round}回`;
-  $('status').textContent = state.open ? 'ただいま受付中' : '受付は終了しました'; $('status').classList.toggle('closed', !state.open);
+  $('status').textContent = state.open ? '受付中' : '受付終了'; $('status').classList.toggle('closed', !state.open);
   const entered = mine?.round === state.round;
   $('form-card').hidden = !state.open || entered;
   $('waiting').hidden = state.open || !!mine;

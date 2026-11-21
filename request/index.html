@@ -1,15 +1,15 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。曲名と歌手名を入力して応募できます。"><link rel="stylesheet" href="./style.css"><script src="./config.js"></script><script type="module" src="./listener.mjs"></script><link rel="icon" href="./favicon.svg"></head><body>
-<header><a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a><a href="https://emupi2020.github.io/official-site/">公式サイト</a></header>
-<main><div class="eyebrow">SONG REQUEST</div><h1>歌まねリクエスト</h1><p class="subtitle">聴きたい一曲、送ってね。</p><div class="row"><span id="status" class="status" role="status">受付状況を確認中</span><span class="small muted" id="round"></span></div>
+<main><h1>歌まねリクエスト</h1><span id="status" class="status" role="status">確認中</span>
 <div id="message" class="message" role="status" hidden></div>
 <section id="waiting" class="card" hidden><p>次のリクエスト受付をお待ちください。</p></section>
 <section id="form-card" class="card" hidden><form id="request-form">
-<label for="name">Pocochaの名前</label><input id="name" name="name" maxlength="50" autocomplete="nickname" placeholder="配信と同じ名前" required>
-<label for="artist">歌手名</label><div class="sug-wrap"><input id="artist" name="artist" maxlength="100" autocomplete="off" placeholder="やまぴー" aria-controls="artist-suggestions" aria-expanded="false" required><div id="artist-suggestions" class="suggestions" hidden></div></div>
-<label for="song">曲名</label><div class="sug-wrap"><input id="song" name="song" maxlength="100" autocomplete="off" placeholder="らぶれす" aria-controls="song-suggestions" aria-expanded="false" required><div id="song-suggestions" class="suggestions" hidden></div></div>
+<label for="name">Pocochaの名前</label><input id="name" name="name" maxlength="50" autocomplete="nickname" required>
+<label for="artist">歌手名</label><div class="sug-wrap"><input id="artist" name="artist" maxlength="100" autocomplete="off" aria-controls="artist-suggestions" aria-expanded="false" required><div id="artist-suggestions" class="suggestions" hidden></div></div>
+<label for="song">曲名</label><div class="sug-wrap"><input id="song" name="song" maxlength="100" autocomplete="off" aria-controls="song-suggestions" aria-expanded="false" required><div id="song-suggestions" class="suggestions" hidden></div></div>
 <button class="primary" id="submit" type="submit">応募する</button>
-<div class="note"><p>その回につき1人1件。途中参加もOK。</p><p>本名・連絡先は入力しないでください。</p><p>曲名・歌手名は公開され、今後の入力候補にも使われます。応募者名は配信者だけが確認できます。</p><p>この配信ですでに歌った曲は、次回配信に持ち越します。</p><p>応募履歴は30日で削除します。入力候補は名前と切り離して保存します。</p></div></form></section>
+<p class="note">1人1件。名前は配信者だけに表示されます。</p>
+<details><summary>注意事項</summary><div class="note"><p>Pocochaと同じ名前で、その回につき1人1件。途中参加もOK。</p><p>本名・連絡先は入力しないでください。</p><p>曲名・歌手名は公開され、今後の入力候補にも使われます。応募者名は配信者だけが確認できます。</p><p>この配信ですでに歌った曲は、次回配信に持ち越します。</p><p>応募履歴は30日で削除します。入力候補は名前と切り離して保存します。</p></div></details></form></section>
 <section id="receipt" class="card" hidden><div class="receipt-title">応募しました</div><div class="receipt-song" id="my-song"></div><p class="muted" id="my-artist"></p><p class="small" id="my-name"></p><p class="message" id="my-status"></p><button type="button" class="text-button" id="rename">名前を修正</button><form id="rename-form" hidden><label for="new-name">Pocochaの名前</label><input id="new-name" maxlength="50" required><button type="submit" class="primary">名前を保存</button></form></section>
 <p id="next-note" class="small muted" hidden>新しい回の受付が始まりました。上のフォームから応募できます。</p>
-</main><footer>Emupi Official</footer></body></html>
+</main></body></html>
 
