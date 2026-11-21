@@ -1,0 +1,7 @@
+{
+  "name": "emupi-official-request",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test tests/*.test.mjs", "dev": "node scripts/dev.mjs", "deploy": "wrangler deploy", "db:migrate": "wrangler d1 migrations apply emupi-requests --remote"},
+  "devDependencies": {"wrangler": "^4.0.0"}
+}
