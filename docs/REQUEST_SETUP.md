@@ -1,5 +1,7 @@
 # リクエスト機能の構成と公開手順
 
+抽選操作と「知らない」記録の最新仕様は [REQUEST_RULES.md](REQUEST_RULES.md) を参照。
+
 ## 構成
 
 - `index.html`：既存トップとSinging欄にリクエストへのリンクを追加。

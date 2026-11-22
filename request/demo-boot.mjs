@@ -1,4 +1,4 @@
-import { initialState, submit, rename, receipt, publicState, adminAction } from './demo-domain.mjs';
+import { initialState, submit, rename, receipt, publicState, adminAction, songStatus } from './demo-domain.mjs';
 import { catalog } from './catalog.mjs';
 const prefix='emupi-demo-v1:', stateKey=prefix+'state';
 function fresh(){
@@ -15,6 +15,7 @@ save(load());
 window.EMUPI_DEMO={storagePrefix:prefix,async request(path,{method='GET',data,token}={}){
   const state=load();
   if(path==='/api/state')return publicState(state);
+  if(path.startsWith('/api/song-status?')){const query=new URL(path,location.origin).searchParams;return songStatus(state,query.get('artist'),query.get('song'));}
   if(path==='/api/suggestions')return{items:[...catalog,...state.suggestions.map(s=>({artist:s.artist,song:s.song}))]};
   if(path==='/api/admin'&&method==='GET')return structuredClone(state);
   if(path==='/api/admin'&&method==='POST'){adminAction(state,data);save(state);return{ok:true};}

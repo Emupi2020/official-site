@@ -4,7 +4,7 @@ let state, busy = false;
 function node(tag, text, className) { const e=document.createElement(tag); e.textContent=text;if(className)e.className=className;return e; }
 async function action(action, extra={}) {
   if(busy)return;busy=true;lock(true);message('');
-  try { await api('/api/admin',{method:'POST',data:{action,...extra}});await refresh(action==='draw'); }
+  try { await api('/api/admin',{method:'POST',data:{action,...extra}});await refresh(action==='draw'||action==='advance'); }
   catch(error){message(error.message,true);}finally{busy=false;lock(false);render();}
 }
 function lock(value){for(const b of document.querySelectorAll('#dashboard button'))b.disabled=value;}
@@ -14,9 +14,11 @@ function render() {
   const pending=state.entries.filter(e=>e.status==='pending').length, deferred=state.entries.filter(e=>e.status==='deferred').length;
   $('counts').textContent=`残り ${pending}件 · 次回 ${deferred}件`;
   const current=state.entries.find(e=>e.id===state.current);
-  $('draw').disabled=busy || !pending || current?.status==='selected';$('undo').disabled=busy||!state.undo;
+  $('draw').textContent=current?'次を回す':'回す';
+  $('draw').disabled=busy || (!pending && current?.status!=='selected');$('undo').disabled=busy||!state.undo;
+  $('unknown').disabled=busy||current?.status!=='selected';
   $('result').hidden=!current;
-  if(current){$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;$('done').disabled=busy||current.status!=='selected';$('skip').disabled=busy||current.status!=='selected';}
+  if(current){$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
   if(!busy){const songs=state.entries.filter(e=>e.status==='pending').map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
   const entries=$('entries');entries.replaceChildren();
   for(const e of [...state.entries].reverse()){
@@ -38,11 +40,11 @@ function render() {
 async function refresh(animate=false){
   try{
     const next=await api('/api/admin');$('login').hidden=true;$('dashboard').hidden=false;
-    if(animate){const current=next.entries.find(e=>e.id===next.current);$('result').hidden=true;await spin(current.song,state.entries.filter(e=>e.status==='pending').map(e=>e.song));}
+    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,next.entries.filter(e=>e.status==='pending'||e.id===current.id).map(e=>e.song));}}
     state=next;render();
   }catch(error){if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;state=null;}else throw error;}
 }
-$('toggle').onclick=()=>action(state.open?'close':'open');$('draw').onclick=()=>action('draw');$('done').onclick=()=>action('done');$('skip').onclick=()=>action('skip');$('undo').onclick=()=>action('undo');
+$('toggle').onclick=()=>action(state.open?'close':'open');$('draw').onclick=()=>action('advance');$('unknown').onclick=()=>action('unknown');$('undo').onclick=()=>action('undo');
 $('next-round').onclick=()=>{if(confirm('次の受付回に切り替えますか？全員が再応募できるようになります。未消化・保留の応募は残ります。'))action('round');};
 $('next-session').onclick=()=>{if(confirm('次回配信を開始しますか？歌唱履歴を区切り、保留していた応募を抽選に戻します。'))action('session');};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};

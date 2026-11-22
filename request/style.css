@@ -65,3 +65,4 @@ body:has(.request-page) { background: #f2f2f7; }
   .request-page .primary, .request-page summary::after { transition: none; }
   .request-page .primary:active { transform: none; }
 }
+.song-actions{max-width:300px;margin:14px auto 0;text-align:left}.song-actions summary{color:var(--muted);font-size:13px}.song-actions .buttons{margin-top:6px}.request-page dialog{max-width:min(400px,calc(100vw - 40px));padding:26px;border:1px solid var(--border);border-radius:22px;background:var(--card);color:var(--text);box-shadow:0 24px 80px #0002}.request-page dialog::backdrop{background:#0005;backdrop-filter:blur(3px)}.request-page dialog h2{font-size:20px;margin-bottom:14px}.request-page dialog p{font-size:15px;line-height:1.8}.request-page dialog .buttons{margin-top:24px}.request-page dialog button{font-size:14px;padding:12px;min-height:48px;border-radius:12px}

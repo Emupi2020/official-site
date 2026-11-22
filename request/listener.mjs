@@ -26,6 +26,15 @@ $('request-form').addEventListener('submit', async event => {
   event.preventDefault(); $('submit').disabled = true; message('');
   try {
     const data = Object.fromEntries(new FormData(event.target));
+    const status = await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);
+    if(status.unknownAt){
+      const date=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(status.unknownAt);
+      $('unknown-description').textContent=`この曲は、${date}時点でえむぴーがまだ覚えていませんでした。それでもリクエストしますか？`;
+      const dialog=$('unknown-warning');dialog.returnValue='';
+      const confirmed=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='request'),{once:true});dialog.showModal();});
+      if(!confirmed){$('song').focus();return;}
+      data.unknownAcknowledgedAt=status.unknownAt;
+    }
     mine = (await api('/api/requests', { method: 'POST', data, token: tokenFor(state.round) })).entry;
     safeSet('emupi-request-name', mine.name); $('song').value = ''; render();
   } catch (error) { message(error.message, true); }

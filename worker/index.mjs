@@ -1,4 +1,4 @@
-import { initialState, publicState, receipt, submit, rename, adminAction, Problem, prune } from './domain.mjs';
+import { initialState, publicState, receipt, submit, rename, adminAction, songStatus, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { catalog } from '../request/catalog.mjs';
 
@@ -46,6 +46,7 @@ async function handle(req, env) {
   }
   if (!env.DB) throw new Problem('応募受付の準備中です。', 503);
   if (path === '/api/state' && req.method === 'GET') return json(publicState((await read(env)).state));
+  if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
   if (path === '/api/suggestions' && req.method === 'GET') {
     const { state } = await read(env);
     return json({ items: [...catalog, ...state.suggestions.map(s => ({ artist: s.artist, song: s.song }))] });
