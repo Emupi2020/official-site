@@ -21,9 +21,14 @@ export function initialState() {
   return { round: 1, session: 1, open: false, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
 }
 export function eligible(state) { return state.entries.filter(e => e.status === 'pending' && !state.sung.includes(e.songKey) && !(state.held || []).includes(e.songKey)); }
+export function unavailableReasons(record) {
+  if (!record) return [];
+  return Object.entries(record.reasons || { unknown: record.at }).map(([reason, at]) => ({ reason, at }));
+}
 export function songStatus(state, artist, song) {
   const key = songIdentity(text(artist, '歌手名'), text(song, '曲名'), state.suggestions);
-  return { unknownAt: state.unknown?.[key]?.at || null };
+  const record = state.unknown?.[key];
+  return { unknownAt: record?.at || null, reasons: unavailableReasons(record) };
 }
 export function publicState(state) {
   const current = state.entries.find(e => e.id === state.current);
@@ -51,7 +56,7 @@ export function submit(state, input, tokenHash, now = Date.now()) {
   if (state.entries.length >= 3000) throw new Problem('応募が上限に達しました。配信者にお知らせください。', 409);
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
-  if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「まだ覚えていない」記録を確認してから、もう一度リクエストしてください。', 409);
+  if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してから、もう一度リクエストしてください。', 409);
   const deferReason = state.sung.includes(songKey) ? 'sung' : (state.held || []).includes(songKey) ? 'unknown' : null;
   const entry = { id: crypto.randomUUID(), name, usedNames: [key], artist, song, songKey, tokenHash, round: state.round, status: deferReason ? 'deferred' : 'pending', deferReason, createdAt: now };
   state.entries.push(entry);
@@ -107,12 +112,18 @@ export function adminAction(state, input) {
       for (const e of state.entries) if (e.status === 'pending' && e.songKey === key) { e.status = 'deferred'; e.deferReason = 'sung'; }
       break;
     }
+    case 'cantSing':
     case 'unknown': {
+      const reason = input.action === 'unknown' ? 'unknown' : input.reason;
+      if (!['unknown', 'no_audio'].includes(reason)) throw new Problem('歌えない理由を選んでください。');
       if (current?.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
       const key = current.songKey, previous = state.unknown[key] || null;
       const affected = state.entries.filter(e => e.songKey === key && ['pending', 'selected'].includes(e.status)).map(e => ({ id: e.id, status: e.status, deferReason: e.deferReason }));
       state.undo = { type: 'unknown', id: current.id, key, previous, hadHold: state.held.includes(key), affected };
-      state.unknown[key] = { at: Math.max(Date.now(), (previous?.at || 0) + 1), artist: current.artist, song: current.song };
+      const at = Math.max(Date.now(), (previous?.at || 0) + 1);
+      const reasons = Object.fromEntries(unavailableReasons(previous).map(item => [item.reason, item.at]));
+      reasons[reason] = at;
+      state.unknown[key] = { at, reasons, artist: current.artist, song: current.song };
       if (!state.held.includes(key)) state.held.push(key);
       for (const e of state.entries) if (affected.some(a => a.id === e.id)) { e.status = 'deferred'; e.deferReason = 'unknown'; }
       break;

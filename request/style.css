@@ -96,3 +96,8 @@ body:has(.request-page) { background: #f2f2f7; }
 .demo-bar~#demo-root .admin-stage{padding:8px;min-height:calc(100svh - 190px)}
 .demo-bar~#demo-root .admin-stage .wheel-wrap{width:min(92vw,calc(100svh - 396px),780px);margin:8px auto}
 @media(max-height:600px) and (min-width:700px){.admin-stage{min-height:440px}.admin-stage .wheel-wrap{width:300px}}
+
+.admin-main dialog{max-width:min(360px,calc(100vw - 40px));padding:24px;border:1px solid var(--border);border-radius:22px;background:var(--card);color:var(--text)}
+.admin-main dialog::backdrop{background:#0005;backdrop-filter:blur(3px)}
+.admin-main dialog h2{font-size:21px}.reason-options{display:flex;flex-direction:column;gap:12px}.reason-options button{min-height:48px;border-radius:12px}
+#unknown-description{white-space:pre-line}

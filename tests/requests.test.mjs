@@ -60,3 +60,25 @@ test('管理セッションの署名・期限・許可メールを検証',async(
 test('LOCAL_DEVを本番ホストで有効にしても管理権限を与えない',async()=>{const e=env();e.LOCAL_DEV='1';assert.equal(await isAdmin(req('/api/admin'),e),false);});
 test('CloudflareのHTML正規化で管理画面がリダイレクトループにならない',async()=>{const e=env();e.ASSETS.fetch=async r=>new URL(r.url).pathname==='/admin'?new Response('admin screen'):Response.redirect('https://requests.example/admin',307);for(const path of ['/admin','/admin/']){const r=await worker.fetch(req(path),e);assert.equal(r.status,200);assert.equal(await r.text(),'admin screen');}});
 test('同一IPの過剰送信を制限し匿名APIに応募者情報が出ない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});for(let i=0;i<20;i++)await worker.fetch(req('/api/requests',input('名前'+i),String(i).padStart(40,'x')),e);assert.equal((await worker.fetch(req('/api/requests',input('追加'),'z'.repeat(40)),e)).status,429);const text=await(await worker.fetch(req('/api/state'),e)).text();assert(!text.includes('名前'));});
+
+test('音源なしを記録し、翌配信も警告必須で応募は残す',()=>{
+ const s=state();submit(s,input('A'),'a');submit(s,input('B'),'b');adminAction(s,{action:'advance'});adminAction(s,{action:'cantSing',reason:'no_audio'});
+ const status=songStatus(s,'山下智久','Loveless');assert.deepEqual(status.reasons,[{reason:'no_audio',at:status.unknownAt}]);assert.equal(s.entries.filter(e=>e.status==='deferred').length,2);
+ adminAction(s,{action:'session'});assert.equal(eligible(s).length,2);assert.throws(()=>submit(s,input('C'),'c'),/記録を確認/);
+ assert.equal(submit(s,{...input('C'),unknownAcknowledgedAt:status.unknownAt},'c').status,'pending');
+});
+test('理由別日時を保持し古い確認は拒否、歌唱で解除し戻すと両理由を復元',()=>{
+ const s=state();submit(s,input('A'),'a');adminAction(s,{action:'advance'});adminAction(s,{action:'cantSing',reason:'unknown'});
+ const first=songStatus(s,'山下智久','Loveless');adminAction(s,{action:'session'});adminAction(s,{action:'advance'});adminAction(s,{action:'cantSing',reason:'no_audio'});
+ const both=songStatus(s,'山下智久','Loveless');assert.equal(both.reasons.length,2);assert.equal(both.reasons[0].at,first.unknownAt);assert(both.unknownAt>first.unknownAt);
+ assert.throws(()=>submit(s,{...input('B'),unknownAcknowledgedAt:first.unknownAt},'b'),/記録を確認/);
+ adminAction(s,{action:'undo'});assert.deepEqual(songStatus(s,'山下智久','Loveless'),first);
+ adminAction(s,{action:'cantSing',reason:'no_audio'});const restored=songStatus(s,'山下智久','Loveless');adminAction(s,{action:'session'});adminAction(s,{action:'advance'});adminAction(s,{action:'advance'});
+ assert.deepEqual(songStatus(s,'山下智久','Loveless').reasons,[]);adminAction(s,{action:'undo'});assert.deepEqual(songStatus(s,'山下智久','Loveless'),restored);
+});
+test('古い知らない記録の引継ぎと不正な理由の拒否',()=>{
+ const s=state();submit(s,input('A'),'a');const key=s.entries[0].songKey;s.unknown[key]={at:123,artist:'山下智久',song:'Loveless'};
+ assert.deepEqual(songStatus(s,'山下智久','Loveless').reasons,[{reason:'unknown',at:123}]);adminAction(s,{action:'advance'});
+ assert.throws(()=>adminAction(s,{action:'cantSing',reason:'other'}),/理由/);assert.equal(s.entries[0].status,'selected');
+ adminAction(s,{action:'cantSing',reason:'no_audio'});assert.equal(songStatus(s,'山下智久','Loveless').reasons[0].at,123);
+});

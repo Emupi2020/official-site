@@ -16,13 +16,16 @@ function render() {
   const current=state.entries.find(e=>e.id===state.current);
   $('draw').textContent=current?'次を回す':'回す';
   $('draw').disabled=busy || (!pending && current?.status!=='selected');$('undo').disabled=busy||!state.undo;
-  $('unknown').disabled=busy||current?.status!=='selected';
+  $('cant-sing').disabled=busy||current?.status!=='selected';
   $('result').hidden=!current;
   if(current){$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
+  if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
   if(!busy){const songs=state.entries.filter(e=>e.status==='pending').map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
   const entries=$('entries');entries.replaceChildren();
   for(const e of [...state.entries].reverse()){
     const row=node('div','','entry');row.append(node('div',`${e.song} ／ ${e.artist}`,'entry-title'),node('p',`${e.name} · 第${e.round}回 · ${statusText[e.status]}`,'small muted'));
+    const record=state.unknown?.[e.songKey];
+    if(record){const reasons=record.reasons||{unknown:record.at};row.append(node('p',Object.entries(reasons).map(([reason,at])=>`${reason==='no_audio'?'音源なし':'知らない'} · ${new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(at)}`).join(' ／ '),'small muted'));}
     const buttons=node('div','','buttons');
     const edit=node('button','修正','secondary');edit.disabled=busy;edit.onclick=()=>{
       const name=prompt('Pocochaの名前',e.name);if(name===null)return;
@@ -44,7 +47,11 @@ async function refresh(animate=false){
     state=next;render();
   }catch(error){if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;state=null;}else throw error;}
 }
-$('toggle').onclick=()=>action(state.open?'close':'open');$('draw').onclick=()=>action('advance');$('unknown').onclick=()=>action('unknown');$('undo').onclick=()=>action('undo');
+$('toggle').onclick=()=>action(state.open?'close':'open');$('draw').onclick=()=>action('advance');$('cant-sing').onclick=async()=>{
+  const dialog=$('cant-sing-dialog');dialog.returnValue='';
+  const reason=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true});dialog.showModal();});
+  if(['unknown','no_audio'].includes(reason))await action('cantSing',{reason});
+};$('undo').onclick=()=>action('undo');
 $('next-round').onclick=()=>{if(confirm('次の受付回に切り替えますか？全員が再応募できるようになります。未消化・保留の応募は残ります。'))action('round');};
 $('next-session').onclick=()=>{if(confirm('次回配信を開始しますか？歌唱履歴を区切り、保留していた応募を抽選に戻します。'))action('session');};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};

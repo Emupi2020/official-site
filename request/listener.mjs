@@ -41,8 +41,11 @@ $('request-form').addEventListener('submit', async event => {
     const data = Object.fromEntries(new FormData(event.target));
     const status = await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);
     if(status.unknownAt){
-      const date=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(status.unknownAt);
-      $('unknown-description').textContent=`この曲は、${date}時点でえむぴーがまだ覚えていませんでした。それでもリクエストしますか？`;
+      const formatter=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const reasons=status.reasons||[{reason:'unknown',at:status.unknownAt}];
+      $('unknown-description').textContent=reasons.map(item=>item.reason==='no_audio'
+        ? `${formatter.format(item.at)}時点では、この曲の音源がありませんでした。`
+        : `${formatter.format(item.at)}時点では、えむぴーがこの曲をまだ覚えていませんでした。`).join('\n')+'\nそれでもリクエストしますか？';
       const dialog=$('unknown-warning');dialog.returnValue='';
       const confirmed=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='request'),{once:true});dialog.showModal();});
       if(!confirmed){$('song').focus();return;}
