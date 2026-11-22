@@ -30,7 +30,7 @@ window.EMUPI_DEMO={storagePrefix:prefix,async request(path,{method='GET',data,to
   throw new Error('テスト版ではこの操作は使えません。');
 }};
 const requested=new URL(location.href).searchParams.get('view')||'admin';
-const view=['request','admin','roulette'].includes(requested)?requested:'admin';
+const view=['request','admin'].includes(requested)?requested:'admin';
 for(const a of document.querySelectorAll('[data-view]'))if(a.dataset.view===view)a.setAttribute('aria-current','page');
 document.getElementById('demo-reset').onclick=()=>{
   if(!confirm('この端末のテストデータを初期状態に戻しますか？'))return;
@@ -38,7 +38,7 @@ document.getElementById('demo-reset').onclick=()=>{
   memory=null;location.reload();
 };
 try{
-  const file={request:'index.html',admin:'admin.html',roulette:'roulette.html'}[view];
+  const file={request:'index.html',admin:'admin.html'}[view];
   const response=await fetch(new URL(file,import.meta.url));
   if(!response.ok)throw new Error('テスト画面を読み込めませんでした。');
   const template=new DOMParser().parseFromString(await response.text(),'text/html');
@@ -47,7 +47,7 @@ try{
   document.getElementById('demo-root').replaceChildren(document.importNode(main,true));
   if(view==='admin'){
     document.getElementById('logout').hidden=true;
-    document.querySelector('a[href="/roulette.html"]').href='./demo.html?view=roulette';
+
   }
-  await import({request:'./listener.mjs',admin:'./admin.mjs',roulette:'./roulette.mjs'}[view]);
+  await import({request:'./listener.mjs',admin:'./admin.mjs'}[view]);
 }catch(error){document.getElementById('demo-root').textContent=error.message;}

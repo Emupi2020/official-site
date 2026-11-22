@@ -18,7 +18,6 @@
 
 - 応募：https://emupi-requests.pokeca-lottery-manager.workers.dev/
 - 管理：https://emupi-requests.pokeca-lottery-manager.workers.dev/admin/
-- 公開ルーレット：https://emupi-requests.pokeca-lottery-manager.workers.dev/roulette.html
 - 公式サイト内への組込み予定：https://emupi2020.github.io/official-site/request/
 
 公式サイトの公開ブランチにはまだ反映していない。管理者のGoogleアカウント指定、Google OAuthクライアントID／Secretの設定と実ログイン確認が必要。
