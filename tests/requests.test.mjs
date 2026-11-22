@@ -1,11 +1,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState, submit, rename, adminAction, eligible, publicState, songIdentity, songStatus, prune } from '../worker/domain.mjs';
+import { initialState, submit, rename, adminAction, eligible, publicState, ownRequests, songIdentity, songStatus, prune } from '../worker/domain.mjs';
 import worker from '../worker/index.mjs';
 import { database } from '../scripts/local-db.mjs';
 import { sign,verify,isAdmin } from '../worker/auth.mjs';
 const input=(name='リスナーA',song='らぶれす',artist='やまぴー')=>({name,song,artist});
 function state(){const s=initialState();s.open=true;return s;}
+test('歌唱済み一覧には実際に消化した曲だけを匿名で公開、戻すも反映',()=>{
+  const s=state();submit(s,input('非公開名A'),'secret-a');submit(s,input('非公開名B'),'secret-b');adminAction(s,{action:'advance'});assert.equal(publicState(s).played.length,0);adminAction(s,{action:'advance'});const p=publicState(s).played;assert.equal(p.length,1);assert(p[0].performedAt>0);assert(!JSON.stringify(p).includes('非公開'));assert(!JSON.stringify(p).includes('secret'));adminAction(s,{action:'undo'});assert.equal(publicState(s).played.length,0);
+});
+test('自分の履歴は自分のトークン分だけ、他人の名前とトークンは返さない',()=>{
+  const s=state();submit(s,input('A'),'a');submit(s,input('B'),'b');const list=ownRequests(s,['a']);assert.equal(list.length,1);assert.equal(list[0].status,'pending');assert(!('name'in list[0]));assert(!('tokenHash'in list[0]));assert.equal(ownRequests(s,['unknown']).length,0);adminAction(s,{action:'advance'});adminAction(s,{action:'advance'});assert(ownRequests(s,['a','b']).every(e=>e.playedThisSession));
+});
+test('知らない・次回保留は歌唱済みに入れず、配信を切り替えると今回の一覧を区切る',()=>{
+  const s=state();submit(s,input('A'),'a');adminAction(s,{action:'advance'});adminAction(s,{action:'unknown'});assert.equal(publicState(s).played.length,0);adminAction(s,{action:'session'});adminAction(s,{action:'advance'});adminAction(s,{action:'advance'});assert.equal(publicState(s).played.length,1);adminAction(s,{action:'session'});assert.equal(publicState(s).played.length,0);assert.equal(s.history.length,1);
+});
 test('知らないは当選分と同曲全件を保留し次回は全件復帰、記録は残る',()=>{
   const s=state();submit(s,input('A'),'a');submit(s,input('B','Loveless','山下智久'),'b');adminAction(s,{action:'advance'});adminAction(s,{action:'unknown'});
   assert.equal(s.entries.filter(e=>e.status==='deferred').length,2);assert.equal(eligible(s).length,0);const at=songStatus(s,'やまぴー','らぶれす').unknownAt;assert(at>0);
@@ -46,6 +55,7 @@ function req(path,data,token='a'.repeat(40),origin='https://emupi2020.github.io'
 test('実DBの同時応募で同名は1件だけ成功',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});const results=await Promise.all(Array.from({length:8},(_,i)=>worker.fetch(req('/api/requests',input(),String(i).repeat(40)),e)));assert.equal(results.filter(r=>r.status===201).length,1);assert.equal(results.filter(r=>r.status===409).length,7);});
 test('修正トークンのない端末から既存応募は取得も変更もできない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input()),e);const own=await(await worker.fetch(req('/api/mine'),e)).json();assert.equal(own.entry.name,'リスナーA');const other=await(await worker.fetch(req('/api/mine',undefined,'b'.repeat(40)),e)).json();assert.equal(other.entry,null);const update=new Request('https://requests.example/api/mine',{method:'PATCH',headers:{Origin:e.PUBLIC_ORIGIN,'Content-Type':'application/json','X-Request-Token':'b'.repeat(40)},body:JSON.stringify({name:'乗っ取り'})});assert.equal((await worker.fetch(update,e)).status,404);});
 test('未認証の管理API・外部Originによる書込みを拒否',async()=>{const e=env();assert.equal((await worker.fetch(req('/api/admin'),e)).status,401);assert.equal((await worker.fetch(req('/api/requests',input(),'a'.repeat(40),'https://evil.example'),e)).status,403);});
+test('本人履歴APIはトークンで限定し空・不正な照会で他人を返さない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input('PRIVATE_NAME')),e);const result=await(await worker.fetch(req('/api/my-requests',{tokens:['a'.repeat(40)]}),e)).json();assert.equal(result.entries.length,1);assert(!JSON.stringify(result).includes('PRIVATE_NAME'));const other=await(await worker.fetch(req('/api/my-requests',{tokens:['b'.repeat(40)]}),e)).json();assert.equal(other.entries.length,0);assert.equal((await worker.fetch(req('/api/my-requests',{tokens:['bad']}),e)).status,400);});
 test('管理セッションの署名・期限・許可メールを検証',async()=>{const e=env();e.ADMIN_EMAIL='admin@example.test';const signed=await sign(e,{kind:'admin',email:e.ADMIN_EMAIL,exp:Date.now()+60000});assert(await verify(e,signed));assert.equal(await verify(e,signed+'broken'),null);assert.equal(await verify(e,await sign(e,{exp:Date.now()-1})),null);const r=new Request('https://requests.example/api/admin',{headers:{Cookie:`__Host-emupi_admin=${signed}`}});assert(await isAdmin(r,e));e.ADMIN_EMAIL='other@example.test';assert.equal(await isAdmin(r,e),false);});
 test('LOCAL_DEVを本番ホストで有効にしても管理権限を与えない',async()=>{const e=env();e.LOCAL_DEV='1';assert.equal(await isAdmin(req('/api/admin'),e),false);});
 test('CloudflareのHTML正規化で管理画面がリダイレクトループにならない',async()=>{const e=env();e.ASSETS.fetch=async r=>new URL(r.url).pathname==='/admin'?new Response('admin screen'):Response.redirect('https://requests.example/admin',307);for(const path of ['/admin','/admin/']){const r=await worker.fetch(req(path),e);assert.equal(r.status,200);assert.equal(await r.text(),'admin screen');}});

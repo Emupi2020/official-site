@@ -1,5 +1,5 @@
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
-let state, mine, items = [], tokens;
+let state, mine, items = [], tokens, myRequests = [];
 try { tokens = JSON.parse(safeGet('emupi-request-tokens') || '{}'); } catch { tokens = {}; }
 const lastToken = () => Object.values(tokens).at(-1);
 function tokenFor(round) {
@@ -15,11 +15,24 @@ function render() {
   $('receipt').hidden = !mine;
   $('next-note').hidden = !state.open || !mine || entered;
   if (mine) { $('my-song').textContent = mine.song; $('my-artist').textContent = mine.artist; $('my-name').textContent = `${mine.name} さん`; $('my-status').textContent = statusText[mine.status]; $('rename').hidden = !mine.editable; }
+  $('my-history').hidden=!myRequests.length;
+  $('my-history-count').textContent=myRequests.length ? `${myRequests.length}件` : '';
+  $('my-history-list').replaceChildren();
+  const labels={pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ保留',skipped:'見送り',removed:'取り下げ'};
+  for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`);
+  const played=state.played||[];
+  $('played-count').textContent=played.length?`${played.length}曲`:'';
+  $('played-empty').hidden=!!played.length;
+  $('played-list').replaceChildren();
+  for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(entry.performedAt):'歌唱済み');
 }
+function historyRow(list,song,artist,status){const row=document.createElement('li'),title=document.createElement('div'),subtitle=document.createElement('div'),label=document.createElement('span');title.textContent=song;title.className='history-song';subtitle.textContent=artist;subtitle.className='history-artist';label.textContent=status;label.className='history-status';row.append(title,subtitle,label);list.append(row);}
 async function refresh() {
   state = await api('/api/state');
   const token = tokens[state.round] || lastToken();
   mine = token ? (await api('/api/mine', { token })).entry : null;
+  const savedTokens=Object.values(tokens).slice(-100);
+  myRequests=savedTokens.length?(await api('/api/my-requests',{method:'POST',data:{tokens:savedTokens}})).entries:[];
   render();
 }
 $('request-form').addEventListener('submit', async event => {
@@ -36,7 +49,7 @@ $('request-form').addEventListener('submit', async event => {
       data.unknownAcknowledgedAt=status.unknownAt;
     }
     mine = (await api('/api/requests', { method: 'POST', data, token: tokenFor(state.round) })).entry;
-    safeSet('emupi-request-name', mine.name); $('song').value = ''; render();
+    safeSet('emupi-request-name', mine.name); $('song').value = ''; await refresh();
   } catch (error) { message(error.message, true); }
   finally { $('submit').disabled = false; }
 });

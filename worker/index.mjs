@@ -1,4 +1,4 @@
-import { initialState, publicState, receipt, submit, rename, adminAction, songStatus, Problem, prune } from './domain.mjs';
+import { initialState, publicState, ownRequests, receipt, submit, rename, adminAction, songStatus, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { catalog } from '../request/catalog.mjs';
 
@@ -52,6 +52,12 @@ async function handle(req, env) {
     return json({ items: [...catalog, ...state.suggestions.map(s => ({ artist: s.artist, song: s.song }))] });
   }
   if (path === '/api/mine' && req.method === 'GET') return json({ entry: receipt((await read(env)).state, await requestToken(req)) });
+  if (path === '/api/my-requests' && req.method === 'POST') {
+    const input = await body(req);
+    if (!input || !Array.isArray(input.tokens) || input.tokens.length > 100 || input.tokens.some(token => typeof token !== 'string' || !/^[a-zA-Z0-9_-]{32,100}$/.test(token))) throw new Problem('保存されたリクエスト情報を確認できません。');
+    const hashes = await Promise.all(input.tokens.map(hash));
+    return json({ entries: ownRequests((await read(env)).state, hashes) });
+  }
   if (path === '/api/requests' && req.method === 'POST') {
     await limit(req, env);
     const token = await requestToken(req), input = await body(req);

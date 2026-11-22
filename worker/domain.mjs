@@ -18,7 +18,7 @@ export function songIdentity(artist, song, custom = []) {
   return item ? `${normalize(item.artist)}:${normalize(item.song)}` : `${a}:${s}`;
 }
 export function initialState() {
-  return { round: 1, session: 1, open: false, entries: [], sung: [], held: [], unknown: {}, current: null, undo: null, suggestions: [], retentionDays: 30 };
+  return { round: 1, session: 1, open: false, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
 }
 export function eligible(state) { return state.entries.filter(e => e.status === 'pending' && !state.sung.includes(e.songKey) && !(state.held || []).includes(e.songKey)); }
 export function songStatus(state, artist, song) {
@@ -27,7 +27,17 @@ export function songStatus(state, artist, song) {
 }
 export function publicState(state) {
   const current = state.entries.find(e => e.id === state.current);
-  return { round: state.round, session: state.session, open: state.open, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
+  const played = (state.history || []).filter(e => e.session === state.session).map(e => ({ song: e.song, artist: e.artist, performedAt: e.performedAt }));
+  // Older saves have song keys but no timestamps. Keep their visible history without inventing a date.
+  for (const key of state.sung) if (!played.some(e => songIdentity(e.artist, e.song, state.suggestions) === key)) {
+    const entry = state.entries.findLast(e => e.songKey === key && e.status === 'done');
+    if (entry) played.push({ song: entry.song, artist: entry.artist, performedAt: null });
+  }
+  return { round: state.round, session: state.session, open: state.open, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
+}
+export function ownRequests(state, hashes) {
+  const allowed = new Set(hashes);
+  return state.entries.filter(e => allowed.has(e.tokenHash)).map(e => ({ id: e.id, artist: e.artist, song: e.song, round: e.round, status: e.status, createdAt: e.createdAt, playedThisSession: state.sung.includes(e.songKey) }));
 }
 export function receipt(state, tokenHash) {
   const entry = state.entries.findLast(e => e.tokenHash === tokenHash);
@@ -61,7 +71,7 @@ function pick(length) {
   return n % length;
 }
 export function adminAction(state, input) {
-  state.held ||= []; state.unknown ||= {};
+  state.held ||= []; state.unknown ||= {}; state.history ||= [];
   const current = state.entries.find(e => e.id === state.current);
   switch (input.action) {
     case 'open': state.open = true; break;
@@ -88,8 +98,10 @@ export function adminAction(state, input) {
     case 'done': {
       if (current?.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
       const key = current.songKey;
-      state.undo = { type: 'done', id: current.id, key, newlySung: !state.sung.includes(key), unknownBefore: state.unknown[key] || null };
+      const historyId = crypto.randomUUID();
+      state.undo = { type: 'done', id: current.id, key, historyId, newlySung: !state.sung.includes(key), unknownBefore: state.unknown[key] || null };
       current.status = 'done';
+      state.history.push({ id: historyId, session: state.session, song: current.song, artist: current.artist, performedAt: Date.now() });
       delete state.unknown[key];
       if (!state.sung.includes(key)) state.sung.push(key);
       for (const e of state.entries) if (e.status === 'pending' && e.songKey === key) { e.status = 'deferred'; e.deferReason = 'sung'; }
@@ -131,6 +143,7 @@ export function adminAction(state, input) {
       if (u.type === 'skip' && e) e.status = 'selected';
       if (u.type === 'done' && e) {
         e.status = 'selected';
+        state.history = state.history.filter(item => item.id !== u.historyId);
         if ('unknownBefore' in u) { if (u.unknownBefore) state.unknown[u.key] = u.unknownBefore; else delete state.unknown[u.key]; }
         if (u.newlySung) { state.sung = state.sung.filter(k => k !== u.key); for (const item of state.entries) if (item.status === 'deferred' && item.songKey === u.key && (!item.deferReason || item.deferReason === 'sung')) { item.status = 'pending'; item.deferReason = null; } }
       }
@@ -173,5 +186,6 @@ export function adminAction(state, input) {
 export function prune(state, now = Date.now()) {
   const cutoff = now - state.retentionDays * 86400000;
   state.entries = state.entries.filter(e => e.createdAt >= cutoff);
+  if (state.history) state.history = state.history.filter(e => e.performedAt >= cutoff);
   if (!state.entries.some(e => e.id === state.current)) state.current = null;
 }

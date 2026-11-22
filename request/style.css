@@ -66,3 +66,27 @@ body:has(.request-page) { background: #f2f2f7; }
   .request-page .primary:active { transform: none; }
 }
 .song-actions{max-width:300px;margin:14px auto 0;text-align:left}.song-actions summary{color:var(--muted);font-size:13px}.song-actions .buttons{margin-top:6px}.request-page dialog{max-width:min(400px,calc(100vw - 40px));padding:26px;border:1px solid var(--border);border-radius:22px;background:var(--card);color:var(--text);box-shadow:0 24px 80px #0002}.request-page dialog::backdrop{background:#0005;backdrop-filter:blur(3px)}.request-page dialog h2{font-size:20px;margin-bottom:14px}.request-page dialog p{font-size:15px;line-height:1.8}.request-page dialog .buttons{margin-top:24px}.request-page dialog button{font-size:14px;padding:12px;min-height:48px;border-radius:12px}
+/* Public wheel occupies the available screen; only the selected song is added. */
+body:has(.roulette-stage){background:var(--bg)}
+.roulette-stage{width:100%;max-width:none;min-height:100svh;margin:0;padding:24px 12px;display:grid;place-items:center;overflow:hidden}
+.roulette-stage .draw-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;width:100%}
+.roulette-stage .wheel-wrap{width:min(96vw,calc(100svh - 168px),960px);margin:0;flex-shrink:0}
+.roulette-stage #result{width:100%;text-align:center;overflow-wrap:anywhere}
+.roulette-stage .result-song{margin:0;font-size:clamp(24px,4vw,44px);letter-spacing:-.04em}
+.roulette-stage .result-artist{margin-top:4px;font-size:clamp(16px,2vw,22px)}
+.roulette-stage #message{position:fixed;bottom:20px;left:20px;right:20px;z-index:10;margin:0}
+.demo-bar~#demo-root .roulette-stage{min-height:calc(100svh - 118px);margin-top:0}
+.demo-bar~#demo-root .roulette-stage .wheel-wrap{width:min(96vw,calc(100svh - 280px),960px)}
+.listener-history{margin:28px 0 0}
+.request-page .listener-history details{margin:0;border-top:1px solid var(--border)}
+.request-page .listener-history summary{min-height:52px;justify-content:flex-start;gap:10px;color:var(--text);font-size:14px}
+.request-page .listener-history summary>span{margin-left:auto;margin-right:8px;color:var(--muted);font-size:12px}
+.request-page .listener-history summary::after{flex-shrink:0}
+.song-history{list-style:none;margin:0;padding:0}
+.song-history li{padding:14px 0;position:relative;overflow-wrap:anywhere;border-top:1px solid var(--border)}
+.history-song{font-size:16px;font-weight:500;line-height:1.5}
+.history-artist{font-size:13px;color:var(--muted);margin-top:3px}
+.history-status{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+.request-page .listener-history #played-empty{margin:8px 0 20px}
+.roulette-stage:not(:has(#result:not([hidden]))) .wheel-wrap{width:min(96vw,calc(100svh - 48px),960px)}
+.demo-bar~#demo-root .roulette-stage:not(:has(#result:not([hidden]))) .wheel-wrap{width:min(96vw,calc(100svh - 148px),960px)}
