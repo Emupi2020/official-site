@@ -39,10 +39,12 @@ body.listener-layout {
 .request-notes > summary {
   min-height: 44px;
   padding-block: 12px;
+  list-style: none;
   color: var(--muted);
   font-size: 13px;
   cursor: pointer;
 }
+.request-notes > summary::-webkit-details-marker { display: none; }
 .request-rules { padding-block-end: 12px; font-size: 14px; line-height: 1.65; text-align: start; }
 .request-rules h3 { margin: 0 0 4px; font-size: 15px; }
 .request-rules ul { margin: 0; padding-inline-start: 1.3em; }
