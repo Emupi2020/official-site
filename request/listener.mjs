@@ -52,6 +52,15 @@ const entryPasscode = $('entry-passcode');
 const rememberedNameKey = 'emupi-request-last-name';
 entryName.value = $('name').value || safeGet(rememberedNameKey) || '';
 let entryMode = 'welcome', entryBusy = false;
+const logoutNotice = $('logout-notice');
+let logoutNoticeTimer;
+function clearLogoutNotice() {
+ if (!logoutNotice.textContent) return;
+ clearTimeout(logoutNoticeTimer);
+ logoutNotice.textContent = '';
+}
+document.addEventListener('click', clearLogoutNotice, true);
+document.addEventListener('keydown', clearLogoutNotice, true);
 const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMode:mode, fromWelcome});
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
@@ -195,6 +204,7 @@ entryForm.onsubmit = async event => {
  }
 };
 window.addEventListener('popstate', event => {
+ clearLogoutNotice();
  if (typeof event.state?.requestScreen !== 'boolean') return;
  const open = event.state.requestScreen && Boolean(lookupName());
  if (!open) setEntryMode(event.state.entryMode || 'welcome');
@@ -594,10 +604,11 @@ $('request-logout').onclick = async () => {
   $('my-history').open = false;
   $('account-settings').open = false;
   $('line-feedback').textContent = '';
-  $('entry-line-feedback').textContent = 'ログアウトしました。';
-  $('entry-line-feedback').hidden = false;
+  $('entry-line-feedback').hidden = true;
   window.history.replaceState(entryView('welcome'), '');
   showRequestScreen(false, true);
+  logoutNotice.textContent = 'ログアウトしました。';
+  logoutNoticeTimer = setTimeout(clearLogoutNotice, 3000);
   await refresh();
  } catch (error) {
   message(error.message, true);
