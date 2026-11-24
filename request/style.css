@@ -151,6 +151,22 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-links summary > span { margin-right: 0; }
 .request-page .request-links summary:has(> span)::after { margin-left: 0; }
 .request-page .request-notes { margin: 10px 0 0; }
+.request-page .listener-account {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  border-top: 1px solid var(--border);
+}
+.request-page .listener-account :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent);
+  font-size: 14px;
+}
+.request-page #line-feedback { width: 100%; margin: 0 0 8px; }
+.request-page #line-feedback:empty { display: none; }
 
 .request-page .edit-actions {
   display: flex;

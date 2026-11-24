@@ -70,16 +70,30 @@ function canEditSong(state, entry) {
 }
 export function receipt(state, tokenHash) {
   const entry = state.entries.findLast(e => e.tokenHash === tokenHash);
-  return entry ? { id: entry.id, name: entry.name, artist: entry.artist, song: entry.song, category: categoryOf(entry), round: entry.round, status: entry.status, deferReason: entry.deferReason, editable: canRename(state, entry), songEditable: canEditSong(state, entry) } : null;
+  return entry ? listenerReceipt(state, entry, !entry.accountId) : null;
 }
-export function submit(state, input, tokenHash, now = Date.now()) {
+export function listenerReceipt(state, entry, canManage) {
+  const { id, name, artist, song, round, status, deferReason } = entry;
+  return { id, name, artist, song, category: categoryOf(entry), round, status, deferReason,
+    editable: canManage && canRename(state, entry), songEditable: canManage && canEditSong(state, entry) };
+}
+export function accountRequests(state, accountId) {
+  const entries = state.entries.filter(entry => entry.accountId === accountId);
+  return {
+    name: entries.at(-1)?.name || '',
+    entries: entries.map(entry => listenerRequest(state, entry)),
+    receipts: entries.filter(entry => entry.round === state.round || entry.round === state.round + 1)
+      .map(entry => listenerReceipt(state, entry, true))
+  };
+}
+export function submit(state, input, tokenHash, now = Date.now(), accountId = null) {
   const round = input.round === undefined ? state.round : input.round;
   if (!Number.isInteger(round) || ![state.round, state.round+1].includes(round)) throw new Problem('受付回が切り替わりました。画面を更新して選び直してください。',409);
   const name = text(input.name, 'Pocochaの名前', 50), artist = text(input.artist, '歌手名'), song = text(input.song, '曲名');
   const key = nameKey(name), category = classifyArtist(artist);
   if (input.category !== undefined && input.category !== category) throw new Problem('歌手名に合う歌まね枠を選んでください。');
   const roundLabel = round === state.round ? '今回' : '次回の予約';
-  if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.tokenHash === tokenHash)) {
+  if (state.entries.some(e => categoryOf(e) === category && e.round === round && (e.tokenHash === tokenHash || (accountId && e.accountId === accountId)))) {
     throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
   }
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.usedNames.includes(key))) {
@@ -91,6 +105,7 @@ export function submit(state, input, tokenHash, now = Date.now()) {
   if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してから、もう一度リクエストしてください。', 409);
   const deferReason = state.sung.includes(songKey) ? 'sung' : (state.held || []).includes(songKey) ? 'unknown' : null;
   const entry = { id: crypto.randomUUID(), name, usedNames: [key], artist, song, songKey, category, tokenHash, round, status: deferReason ? 'deferred' : 'pending', deferReason, createdAt: now };
+  if (accountId) entry.accountId = accountId;
   state.entries.push(entry);
   rememberSong(state, artist, song);
   return entry;

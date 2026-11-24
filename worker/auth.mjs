@@ -23,8 +23,8 @@ export async function verify(env, token) {
     return value.exp > Date.now() ? value : null;
   } catch { return null; }
 }
-function cookie(req, name) { return (req.headers.get('Cookie') || '').split(';').map(c => c.trim()).find(c => c.startsWith(`${name}=`))?.slice(name.length + 1); }
-const setCookie = (name, value, age) => `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
+export function cookie(req, name) { return (req.headers.get('Cookie') || '').split(';').map(c => c.trim()).find(c => c.startsWith(`${name}=`))?.slice(name.length + 1); }
+export const setCookie = (name, value, age) => `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
 
 const sessionAge = 30 * 86400;
 export async function passwordKey(password, salt) {

@@ -2,6 +2,8 @@ import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
 let state, items=[], tokens, busy=false, nameEditing=false;
 let receipts = new Map(), myRequests = [], namedRequests = [], loadedName = '', lookupTimer, lookupVersion = 0;
+let account = { enabled: false, signedIn: false, entries: [], receipts: [] };
+let refreshVersion = 0;
 try { tokens=JSON.parse(safeGet('emupi-request-tokens')||'{}'); } catch { tokens={}; }
 const duplicateStorageKey = 'emupi-duplicate-requests';
 let confirmedDuplicates = [];
@@ -41,7 +43,7 @@ function canSubmit(slot) {
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name, #line-link, #line-logout')) button.disabled = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
 function feedback(slot, text, error = true) {
@@ -62,15 +64,22 @@ function renderHistory(myRequests){
  for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(entry.performedAt):'歌唱済み');
 }
 async function refresh(){
- const next=await api('/api/state');
+ const version = ++refreshVersion;
+ const [next, nextAccount] = await Promise.all([api('/api/state'), api('/api/listener-account')]);
  const keys=[...new Set(slots.map(slot=>{const round=next.round+Number(slot.reserved);return tokens[`${round}:${slot.category}`]||tokens[round];}).filter(Boolean))];
  const savedTokens=Object.values(tokens).slice(-100);
  const [owned, history] = await Promise.all([
   Promise.all(keys.map(async token => [token, (await api('/api/mine', {token})).entry])),
   savedTokens.length ? api('/api/my-requests', {method:'POST', data:{tokens:savedTokens}}) : {entries:[]}
  ]);
+ if (version !== refreshVersion) return;
  receipts = new Map(owned);
  myRequests = history.entries;
+ if (!account.signedIn && nextAccount.signedIn && nextAccount.name && !nameEditing) {
+  $('name').value = nextAccount.name;
+  safeSet('emupi-request-name', nextAccount.name);
+ }
+ account = nextAccount;
  state=next;
  renderRequests();
  await refreshNameRequests();
@@ -100,9 +109,10 @@ function renderRequests() {
   const token = tokens[`${slot.round}:${slot.category}`] || tokens[slot.round];
   const entry = receipts.get(token);
   const matches = candidate => candidate && candidate.round === slot.round && (candidate.category || classifyArtist(candidate.artist)) === slot.category;
+  const linked = account.receipts.find(matches);
   const owned = matches(entry);
-  slot.entry = owned ? entry : restored.find(matches) || null;
-  slot.token = owned ? token : null;
+  slot.entry = linked || (owned ? entry : restored.find(matches)) || null;
+  slot.token = !linked && owned ? token : null;
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
@@ -110,8 +120,17 @@ function renderRequests() {
  }
  renderDuplicateSlots();
  renderNameControls();
- const history = new Map([...restored, ...myRequests].map(entry => [entry.id, entry]));
+ const history = new Map([...restored, ...myRequests, ...account.entries].map(entry => [entry.id, entry]));
  renderHistory([...history.values()].sort((a, b) => a.createdAt - b.createdAt));
+ renderAccount();
+}
+function renderAccount() {
+ $('listener-account').hidden = !account.enabled;
+ if (account.enabled) $('my-history').hidden = false;
+ $('line-start').hidden = account.signedIn;
+ $('line-logout').hidden = !account.signedIn;
+ const linked = new Set(account.entries.map(entry => entry.id));
+ $('line-link').hidden = !account.signedIn || !myRequests.some(entry => !linked.has(entry.id));
 }
 async function confirmSong(data){
  const status=await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);if(!status.unknownAt)return true;
@@ -196,13 +215,14 @@ $('cancel-name').onclick = () => {
 };
 $('name-form').onsubmit = async event => {
  event.preventDefault();
- const ownedTokens = slots.filter(slot => slot.entry?.editable).map(slot => slot.token);
- if (busy || !nameEditing || !ownedTokens.length) return;
+ const editable = slots.filter(slot => slot.entry?.editable);
+ const ownedTokens = editable.map(slot => slot.token).filter(Boolean);
+ if (busy || !nameEditing || !editable.length) return;
  lock(true);
  nameFeedback('');
  try {
   const name = $('name').value;
-  await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, name}});
+  await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, account: editable.some(slot => !slot.token), name}});
   $('name').value = name.normalize('NFKC').trim();
   safeSet('emupi-request-name', $('name').value);
   nameEditing = false;
@@ -246,7 +266,9 @@ for(const slot of slots){
   try {
    if (!await confirmSong(data)) { field(slot, 'song').focus(); return; }
    if (editing) {
-    await api('/api/mine', {method: 'PATCH', data: {...data, action: 'editSong'}, token: editing.token});
+    await api('/api/mine', {
+     method: 'PATCH', data: {...data, action: 'editSong', ...(!editing.token && {requestId: editing.id})}, token: editing.token
+    });
     stopEditing(slot);
     await refresh();
     feedback(slot, '曲を修正しました。', false);
@@ -334,6 +356,31 @@ $('name').addEventListener('input', () => {
  lock(busy);
  if (lookupName()) lookupTimer = setTimeout(() => refreshNameRequests(true), 350);
 });
+async function accountAction(path, data, notice) {
+ if (busy) return;
+ lock(true);
+ const status = $('line-feedback');
+ status.textContent = '';
+ try {
+  const result = await api(path, {method:'POST', data});
+  await refresh();
+  status.textContent = notice(result);
+ } catch (error) {
+  status.textContent = error.message;
+ } finally {
+  lock(false);
+ }
+}
+$('line-link').onclick = () => accountAction('/api/listener-account', {tokens: Object.values(tokens).slice(-100)},
+ result => result.linked ? `${result.linked}件のリクエストを連携しました。` : '新しく連携できるリクエストはありません。');
+$('line-logout').onclick = () => accountAction('/auth/line/logout', {}, () => 'ログアウトしました。');
+const pageUrl = new URL(location.href);
+if (pageUrl.searchParams.has('line')) {
+ $('my-history').open = true;
+ $('line-feedback').textContent = pageUrl.searchParams.get('line') === 'connected' ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
+ pageUrl.searchParams.delete('line');
+ window.history.replaceState(null, '', pageUrl);
+}
 lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try{await refresh();items=(await api('/api/suggestions')).items;message('');}catch(error){message(error.message,true);}

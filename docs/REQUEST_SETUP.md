@@ -46,7 +46,7 @@ npm run dev
 
 - 受付回と配信は別。次の受付回でも歌唱履歴は残る。次回配信の開始操作で保留が戻る。
 - 名前の訂正は同じ応募の更新。旧名もその回の使用済み名として記録する。
-- 応募内容は同じPococha名で照会できる。編集時は端末に保存されている応募トークンを検証する。
+- 応募内容は同じPococha名で照会できる。未連携分の編集時は応募トークンを検証し、LINE連携済みの応募は本人のログインを検証する。
 - 応募処理はD1のrevision条件付きUPDATEで確定し、競合時は最新状態から再検証する。同時送信も重複登録しない。
 - 公開APIは応募者名・応募トークン・使用済み名を返さない。
 - 管理操作は署名付きHttpOnly Cookieとパスワード設定のバージョンを検証し、書込み時には同一Originも確認する。
@@ -76,4 +76,14 @@ npm run dev
 - ADMIN_PASSWORD_HASHはランダムsaltとPBKDF2-SHA256（100,000回）の照合値。Cloudflare Secretsに保存し、ブラウザへ返さない。SESSION_SECRETは引き続き必要。
 - 署名付きSecure/HttpOnly/SameSite=Lax Cookieを30日保持する。パスワード設定の変更で既存セッションも無効化する。
 - ログインとログアウトは管理画面と同じOriginのみ許可。ログイン試行はIP識別子ごと15分枠で10回まで。
-- 秘密値はGitに保存しない。リスナーのログインは不要。
+- 秘密値はGitに保存しない。リクエストの送信自体にリスナーのログインは不要。
+
+## 任意のLINEログイン
+
+1. LINE Developers Consoleで「LINEログイン」のチャネルを作成し、アプリタイプに「ウェブアプリ」を選ぶ。
+2. コールバックURLに `https://emupi-requests.pokeca-lottery-manager.workers.dev/auth/line/callback` を登録する。
+3. 対象Workerに `wrangler secret put LINE_CHANNEL_ID` と `wrangler secret put LINE_CHANNEL_SECRET` で値を設定する。認証には既存の `SESSION_SECRET` を使う。LINEの設定値がそろうと「自分のリクエスト」に入口が出る。
+4. チャネルを「開発中」のまま管理者かテスターでログインを試す。連携後に同じブラウザーでログアウトし、曲の修正ができなくなること、別のブラウザーで同じLINEにログインすると修正できることを確認する。
+5. 一般公開は、チャネルを「公開済み」に切り替える。
+
+LINEに求める権限は `openid` のみ。Pococha名はリクエストに入力した値を使う。
