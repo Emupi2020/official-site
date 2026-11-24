@@ -21,6 +21,7 @@ body.listener-layout:has(#request-screen[hidden]) {
   --border: inherit;
   width: 100%;
 }
+.listener-layout:has(#request-screen:not([hidden])) .request-page { margin-block: 12px 20px; }
 .listener-content {
   flex: 1;
   min-height: 0;
