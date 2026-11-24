@@ -220,7 +220,11 @@ export function adminAction(state, input) {
       const e = state.entries.find(e => e.id === u.id);
       if (u.type === 'draw') { if (e) e.status = state.sung.includes(e.songKey) ? 'deferred' : 'pending'; state.current = u.previous; }
       if (u.type === 'skip' && e) e.status = 'selected';
-      if (u.type === 'deferSelected' && e) { e.status = 'selected'; e.deferReason = u.previousReason; state.current = e.id; }
+      if (['defer', 'deferSelected'].includes(u.type) && e) {
+        e.status = u.previousStatus ?? 'selected';
+        e.deferReason = u.previousReason;
+        if (e.status === 'selected') state.current = e.id;
+      }
       if (u.type === 'done' && e) {
         e.status = 'selected';
         state.history = state.history.filter(item => item.id !== u.historyId);
@@ -252,7 +256,7 @@ export function adminAction(state, input) {
       const e = state.entries.find(e => e.id === input.id);
       const isSelected = e && e === current && e.status === 'selected';
       if (input.selected ? !isSelected : e?.status !== 'pending') throw new Problem(input.selected ? '当選曲が変わりました。確認してから操作してください。' : '待機中の応募を選んでください。', 409);
-      state.undo = isSelected ? { type: 'deferSelected', id: e.id, previousReason: e.deferReason ?? null } : null;
+      state.undo = { type: 'defer', id: e.id, previousStatus: e.status, previousReason: e.deferReason ?? null };
       e.status = 'deferred'; e.deferReason = 'manual'; break;
     }
     case 'remove': {

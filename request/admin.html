@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/roulette-tabs.css?result=actions"><script src="/config.js"></script><script type="module" src="/admin.mjs?roulette=result-actions"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/roulette-tabs.css?result=actions"><script src="/config.js"></script><script type="module" src="/admin.mjs?roulette=undo-state"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header><a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a><span class="small muted">管理者専用</span></header>
 <main class="admin-main"><div id="message" class="message" role="status" hidden></div>
 <section id="login" class="card" hidden><h2>配信者ログイン</h2><form id="login-form"><label for="password">パスワード</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button id="login-submit" class="primary" type="submit">ログイン</button></form></section>
@@ -21,6 +21,7 @@
 <button id="open-roulette" class="primary launch-roulette">ルーレット</button>
 <section id="current-info" class="card" hidden><div id="selected-song" class="entry-title"></div><p id="result-name" class="small muted"></p></section>
 <div class="buttons admin-song-actions"><button id="cant-sing" class="secondary">歌えない</button><button id="undo" class="secondary">戻す</button></div>
+<p id="undo-feedback" class="small muted" role="status" hidden></p>
 <details class="manage"><summary>受付・配信の管理</summary><section class="card"><div class="buttons"><button id="next-session" class="secondary">次回配信を開始</button></div><p class="small muted">回は全件処理後に自動で切り替わります。次回配信を開始すると、持ち越し分を抽選に戻します。</p></section><section class="card"><h2>入力候補</h2><div id="suggestions"></div></section><button id="logout" class="text-button">ログアウト</button></details>
 </div>
 <dialog id="roulette-screen" class="roulette-screen" aria-label="配信用ルーレット"><button id="close-roulette" class="roulette-close" aria-label="管理画面に戻る">×</button><div class="broadcast-wheel">

@@ -242,3 +242,16 @@ test('当選したリクエストを理由なしで次回配信へ持ち越し�
  assert.equal(winner.deferReason, null);
  assert.ok(eligible(s).includes(winner));
 });
+
+test('管理一覧で次回へ送った曲を戻すと抽選待ちと受付回が復元される', () => {
+ const s = state();
+ const request = submit(s, input('A'), 'a');
+ adminAction(s, { action:'defer', id:request.id });
+ assert.equal(request.status, 'deferred');
+ assert.equal(s.round, 2);
+ adminAction(s, { action:'undo' });
+ assert.equal(s.round, 1);
+ assert.equal(request.status, 'pending');
+ assert.equal(request.deferReason, null);
+ assert.deepEqual(eligible(s), [request]);
+});

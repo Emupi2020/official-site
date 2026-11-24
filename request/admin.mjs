@@ -4,13 +4,40 @@ import { setWheel, spin, settle } from './wheel.mjs';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
 let state, busy = false, dismissedResult = null, drawCategory = defaultCategory;
+let refreshVersion = 0;
 const resultKey = entry => entry ? `${entry.id}:${entry.drawnAt}:${entry.status}` : null;
 function stageMessage(value){$('roulette-message').hidden=!value;$('roulette-message').textContent=value;}
 function node(tag, text, className) { const e=document.createElement(tag); e.textContent=text;if(className)e.className=className;return e; }
-async function action(action, extra={}) {
-  if(busy)return;busy=true;lock(true);message('');stageMessage('');$('roulette-screen').classList.add('spinning');
-  try { await api('/api/admin',{method:'POST',data:{action,...extra,...(['draw','advance'].includes(action)?{category:drawCategory}:{})}});await refresh(action==='draw'||action==='advance'); }
-  catch(error){message(error.message,true);stageMessage(error.message);}finally{busy=false;$('roulette-screen').classList.remove('spinning');lock(false);render();if($('roulette-screen').open&&!$('result').hidden)$('dismiss-result').focus();}
+function undoFeedback(text, error = false) {
+  const feedback = $('undo-feedback');
+  feedback.textContent = text;
+  feedback.hidden = !text;
+  feedback.classList.toggle('danger', error);
+}
+async function action(action, extra = {}) {
+  if (busy) return;
+  busy = true;
+  ++refreshVersion;
+  lock(true);
+  message('');
+  stageMessage('');
+  undoFeedback('');
+  $('roulette-screen').classList.add('spinning');
+  const drawing = ['draw', 'advance'].includes(action);
+  try {
+    await api('/api/admin', {method:'POST', data:{action, ...extra, ...(drawing ? {category:drawCategory} : {})}});
+    await refresh(drawing);
+    if (action === 'undo' && state) undoFeedback('直前の操作を取り消しました。');
+  } catch (error) {
+    if (action === 'undo') undoFeedback(error.message, true);
+    else { message(error.message, true); stageMessage(error.message); }
+  } finally {
+    busy = false;
+    $('roulette-screen').classList.remove('spinning');
+    lock(false);
+    render();
+    if ($('roulette-screen').open && !$('result').hidden) $('dismiss-result').focus();
+  }
 }
 function lock(value){for(const b of document.querySelectorAll('#dashboard button, #roulette-screen button'))b.disabled=value;}
 const poolFor = ({ entries, round }) => entries.filter(entry =>
@@ -80,11 +107,14 @@ function renderRoulette(current = state.entries.find(entry => entry.id === state
   if (wasHidden && !result.hidden) $('dismiss-result').focus();
 }
 async function refresh(animate=false){
+  const version = ++refreshVersion;
   try{
-    const next=await api('/api/admin');$('login').hidden=true;$('dashboard').hidden=false;
+    const next = await api('/api/admin');
+    if (version !== refreshVersion) return;
+    $('login').hidden=true;$('dashboard').hidden=false;
     if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,[...poolFor(next), current].map(e=>e.song));}}
     state=next;render();
-  }catch(error){if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
+  }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
 }
 $('login-form').onsubmit=async event=>{
   event.preventDefault();$('login-submit').disabled=true;message('');
