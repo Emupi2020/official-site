@@ -2,17 +2,20 @@ import { cookie, hash, setCookie, sign, verify } from './auth.mjs';
 import { Problem } from './domain.mjs';
 
 const transactionCookie = '__Host-emupi_line_flow';
-const sessionCookie = '__Host-emupi_listener';
+export const sessionCookie = '__Host-emupi_listener';
 const flowAge = 600;
 const sessionAge = 30 * 86400;
 const random = () => crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
 
 export const lineEnabled = env => Boolean(env.LINE_CHANNEL_ID && env.LINE_CHANNEL_SECRET && env.SESSION_SECRET?.length >= 32);
 
-export async function listenerId(req, env) {
-  if (!lineEnabled(env)) return null;
+export async function listenerSession(req, env) {
   const session = await verify(env, cookie(req, sessionCookie));
-  return session?.kind === 'line-listener' && session.channel === env.LINE_CHANNEL_ID ? session.accountId : null;
+  if (session?.kind === 'pin-listener') return session;
+  return lineEnabled(env) && session?.kind === 'line-listener' && session.channel === env.LINE_CHANNEL_ID ? session : null;
+}
+export async function listenerId(req, env) {
+  return (await listenerSession(req, env))?.accountId ?? null;
 }
 
 function redirect(location, ...cookies) {

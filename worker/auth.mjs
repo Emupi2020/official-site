@@ -34,6 +34,14 @@ export async function passwordKey(password, salt) {
 export async function passwordRecord(password, salt = b64(crypto.getRandomValues(new Uint8Array(24)))) {
   return salt + '.' + await passwordKey(password, salt);
 }
+export async function matchesPassword(password, record) {
+  const [salt, expected] = record.split('.');
+  if (!salt || !expected) return false;
+  const actual = await passwordKey(password, salt);
+  const compareKey = await crypto.subtle.importKey('raw', encoder.encode(expected), {name:'HMAC',hash:'SHA-256'}, false, ['sign','verify']);
+  const signature = await crypto.subtle.sign('HMAC', compareKey, encoder.encode(actual));
+  return crypto.subtle.verify('HMAC', compareKey, signature, encoder.encode(expected));
+}
 export async function isAdmin(req, env) {
   if (env.LOCAL_DEV === '1' && ['localhost', '127.0.0.1'].includes(new URL(req.url).hostname)) return true;
   const session = await verify(env, cookie(req, '__Host-emupi_admin'));
@@ -58,11 +66,7 @@ export async function auth(req, env) {
   if(typeof input?.password !== 'string' || !input.password || input.password.length>256) throw new Problem('パスワードを入力してください。');
   const [salt,expected] = env.ADMIN_PASSWORD_HASH.split('.');
   if(!salt || !expected) throw new Problem('パスワード設定を確認してください。',503);
-  const actual = await passwordKey(input.password,salt);
-  // Compare fixed-length digests with Web Crypto's HMAC verifier.
-  const compareKey = await crypto.subtle.importKey('raw',encoder.encode(expected),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);
-  const signature = await crypto.subtle.sign('HMAC',compareKey,encoder.encode(actual));
-  if (!await crypto.subtle.verify('HMAC',compareKey,signature,encoder.encode(expected))) throw new Problem('パスワードが違います。',401);
+  if (!await matchesPassword(input.password, env.ADMIN_PASSWORD_HASH)) throw new Problem('パスワードが違います。',401);
   const token = await sign(env,{kind:'admin',passwordVersion:await hash(env.ADMIN_PASSWORD_HASH),exp:Date.now()+sessionAge*1000});
   return new Response(JSON.stringify({ok:true}),{headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Set-Cookie':setCookie('__Host-emupi_admin',token,sessionAge)}});
 }

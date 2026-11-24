@@ -37,6 +37,8 @@ const part=(slot,selector)=>slot.root.querySelector(selector);
 $('name').value=safeGet('emupi-request-name')||'';
 const entryForm = $('entry-form');
 const entryName = $('entry-name');
+const entryPasscode = $('entry-passcode');
+let entryMode = 'guest', entryBusy = false;
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
@@ -45,21 +47,82 @@ function showRequestScreen(open, focus = false) {
 const hasSavedName = Boolean($('name').value.trim());
 showRequestScreen(hasSavedName);
 window.history.replaceState({requestScreen:hasSavedName}, '');
-function updateEntryButton() { $('enter-request').disabled = !entryName.value.trim(); }
+function updateEntryButton() {
+ $('enter-request').disabled = entryBusy || !entryName.value.trim() || (entryMode !== 'guest' && !/^\d{4}$/.test(entryPasscode.value));
+}
+function passcodeFeedback(text) {
+ $('passcode-feedback').textContent = text;
+ $('passcode-feedback').hidden = !text;
+}
+function setEntryMode(mode) {
+ if (entryBusy) return;
+ entryMode = mode;
+ const guest = mode === 'guest';
+ $('passcode-field').hidden = guest;
+ $('passcode-options').hidden = !guest || !account.passcodeEnabled;
+ $('cancel-passcode').hidden = guest;
+ entryPasscode.required = !guest;
+ entryPasscode.value = '';
+ entryPasscode.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+ $('enter-request').textContent = { guest:'名前だけで始める', register:'パスコードを設定して始める', login:'パスコードでログイン' }[mode];
+ passcodeFeedback('');
+ updateEntryButton();
+ if (!guest) (entryName.value.trim() ? entryPasscode : entryName).focus();
+}
+function openPasscode(mode) {
+ entryName.value = lookupName();
+ window.history.pushState({requestScreen:false}, '');
+ showRequestScreen(false);
+ setEntryMode(mode);
+}
+$('choose-passcode').onclick = () => setEntryMode('register');
+$('choose-passcode-login').onclick = () => setEntryMode('login');
+$('cancel-passcode').onclick = () => { setEntryMode('guest'); entryName.focus(); };
+$('manage-passcode').onclick = () => openPasscode('register');
+$('manage-passcode-login').onclick = () => openPasscode('login');
 entryName.addEventListener('input', updateEntryButton);
 entryName.addEventListener('change', updateEntryButton);
+entryPasscode.addEventListener('input', updateEntryButton);
 window.addEventListener('pageshow', updateEntryButton);
 updateEntryButton();
-entryForm.onsubmit = event => {
+entryForm.onsubmit = async event => {
  event.preventDefault();
  const name = entryName.value.normalize('NFKC').trim();
- if (!name) return;
- $('name').value = name;
- safeSet('emupi-request-name', name);
+ if (!name || entryBusy) return;
+ let displayName = name;
+ if (entryMode !== 'guest') {
+  entryBusy = true;
+  updateEntryButton();
+  passcodeFeedback('');
+  try {
+   const result = await api(`/api/passcode/${entryMode}`, {method:'POST', data:{name, passcode:entryPasscode.value}});
+   displayName = result.name;
+  } catch (error) {
+   passcodeFeedback(error.message);
+   return;
+  } finally {
+   entryBusy = false;
+   updateEntryButton();
+  }
+ }
+ $('name').value = displayName;
+ safeSet('emupi-request-name', displayName);
+ const mode = entryMode;
+ setEntryMode('guest');
  window.history.pushState({requestScreen:true}, '');
  showRequestScreen(true, true);
  if (state) renderRequests();
- void refreshNameRequests(true);
+ if (mode === 'guest') {
+  await refreshNameRequests(true);
+ } else {
+  $('my-history').open = true;
+  const savedTokens = Object.values(tokens).slice(-100);
+  if (mode === 'register' && savedTokens.length) {
+   await accountAction('/api/listener-account', {tokens:savedTokens}, result => result.linked ? `${result.linked}件のリクエストを連携しました。` : 'パスコードを設定しました。');
+  } else {
+   try { await refresh(); } catch (error) { message(error.message, true); }
+  }
+ }
 };
 window.addEventListener('popstate', event => {
  if (typeof event.state?.requestScreen !== 'boolean') return;
@@ -162,9 +225,12 @@ function renderRequests() {
 }
 function renderAccount() {
  $('entry-line').hidden = !account.enabled || account.signedIn;
- $('listener-account').hidden = !account.enabled;
- if (account.enabled) $('my-history').hidden = false;
- $('line-start').hidden = account.signedIn;
+ $('passcode-options').hidden = !account.passcodeEnabled || entryMode !== 'guest' || account.signedIn;
+ $('listener-account').hidden = !account.enabled && !account.passcodeEnabled;
+ if (!$('listener-account').hidden) $('my-history').hidden = false;
+ $('manage-passcode').hidden = !account.passcodeEnabled || account.signedIn;
+ $('manage-passcode-login').hidden = !account.passcodeEnabled || account.signedIn;
+ $('line-start').hidden = !account.enabled || account.signedIn;
  $('line-logout').hidden = !account.signedIn;
  const linked = new Set(account.entries.map(entry => entry.id));
  $('line-link').hidden = !account.signedIn || !myRequests.some(entry => !linked.has(entry.id));

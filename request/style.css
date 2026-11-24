@@ -138,6 +138,12 @@ body:has(.request-page) { background: #f2f2f7; }
   font-size: 14px;
 }
 .request-page #entry-line-feedback { margin: 12px 0 0; text-align: center; }
+.request-page .entry-options { display: grid; gap: 4px; margin-top: 12px; }
+.request-page .entry-options button,
+.request-page #cancel-passcode { min-height: 44px; font-size: 14px; }
+.request-page #cancel-passcode { width: 100%; }
+.request-page .passcode-field { margin-top: 16px; }
+.request-page #passcode-feedback { margin: 8px 0 0; color: var(--danger); }
 .request-page .request-name .input-group {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

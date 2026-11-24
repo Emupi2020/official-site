@@ -1,6 +1,7 @@
-import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, Problem, prune } from './domain.mjs';
+import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
-import { lineAuth, lineEnabled, listenerId } from './line-login.mjs';
+import { lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
+import { passcodeAuth } from './passcode.mjs';
 import { catalog } from '../request/catalog.mjs';
 import { categoryOf } from '../request/categories.mjs';
 
@@ -49,6 +50,10 @@ async function handle(req, env) {
     return env.ASSETS.fetch(req);
   }
   if (!env.DB) throw new Problem('応募受付の準備中です。', 503);
+  if (['/api/passcode/register', '/api/passcode/login'].includes(path) && req.method === 'POST') {
+    await limit(req, env, ':passcode');
+    return passcodeAuth(env, path.split('/').at(-1), await body(req));
+  }
   if (path === '/api/state' && req.method === 'GET') return json(publicState((await read(env)).state));
   if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
   if (path === '/api/suggestions' && req.method === 'GET') {
@@ -57,19 +62,23 @@ async function handle(req, env) {
   }
   if (path === '/api/mine' && req.method === 'GET') return json({ entry: receipt((await read(env)).state, await requestToken(req)) });
   if (path === '/api/listener-account' && ['GET', 'POST'].includes(req.method)) {
-    const accountId = await listenerId(req, env);
-    const empty = { enabled: lineEnabled(env), signedIn: false, name: '', entries: [], receipts: [] };
+    const session = await listenerSession(req, env);
+    const accountId = session?.accountId;
+    const enabled = lineEnabled(env);
+    const passcodeEnabled = Boolean(env.SESSION_SECRET?.length >= 32);
     if (req.method === 'GET') {
-      if (!accountId) return json(empty);
+      if (!accountId) return json({ enabled, passcodeEnabled, signedIn: false, name: '', entries: [], receipts: [] });
       const { state } = await read(env);
       prune(state);
-      return json({ ...accountRequests(state, accountId), enabled: true, signedIn: true });
+      const account = accountRequests(state, accountId);
+      return json({ ...account, name: account.name || session.name || '', enabled, passcodeEnabled, signedIn: true });
     }
-    if (!accountId) throw new Problem('LINEでログインしてください。', 401);
+    if (!accountId) throw new Problem('ログインしてください。', 401);
     await limit(req, env);
     const hashes = new Set(await requestTokenHashes((await body(req))?.tokens));
     const { value: linked } = await mutate(env, state => {
-      const entries = state.entries.filter(entry => !entry.accountId && hashes.has(entry.tokenHash));
+      const entries = state.entries.filter(entry => !entry.accountId && hashes.has(entry.tokenHash) &&
+        (session.kind !== 'pin-listener' || nameKey(entry.name) === nameKey(session.name)));
       for (const entry of entries) {
         if (state.entries.some(other => other.accountId === accountId && other.round === entry.round && categoryOf(other) === categoryOf(entry))) continue;
         entry.accountId = accountId;
@@ -113,14 +122,14 @@ async function handle(req, env) {
       return json({updated});
     }
     const viaAccount = input?.action === 'editSong' && typeof input.requestId === 'string';
-    if (viaAccount && !accountId) throw new Problem('LINEでログインしてください。', 401);
+    if (viaAccount && !accountId) throw new Problem('ログインしてください。', 401);
     const token = viaAccount ? null : await requestToken(req);
     const result = await mutate(env, state => {
       const e = viaAccount
         ? state.entries.find(entry => entry.accountId === accountId && entry.id === input.requestId)
         : state.entries.findLast(entry => entry.tokenHash === token);
       if (!e) throw new Problem('応募が見つかりません。', 404);
-      if (e.accountId && e.accountId !== accountId) throw new Problem('連携したLINEアカウントでログインしてください。', 401);
+      if (e.accountId && e.accountId !== accountId) throw new Problem('連携したアカウントでログインしてください。', 401);
       if (input?.action === 'editSong') editSong(state, e, input);
       else rename(state, e, input?.name);
       return e;
