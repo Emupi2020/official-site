@@ -139,30 +139,30 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-name { margin-top: 20px; }
 .request-page #entry-screen {
   max-width: 384px;
-  margin: clamp(56px, 15vh, 144px) auto 0;
-  padding: clamp(22px, 6vw, 32px);
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--card);
+  width: 100%;
+  margin: 0 auto;
 }
-.request-page .entry-brand {
-  margin: 0 0 6px;
-  color: var(--muted);
-  font-size: 14px;
-  text-align: center;
-}
-.request-page #entry-title { margin: 0 0 26px; text-align: center; }
+.request-page .entry-heading { text-align: center; }
+.request-page .entry-mark { display: block; margin: 0 auto 14px; }
+.request-page #entry-title { margin: 0; font-size: clamp(20px, 6vw, 32px); }
 .request-page #entry-title:focus { outline: none; }
+.request-page #entry-form { margin-top: 24px; }
 .request-page .entry-welcome-actions { display: grid; gap: 10px; }
-.request-page .entry-welcome-actions button { width: 100%; min-height: 48px; margin: 0; font-size: 16px; }
-.request-page .entry-welcome-actions .secondary { background: transparent; border: 1px solid var(--border); }
-.request-page .entry-back { min-height: 44px; margin: -10px 0 6px; font-size: 14px; }
+.request-page :is(.entry-welcome-actions > button, #enter-request, .entry-start-option) {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.request-page .entry-welcome-actions button { margin: 0; }
+.request-page #entry-screen .secondary { background: transparent; border: 1px solid var(--border); }
+.request-page .entry-back { min-height: 44px; margin: -4px 0 8px; font-size: 14px; }
 .request-page #entry-form input { min-height: 50px; }
 .request-page #entry-form label[for="entry-name"] { margin-bottom: 3px; }
 .request-page #entry-name-help { margin: 0 0 8px; line-height: 1.5; }
 .request-page #guest-entry-note { margin: 10px 0 0; color: var(--danger); line-height: 1.55; }
-.request-page #enter-request { margin-top: 16px; min-height: 48px; background: #0068d9; font-size: 16px; }
-.request-page #enter-request:hover { background: #005fc6; }
+.request-page #enter-request { margin-top: 16px; }
 .request-page #enter-request:disabled {
   background: color-mix(in srgb, var(--muted) 15%, var(--card));
   color: var(--muted);
@@ -180,21 +180,8 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page #entry-line-feedback { margin: 12px 0 0; text-align: center; }
 .request-page .entry-options { margin-top: 10px; }
-.request-page .entry-start-option {
-  width: 100%;
-  min-height: 48px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: #fff;
-  color: #1d1d1f;
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 600;
-}
 .request-page .entry-signin {
-  margin-top: 20px;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
+  margin-top: 8px;
   text-align: center;
 }
 .request-page .entry-signin button,

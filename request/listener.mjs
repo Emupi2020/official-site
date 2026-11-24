@@ -45,6 +45,8 @@ if (viewport) {
  fitLoginViewport();
 }
 const entryForm = $('entry-form');
+const entryTitle = $('entry-title');
+const welcomeTitle = entryTitle.textContent;
 const entryName = $('entry-name');
 const entryPasscode = $('entry-passcode');
 const rememberedNameKey = 'emupi-request-last-name';
@@ -54,7 +56,7 @@ const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMod
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
- if (focus) (open ? $('request-title') : $('entry-title')).focus();
+ if (focus) (open ? $('request-title') : entryTitle).focus();
 }
 const hasSavedName = Boolean($('name').value.trim());
 entryBusy = hasSavedName;
@@ -75,8 +77,7 @@ function setEntryMode(mode, focus = false) {
  const welcome = mode === 'welcome';
  const guest = mode === 'guest';
  const login = mode === 'login' || mode === 'name-login';
- $('entry-brand').hidden = welcome;
- $('entry-title').textContent = welcome ? $('entry-brand').textContent : login ? 'ログイン' : 'はじめての方';
+ entryTitle.textContent = welcome ? welcomeTitle : login ? 'ログイン' : 'はじめての方';
  $('entry-welcome-actions').hidden = !welcome;
  entryForm.hidden = welcome;
  $('entry-back').hidden = welcome;
@@ -98,7 +99,7 @@ function setEntryMode(mode, focus = false) {
  passcodeFeedback('');
  renderEntryOptions();
  updateEntryButton();
- if (focus) $('entry-title').focus();
+ if (focus) entryTitle.focus();
 }
 function navigateEntry(mode, replace = false) {
  if (entryBusy) return;
