@@ -60,6 +60,9 @@ function setEntryMode(mode) {
  if (entryBusy) return;
  entryMode = mode;
  const guest = mode === 'guest';
+ $('entry-name-help').textContent = mode === 'login'
+  ? '登録したときの名前を入力してください。'
+  : 'えむぴーが見て誰か分かる名前なら、略称やニックネームでもOKです。';
  $('guest-entry-note').hidden = !guest;
  if (guest) $('enter-request').setAttribute('aria-describedby', 'guest-entry-note');
  else $('enter-request').removeAttribute('aria-describedby');
