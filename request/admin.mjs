@@ -1,8 +1,13 @@
 import { categoryOf } from './categories.mjs';
-import { api, $, message } from './common.mjs';
-import { setWheel, spin, settle } from './wheel.mjs';
+import { api, $, message, safeGet, safeSet } from './common.mjs';
+import { setWheel, spin, settle } from './wheel.mjs?spin=duration';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
+const spinDuration = $('spin-duration');
+const spinDurationKey = 'emupi-request-spin-duration';
+const savedDuration = safeGet(spinDurationKey);
+if (spinDuration && [...spinDuration.options].some(option => option.value === savedDuration)) spinDuration.value = savedDuration;
+spinDuration?.addEventListener('change', () => safeSet(spinDurationKey, spinDuration.value));
 let state, busy = false, dismissedResult = null, drawCategory = defaultCategory;
 let refreshVersion = 0;
 const resultKey = entry => entry ? `${entry.id}:${entry.drawnAt}:${entry.status}` : null;
@@ -118,7 +123,7 @@ async function refresh(animate=false){
     const next = await api('/api/admin');
     if (version !== refreshVersion) return;
     $('login').hidden=true;$('dashboard').hidden=false;
-    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,[...poolFor(next), current].map(e=>e.song));}}
+    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song, poolFor(next).map(entry => entry.song), Number(spinDuration?.value || 5) * 1000);}}
     state=next;render();
   }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
 }

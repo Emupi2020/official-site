@@ -31,7 +31,7 @@
   inset: 50% auto auto 50%;
   z-index: 1;
   transform: translate(-50%, -50%);
-  width: clamp(48px, 9vmin, 72px);
+  width: clamp(60px, 14vmin, 84px);
   height: auto;
   aspect-ratio: 1;
   min-height: 0;
@@ -57,3 +57,22 @@
   max-height: 100%;
   overflow: auto;
 }
+
+.roulette-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+.roulette-settings label { margin: 0; }
+.roulette-settings select {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+}
+.roulette-settings + .launch-roulette { margin-top: 12px; }

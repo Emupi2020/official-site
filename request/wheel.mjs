@@ -4,7 +4,7 @@ let labels = ['リクエストを待っています'];
 const canvas = $('wheel'), ctx = canvas.getContext('2d');
 function paint(rotation = angle) {
   const size = 800, center = size / 2, radius = center - 12;
-  canvas.width = size; canvas.height = size;
+  ctx.clearRect(0, 0, size, size);
   const dark = matchMedia('(prefers-color-scheme: dark)').matches;
   const colors = dark ? ['#173c69','#225794','#16304e','#24466e','#306baf','#25405c'] : ['#dceafe','#edf3fd','#bad7fb','#e4edf8','#caddf4','#f3f6fa'];
   const count = labels.length, arc = 2 * Math.PI / count;
@@ -17,17 +17,51 @@ function paint(rotation = angle) {
   ctx.setTransform(1,0,0,1,0,0);
 }
 export function setWheel(songs) { labels = songs.length ? songs.slice(0,100) : ['リクエストを待っています']; paint(); }
-export function settle(song,songs) { labels=[...songs.slice(0,99),song];const index=labels.length-1;angle=-(index+.5)*2*Math.PI/labels.length;paint(); }
-export async function spin(song, songs) {
-  // Use the server-selected winner as a real segment. Never re-draw in the browser.
-  const visual = songs.length ? songs.slice(0,100) : [song];
-  let index = visual.indexOf(song);
-  if(index<0){visual[visual.length-1]=song;index=visual.length-1;}
-  labels=visual;
-  const target = -(index+.5)*2*Math.PI/labels.length;
-  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const from=angle, full=2*Math.PI, end=from+full*5+((target-from)%full+full)%full;
-  if(reduced){angle=end;paint();return;}
-  await new Promise(resolve=>{const start=performance.now();function frame(now){const t=Math.min(1,(now-start)/3000);angle=from+(end-from)*(1-Math.pow(1-t,4));paint();if(t<1)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame);});
+export function settle(song, songs) {
+  const target = placeWinner(song, songs);
+  angle = target;
+  paint();
+}
+function placeWinner(song, songs) {
+  labels = [...songs.slice(0, 99), song];
+  const winnerIndex = labels.length - 1;
+  return -(winnerIndex + .5) * 2 * Math.PI / labels.length;
+}
+// Integrate the acceleration, coast, and braking speeds to get the distance travelled.
+function spinProgress(t) {
+  const accelerationEnd = .12;
+  const brakingStart = .52;
+  const brakingTime = 1 - brakingStart;
+  const travel = (1 + brakingStart - accelerationEnd) / 2;
+  if (t < accelerationEnd) {
+    const ramp = t / accelerationEnd;
+    return accelerationEnd * (ramp ** 3 - ramp ** 4 / 2) / travel;
+  }
+  if (t < brakingStart) return (t - accelerationEnd / 2) / travel;
+  const ramp = (t - brakingStart) / brakingTime;
+  return (brakingStart - accelerationEnd / 2 + brakingTime * (ramp - ramp ** 3 + ramp ** 4 / 2)) / travel;
+}
+export async function spin(song, songs, duration) {
+  const target = placeWinner(song, songs);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    angle = target;
+    paint();
+    return;
+  }
+  const from = angle;
+  const fullTurn = 2 * Math.PI;
+  const turns = Math.max(3, Math.round(duration / 650));
+  const distance = fullTurn * turns + ((target - from) % fullTurn + fullTurn) % fullTurn;
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      angle = t === 1 ? target : from + distance * spinProgress(t);
+      paint();
+      if (t < 1) requestAnimationFrame(frame);
+      else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
 }
 paint();
