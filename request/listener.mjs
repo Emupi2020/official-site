@@ -58,6 +58,9 @@ function setEntryMode(mode) {
  if (entryBusy) return;
  entryMode = mode;
  const guest = mode === 'guest';
+ $('guest-entry-note').hidden = !guest;
+ if (guest) $('enter-request').setAttribute('aria-describedby', 'guest-entry-note');
+ else $('enter-request').removeAttribute('aria-describedby');
  $('passcode-field').hidden = guest;
  $('passcode-options').hidden = !guest || !account.passcodeEnabled;
  $('cancel-passcode').hidden = guest;
