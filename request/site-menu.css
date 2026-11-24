@@ -26,7 +26,7 @@ body.listener-layout {
   display: flex;
   flex-direction: column;
 }
-.listener-content > .site-footer { flex-shrink: 0; margin-top: auto; }
+.listener-content > .site-footer { flex-shrink: 0; margin-top: auto; padding-block: 16px; }
 .listener-nav {
   padding-inline: 0;
   border-bottom-color: var(--border);
@@ -53,7 +53,7 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
 .request-menu-content {
   max-width: 480px;
   margin: auto;
-  padding: 4px max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding: 12px max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 .request-menu .request-menu-link {
   width: 100%;
@@ -105,10 +105,6 @@ html:has(.listener-layout #request-screen[hidden]),
   margin: 0 auto;
   padding-block: 16px;
 }
-@media (max-height: 760px) {
-  .listener-layout:has(#request-screen[hidden]) .site-footer { padding-block: 16px; }
-}
-
 .listener-layout:has(#menu-page[hidden]):has(#entry-screen:not([hidden]) #entry-welcome-actions:not([hidden])) {
   .listener-content { overflow: clip; }
   .request-page {
