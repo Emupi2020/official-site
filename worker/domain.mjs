@@ -52,7 +52,15 @@ export function publicState(state) {
 }
 export function ownRequests(state, hashes) {
   const allowed = new Set(hashes);
-  return state.entries.filter(e => allowed.has(e.tokenHash)).map(e => ({ id: e.id, artist: e.artist, song: e.song, category: categoryOf(e), round: e.round, status: e.status, createdAt: e.createdAt, playedThisSession: state.sung.includes(e.songKey) }));
+  return state.entries.filter(e => allowed.has(e.tokenHash)).map(e => listenerRequest(state, e));
+}
+function listenerRequest(state, entry) {
+  const { id, artist, song, round, status, createdAt } = entry;
+  return { id, artist, song, category: categoryOf(entry), round, status, createdAt, playedThisSession: state.sung.includes(entry.songKey) };
+}
+export function requestsByName(state, name) {
+  const key = nameKey(text(name, 'Pocochaの名前', 50));
+  return state.entries.filter(entry => nameKey(entry.name) === key).map(entry => listenerRequest(state, entry));
 }
 export function canRename(state, entry) {
   return [state.round, state.round + 1].includes(entry.round) && ['pending', 'deferred'].includes(entry.status);
@@ -75,7 +83,7 @@ export function submit(state, input, tokenHash, now = Date.now()) {
     throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
   }
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.usedNames.includes(key))) {
-    throw new Problem(`この名前では、${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。送信したときのブラウザーで控えを確認できます。`, 409, 'duplicate_request');
+    throw new Problem(`この名前では、${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
   }
   if (state.entries.length >= 3000) throw new Problem('応募が上限に達しました。配信者にお知らせください。', 409);
   const songKey = songIdentity(artist, song, state.suggestions);

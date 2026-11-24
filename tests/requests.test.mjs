@@ -53,7 +53,25 @@ test('30日経過の応募者情報を消し匿名候補は保持',()=>{const s=
 function env(){return{DB:database(),PUBLIC_ORIGIN:'https://emupi2020.github.io',SESSION_SECRET:'x'.repeat(40),ASSETS:{fetch:()=>new Response('static')}};}
 function req(path,data,token='a'.repeat(40),origin='https://emupi2020.github.io'){return new Request('https://requests.example'+path,{method:data?'POST':'GET',headers:{Origin:origin,'Content-Type':'application/json','X-Request-Token':token},body:data?JSON.stringify(data):undefined});}
 test('実DBの同時応募で同名は1件だけ成功',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});const results=await Promise.all(Array.from({length:8},(_,i)=>worker.fetch(req('/api/requests',input(),String(i).repeat(40)),e)));assert.equal(results.filter(r=>r.status===201).length,1);assert.equal(results.filter(r=>r.status===409).length,7);});
-test('修正トークンのない端末から既存応募は取得も変更もできない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input()),e);const own=await(await worker.fetch(req('/api/mine'),e)).json();assert.equal(own.entry.name,'リスナーA');const other=await(await worker.fetch(req('/api/mine',undefined,'b'.repeat(40)),e)).json();assert.equal(other.entry,null);const update=new Request('https://requests.example/api/mine',{method:'PATCH',headers:{Origin:e.PUBLIC_ORIGIN,'Content-Type':'application/json','X-Request-Token':'b'.repeat(40)},body:JSON.stringify({name:'乗っ取り'})});assert.equal((await worker.fetch(update,e)).status,404);});
+test('修正トークンなしでは編集用の控えを取得できず変更もできない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input()),e);const own=await(await worker.fetch(req('/api/mine'),e)).json();assert.equal(own.entry.name,'リスナーA');const other=await(await worker.fetch(req('/api/mine',undefined,'b'.repeat(40)),e)).json();assert.equal(other.entry,null);const update=new Request('https://requests.example/api/mine',{method:'PATCH',headers:{Origin:e.PUBLIC_ORIGIN,'Content-Type':'application/json','X-Request-Token':'b'.repeat(40)},body:JSON.stringify({name:'乗っ取り'})});assert.equal((await worker.fetch(update,e)).status,404);});
+test('名前の再入力では一致する受付と予約を閲覧でき、編集情報や期限切れは返さない', async () => {
+  const e = env();
+  const { mutate } = await import('../worker/index.mjs');
+  await mutate(e, state => {
+    submit(state, input('別の名前', '別の曲'), 'other');
+    submit(state, input('Listener A', '今回の曲'), 'current');
+    submit(state, { ...input('Listener A', '予約曲'), round: 2 }, 'reserved');
+    submit(state, input('Listener A', '期限切れ', '別の歌手'), 'expired', Date.now() - 31 * 86400000);
+  });
+  const response = await worker.fetch(req('/api/requests-by-name', {name: ' ＬＩＳＴＥＮＥＲ　Ａ '}, ''), e);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  const {entries} = await response.json();
+  assert.deepEqual(entries.map(entry => [entry.song, entry.round]), [['今回の曲', 1], ['予約曲', 2]]);
+  for (const entry of entries) {
+    assert(!('name' in entry) && !('tokenHash' in entry) && !('editable' in entry) && !('songEditable' in entry));
+  }
+});
 test('未認証の管理API・外部Originによる書込みを拒否',async()=>{const e=env();assert.equal((await worker.fetch(req('/api/admin'),e)).status,401);assert.equal((await worker.fetch(req('/api/requests',input(),'a'.repeat(40),'https://evil.example'),e)).status,403);});
 test('本人履歴APIはトークンで限定し空・不正な照会で他人を返さない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input('PRIVATE_NAME')),e);const result=await(await worker.fetch(req('/api/my-requests',{tokens:['a'.repeat(40)]}),e)).json();assert.equal(result.entries.length,1);assert(!JSON.stringify(result).includes('PRIVATE_NAME'));const other=await(await worker.fetch(req('/api/my-requests',{tokens:['b'.repeat(40)]}),e)).json();assert.equal(other.entries.length,0);assert.equal((await worker.fetch(req('/api/my-requests',{tokens:['bad']}),e)).status,400);});
 test('管理セッションの署名・期限・パスワード変更を検証',async()=>{const e=env();e.ADMIN_PASSWORD_HASH=await passwordRecord('test-password');const signed=await sign(e,{kind:'admin',passwordVersion:await hash(e.ADMIN_PASSWORD_HASH),exp:Date.now()+60000});assert(await verify(e,signed));assert.equal(await verify(e,signed+'broken'),null);assert.equal(await verify(e,await sign(e,{exp:Date.now()-1})),null);const r=new Request('https://requests.example/api/admin',{headers:{Cookie:`__Host-emupi_admin=${signed}`}});assert(await isAdmin(r,e));e.ADMIN_PASSWORD_HASH=await passwordRecord('changed-password');assert.equal(await isAdmin(r,e),false);});

@@ -1,4 +1,4 @@
-import { initialState, publicState, ownRequests, receipt, submit, rename, canRename, editSong, adminAction, songStatus, Problem, prune } from './domain.mjs';
+import { initialState, publicState, ownRequests, requestsByName, receipt, submit, rename, canRename, editSong, adminAction, songStatus, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { catalog } from '../request/catalog.mjs';
 
@@ -24,9 +24,9 @@ async function requestToken(req) {
   if (!value || !/^[a-zA-Z0-9_-]{32,100}$/.test(value)) throw new Problem('応募情報を確認できません。ページを開き直してください。');
   return hash(value);
 }
-async function limit(req, env) {
+async function limit(req, env, scope = '') {
   const ip = req.headers.get('CF-Connecting-IP') || 'local';
-  const minute = Math.floor(Date.now() / 60000), key = await hash(`${env.SESSION_SECRET || 'local'}:${ip}:${minute}`);
+  const minute = Math.floor(Date.now() / 60000), key = await hash(`${env.SESSION_SECRET || 'local'}:${ip}:${minute}${scope}`);
   const value = await env.DB.prepare('INSERT INTO rate_limits(key, count, expires_at) VALUES (?, 1, ?) ON CONFLICT(key) DO UPDATE SET count = count + 1 RETURNING count').bind(key, Date.now() + 120000).first();
   if (value.count > 20) throw new Problem('送信が続いています。少し待ってお試しください。', 429);
 }
@@ -57,6 +57,13 @@ async function handle(req, env) {
     const input = await body(req);
     const hashes = await requestTokenHashes(input?.tokens);
     return json({ entries: ownRequests((await read(env)).state, hashes) });
+  }
+  if (path === '/api/requests-by-name' && req.method === 'POST') {
+    await limit(req, env, ':name-lookup');
+    const input = await body(req);
+    const { state } = await read(env);
+    prune(state);
+    return json({ entries: requestsByName(state, input?.name) });
   }
   if (path === '/api/requests' && req.method === 'POST') {
     await limit(req, env);

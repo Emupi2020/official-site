@@ -1,6 +1,7 @@
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
 let state, items=[], tokens, busy=false, nameEditing=false;
+let receipts = new Map(), myRequests = [], namedRequests = [], loadedName = '', lookupTimer, lookupVersion = 0;
 try { tokens=JSON.parse(safeGet('emupi-request-tokens')||'{}'); } catch { tokens={}; }
 const duplicateStorageKey = 'emupi-duplicate-requests';
 let confirmedDuplicates = [];
@@ -14,9 +15,9 @@ function renderDuplicateSlots() {
  for (const slot of slots) {
   const key = duplicateKey(slot.round, slot.category, $('name').value);
   const duplicate = !slot.entry && confirmedDuplicates.includes(key);
-  const showError = duplicate && slot.rejectedSubmission?.key === key && Date.now() < slot.rejectedSubmission.until;
+  const showError = slot.rejectedSubmission?.key === key && Date.now() < slot.rejectedSubmission.until;
   const receipt = part(slot, '.slot-duplicate');
-  receipt.hidden = !duplicate;
+  receipt.hidden = !duplicate && !showError;
   receipt.classList.toggle('has-error', showError);
   part(slot, '.duplicate-error').hidden = !showError;
   part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
@@ -63,13 +64,45 @@ function renderHistory(myRequests){
 async function refresh(){
  const next=await api('/api/state');
  const keys=[...new Set(slots.map(slot=>{const round=next.round+Number(slot.reserved);return tokens[`${round}:${slot.category}`]||tokens[round];}).filter(Boolean))];
- const receipts=new Map(await Promise.all(keys.map(async token=>[token,(await api('/api/mine',{token})).entry])));
  const savedTokens=Object.values(tokens).slice(-100);
- const myRequests=savedTokens.length?(await api('/api/my-requests',{method:'POST',data:{tokens:savedTokens}})).entries:[];
+ const [owned, history] = await Promise.all([
+  Promise.all(keys.map(async token => [token, (await api('/api/mine', {token})).entry])),
+  savedTokens.length ? api('/api/my-requests', {method:'POST', data:{tokens:savedTokens}}) : {entries:[]}
+ ]);
+ receipts = new Map(owned);
+ myRequests = history.entries;
  state=next;
+ renderRequests();
+ await refreshNameRequests();
+}
+function lookupName() {
+ return (nameEditing ? nameBeforeEdit : $('name').value).normalize('NFKC').trim();
+}
+async function refreshNameRequests(reportError = false) {
+ const name = lookupName();
+ const version = ++lookupVersion;
+ if (!name || nameEditing) return;
+ try {
+  const {entries} = await api('/api/requests-by-name', {method:'POST', data:{name}});
+  if (version !== lookupVersion || name !== lookupName()) return;
+  loadedName = name;
+  namedRequests = entries;
+  if (entries.length && !nameEditing) safeSet('emupi-request-name', name);
+  if (state) renderRequests();
+ } catch (error) {
+  if (reportError && version === lookupVersion && name === lookupName() && !nameEditing) nameFeedback(error.message, true);
+ }
+}
+function renderRequests() {
+ const restored = loadedName === lookupName() ? namedRequests : [];
  for(const slot of slots){
-  slot.round=state.round+Number(slot.reserved);const token=tokens[`${slot.round}:${slot.category}`]||tokens[slot.round];const entry=receipts.get(token);
-  slot.entry=entry&&entry.round===slot.round&&(entry.category||classifyArtist(entry.artist))===slot.category?entry:null;slot.token=slot.entry?token:null;
+  slot.round = state.round + Number(slot.reserved);
+  const token = tokens[`${slot.round}:${slot.category}`] || tokens[slot.round];
+  const entry = receipts.get(token);
+  const matches = candidate => candidate && candidate.round === slot.round && (candidate.category || classifyArtist(candidate.artist)) === slot.category;
+  const owned = matches(entry);
+  slot.entry = owned ? entry : restored.find(matches) || null;
+  slot.token = owned ? token : null;
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
@@ -77,7 +110,8 @@ async function refresh(){
  }
  renderDuplicateSlots();
  renderNameControls();
- renderHistory(myRequests);
+ const history = new Map([...restored, ...myRequests].map(entry => [entry.id, entry]));
+ renderHistory([...history.values()].sort((a, b) => a.createdAt - b.createdAt));
 }
 async function confirmSong(data){
  const status=await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);if(!status.unknownAt)return true;
@@ -291,7 +325,15 @@ for(const slot of slots){
   }
   input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);lock(busy);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
 }
-$('name').addEventListener('input', () => { renderDuplicateSlots(); lock(busy); });
+$('name').addEventListener('input', () => {
+ if (nameEditing) return;
+ nameFeedback('');
+ clearTimeout(lookupTimer);
+ ++lookupVersion;
+ if (state) renderRequests();
+ lock(busy);
+ if (lookupName()) lookupTimer = setTimeout(() => refreshNameRequests(true), 350);
+});
 lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try{await refresh();items=(await api('/api/suggestions')).items;message('');}catch(error){message(error.message,true);}
