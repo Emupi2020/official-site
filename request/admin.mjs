@@ -64,9 +64,9 @@ function render() {
   renderRoulette(current);
   $('undo').disabled=busy||!state.undo;
   $('cant-sing').disabled=busy||current?.status!=='selected';
-  $('current-info').hidden=!current;
+  $('current-info').hidden = current?.status !== 'selected';
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
-  if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
+  if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
   const tables = { yamapi: $('entries-yamapi'), other: $('entries-other') };
   const processed = $('entries-processed');
