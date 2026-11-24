@@ -27,19 +27,10 @@ function placeWinner(song, songs) {
   const winnerIndex = labels.length - 1;
   return -(winnerIndex + .5) * 2 * Math.PI / labels.length;
 }
-// Integrate the acceleration, coast, and braking speeds to get the distance travelled.
+// After a short buildup, speed decays continuously to zero.
 function spinProgress(t) {
-  const accelerationEnd = .12;
-  const brakingStart = .52;
-  const brakingTime = 1 - brakingStart;
-  const travel = (1 + brakingStart - accelerationEnd) / 2;
-  if (t < accelerationEnd) {
-    const ramp = t / accelerationEnd;
-    return accelerationEnd * (ramp ** 3 - ramp ** 4 / 2) / travel;
-  }
-  if (t < brakingStart) return (t - accelerationEnd / 2) / travel;
-  const ramp = (t - brakingStart) / brakingTime;
-  return (brakingStart - accelerationEnd / 2 + brakingTime * (ramp - ramp ** 3 + ramp ** 4 / 2)) / travel;
+  const remaining = 1 - t;
+  return 1 - (5 * remaining ** 3 - remaining ** 15) / 4;
 }
 export async function spin(song, songs, duration) {
   const target = placeWinner(song, songs);
@@ -56,12 +47,13 @@ export async function spin(song, songs, duration) {
     const start = performance.now();
     function frame(now) {
       const t = Math.min(1, (now - start) / duration);
-      angle = t === 1 ? target : from + distance * spinProgress(t);
+      angle = from + distance * spinProgress(t);
       paint();
       if (t < 1) requestAnimationFrame(frame);
       else resolve();
     }
     requestAnimationFrame(frame);
   });
+  angle = target;
 }
 paint();

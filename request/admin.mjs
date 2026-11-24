@@ -1,6 +1,6 @@
 import { categoryOf } from './categories.mjs';
 import { api, $, message, safeGet, safeSet } from './common.mjs';
-import { setWheel, spin, settle } from './wheel.mjs?spin=duration';
+import { setWheel, spin, settle } from './wheel.mjs?spin=natural-stop';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
 const spinDuration = $('spin-duration');
