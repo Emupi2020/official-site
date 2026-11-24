@@ -148,7 +148,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #entry-title:focus { outline: none; }
 .request-page #entry-form { margin-top: 24px; }
 .request-page .entry-welcome-actions { display: grid; gap: 10px; }
-.request-page :is(.entry-welcome-actions > button, #enter-request, .entry-start-option) {
+.request-page :is(.entry-welcome-actions > button, #enter-request) {
   width: 100%;
   min-height: 48px;
   border-radius: 999px;
@@ -179,20 +179,19 @@ body:has(.request-page) { background: #f2f2f7; }
   font-size: 14px;
 }
 .request-page #entry-line-feedback { margin: 12px 0 0; text-align: center; }
-.request-page .entry-options { margin-top: 10px; }
-.request-page .entry-signin {
+.request-page .entry-secondary-links {
   margin-top: 8px;
   text-align: center;
 }
-.request-page .entry-signin button { min-height: 44px; font-size: 14px; }
-.request-page .entry-login-links {
+.request-page .entry-secondary-links button { min-height: 44px; font-size: 14px; }
+.request-page .entry-secondary-links:has(> button:not([hidden]) + button:not([hidden])) {
   display: grid;
   grid-template-columns: minmax(0, max-content) 1px minmax(0, max-content);
   justify-content: center;
   align-items: center;
   column-gap: 12px;
 }
-.request-page .entry-login-links::before {
+.request-page .entry-secondary-links:has(> button:not([hidden]) + button:not([hidden]))::before {
   content: '';
   grid-area: 1 / 2;
   height: 14px;

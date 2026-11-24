@@ -100,7 +100,7 @@ function setEntryMode(mode, focus = false) {
  $('entry-signin').hidden = !guest && mode !== 'register';
  $('entry-login-links').hidden = !login;
  $('choose-name-login').textContent = mode === 'name-login' ? 'パスコードでログイン' : '名前だけでログイン';
- $('guest-options').hidden = mode !== 'register';
+ $('choose-registration-mode').textContent = guest ? 'パスコードを設定して始める' : '名前だけで始める';
  entryPasscode.required = usesPasscode(mode);
  entryPasscode.value = '';
  entryPasscode.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
@@ -144,9 +144,8 @@ $('entry-back').onclick = () => {
  if (window.history.state?.fromWelcome) window.history.back();
  else navigateEntry('welcome', true);
 };
-$('choose-passcode').onclick = () => navigateEntry('register', true);
+$('choose-registration-mode').onclick = () => navigateEntry(entryMode === 'register' ? 'guest' : 'register', true);
 $('choose-passcode-login').onclick = () => navigateEntry('login', true);
-$('choose-guest').onclick = () => navigateEntry('guest', true);
 $('choose-name-login').onclick = () => navigateEntry(entryMode === 'login' ? 'name-login' : 'login', true);
 $('choose-register').onclick = () => navigateEntry(registrationMode(), true);
 $('manage-passcode').onclick = () => openPasscode('register');
@@ -326,7 +325,7 @@ function renderRequests() {
 }
 function renderEntryOptions() {
  $('entry-line').hidden = entryMode !== 'login' || !account.enabled || account.signedIn;
- $('passcode-options').hidden = entryMode !== 'guest' || !account.passcodeEnabled || account.signedIn;
+ $('choose-registration-mode').hidden = entryMode === 'guest' && (!account.passcodeEnabled || account.signedIn);
 }
 function renderAccount() {
  renderEntryOptions();
