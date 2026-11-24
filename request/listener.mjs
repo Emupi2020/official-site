@@ -39,12 +39,16 @@ async function confirmSong(data){
  $('unknown-description').textContent=(status.reasons||[{reason:'unknown',at:status.unknownAt}]).map(item=>item.reason==='no_audio'?`${formatter.format(item.at)}時点では、この曲の音源がありませんでした。`:`${formatter.format(item.at)}時点では、えむぴーがこの曲をまだ覚えていませんでした。`).join('\n')+'\nそれでもリクエストしますか？';
  const dialog=$('unknown-warning');dialog.returnValue='';const confirmed=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='request'),{once:true});dialog.showModal();});if(confirmed)data.unknownAcknowledgedAt=status.unknownAt;return confirmed;
 }
-function hideSuggestions(except){for(const slot of slots)for(const kind of ['artist','song']){const input=field(slot,kind);if(input!==except){field(slot,`${kind}-suggestions`).hidden=true;input.setAttribute('aria-expanded','false');}}}
+function hideSuggestions(except){for(const slot of slots)for(const kind of ['artist','song']){const input=field(slot,kind);if(input.tagName!=='SELECT'&&input!==except){field(slot,`${kind}-suggestions`).hidden=true;input.setAttribute('aria-expanded','false');}}}
 function suggest(slot,kind){
  const input=field(slot,kind),box=field(slot,`${kind}-suggestions`),value=normalize(input.value);hideSuggestions(input);box.replaceChildren();if(!value){box.hidden=true;input.setAttribute('aria-expanded','false');return;}
  let candidates;
  if(kind==='artist')candidates=[...new Map(items.filter(i=>classifyArtist(i.artist)===slot.category&&[i.artist,...(i.artistAliases||[])].some(v=>normalize(v).includes(value))).map(i=>[i.artist,{label:i.artist}])).values()];
- else {const artist=normalize(field(slot,'artist').value),artists=new Set(items.filter(i=>[i.artist,...(i.artistAliases||[])].some(v=>normalize(v)===artist)).map(i=>normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&[i.song,...(i.aliases||[])].some(v=>normalize(v).includes(value))).map(i=>({label:`${i.song} · ${i.artist}`,item:i}));}
+ else {const artistField = field(slot, 'artist');
+  const artist = normalize(artistField.value);
+  const artists = artistField.tagName === 'SELECT'
+    ? new Set([artist])
+    : new Set(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&[i.song,...(i.aliases||[])].some(v=>normalize(v).includes(value))).map(i=>({label:`${i.song} · ${i.artist}`,item:i}));}
  for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';button.textContent=candidate.label;button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');input.focus();};box.append(button);}
  box.hidden=!box.children.length;input.setAttribute('aria-expanded',String(!box.hidden));
 }
@@ -58,7 +62,18 @@ for(const slot of slots){
  };
  part(slot,'.slot-rename').onclick=()=>{const form=part(slot,'.slot-rename-form');form.hidden=!form.hidden;slot.renameToken=slot.token;field(slot,'new-name').value=slot.entry.name;if(!form.hidden)field(slot,'new-name').focus();};
  part(slot,'.slot-rename-form').onsubmit=async event=>{event.preventDefault();if(busy)return;lock(true);feedback(slot,'');try{const mine=(await api('/api/mine',{method:'PATCH',data:{name:field(slot,'new-name').value},token:slot.renameToken})).entry;safeSet('emupi-request-name',mine.name);$('name').value=mine.name;event.target.hidden=true;await refresh();}catch(error){feedback(slot,error.message);}finally{lock(false);}};
- for(const kind of ['artist','song']){const input=field(slot,kind);input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
+ for(const kind of ['artist','song']){const input=field(slot,kind);
+  if (input.tagName === 'SELECT') {
+   input.addEventListener('focus', () => hideSuggestions());
+   input.addEventListener('change', () => {
+    slot.draftRound ??= slot.round;
+    field(slot, 'song').value = '';
+    hideSuggestions();
+    feedback(slot, '');
+   });
+   continue;
+  }
+  input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
 }
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try{await refresh();items=(await api('/api/suggestions')).items;message('');}catch(error){message(error.message,true);}

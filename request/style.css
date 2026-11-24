@@ -37,9 +37,12 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-field { position: relative; padding: 15px 20px 11px; }
 .request-page .request-field + .request-field::before { content: ''; position: absolute; top: 0; right: 20px; left: 20px; height: 1px; background: var(--border); }
 .request-page .request-field label { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; font-weight: 400; }
-.request-page .request-field input { min-height: 43px; padding: 7px 0 3px; border: 0; border-radius: 5px; background: transparent; font-family: inherit; font-size: 17px; line-height: 1.5; }
+.request-page .request-field select { display:block; width:100%; color:var(--text); }
+.request-page .request-field input,
+.request-page .request-field select { min-height: 43px; padding: 7px 0 3px; border: 0; border-radius: 5px; background: transparent; font-family: inherit; font-size: 17px; line-height: 1.5; }
 .request-page .request-field:focus-within label { color: var(--accent); }
-.request-page .request-field input:focus { outline: 0; box-shadow: 0 2px 0 -1px var(--accent); }
+.request-page .request-field input:focus,
+.request-page .request-field select:focus-visible { outline: 0; box-shadow: 0 2px 0 -1px var(--accent); }
 .request-page .primary { min-height: 52px; margin-top: 24px; border-radius: 14px; font: 600 17px/1.4 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Noto Sans JP', sans-serif; background: #007aff; transition: background .15s, transform .15s; }
 .request-page .primary:hover { background: #0071ed; filter: none; }
 .request-page .primary:active { transform: scale(.985); }
