@@ -96,6 +96,16 @@ body:has(.request-page) { background: #f2f2f7; }
 .category-choice{display:flex;gap:8px;margin-top:12px}.category-choice button{flex:1;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:12px 8px;font-size:13px}.category-choice button[aria-pressed=true]{background:var(--soft);border-color:var(--accent);color:var(--accent)}.draw-category-label{max-width:360px;margin:24px auto 8px}#draw-category{display:block;width:min(100%,360px);margin:0 auto;min-height:48px;border:1px solid var(--border);border-radius:12px;padding:10px 14px;font:inherit;color:var(--text);background:var(--card)}
 
 .request-page .slot-note { margin: 0; font-size: 13px; text-wrap: pretty; }
+.request-page .request-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.request-page .request-top h1 { margin: 0; }
+.request-page .request-top:has(#line-logout:not([hidden])) h1 { font-size: clamp(20px, 6vw, 32px); }
+.request-page .request-top #line-logout { min-height: 44px; flex-shrink: 0; font-size: 14px; white-space: nowrap; }
 .request-page :is(.request-name, .request-block) {
   margin: 12px 0 0;
   padding: 14px 16px;

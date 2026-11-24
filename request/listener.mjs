@@ -126,11 +126,12 @@ entryForm.onsubmit = async event => {
 };
 window.addEventListener('popstate', event => {
  if (typeof event.state?.requestScreen !== 'boolean') return;
- if (!event.state.requestScreen) {
+ const open = event.state.requestScreen && Boolean(lookupName());
+ if (!open) {
   entryName.value = lookupName();
   updateEntryButton();
  }
- showRequestScreen(event.state.requestScreen, true);
+ showRequestScreen(open, true);
 });
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
@@ -476,7 +477,35 @@ async function accountAction(path, data, notice) {
 }
 $('line-link').onclick = () => accountAction('/api/listener-account', {tokens: Object.values(tokens).slice(-100)},
  result => result.linked ? `${result.linked}件のリクエストを連携しました。` : '新しく連携できるリクエストはありません。');
-$('line-logout').onclick = () => accountAction('/auth/line/logout', {}, () => 'ログアウトしました。');
+$('line-logout').onclick = async () => {
+ if (busy) return;
+ lock(true);
+ try {
+  await api('/auth/line/logout', {method:'POST', data:{}});
+  ++lookupVersion;
+  clearTimeout(lookupTimer);
+  nameEditing = false;
+  $('name').value = '';
+  entryName.value = '';
+  safeSet('emupi-request-name', '');
+  setEntryMode('guest');
+  for (const slot of slots) {
+   stopEditing(slot);
+   feedback(slot, '');
+  }
+  $('my-history').open = false;
+  $('line-feedback').textContent = '';
+  $('entry-line-feedback').textContent = 'ログアウトしました。';
+  $('entry-line-feedback').hidden = false;
+  window.history.replaceState({requestScreen:false}, '');
+  showRequestScreen(false, true);
+  await refresh();
+ } catch (error) {
+  message(error.message, true);
+ } finally {
+  lock(false);
+ }
+};
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has('line')) {
  $('my-history').open = true;
