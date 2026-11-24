@@ -73,7 +73,8 @@ function suggest(kind) {
     candidates = [...new Map(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v).includes(value))).map(i => [i.artist, { label: i.artist }])).values()];
   } else {
     const a = normalize($('artist').value);
-    candidates = items.filter(i => [i.song, ...(i.aliases || [])].some(v => normalize(v).includes(value))).sort((x,y) => Number([y.artist,...(y.artistAliases||[])].some(v=>normalize(v)===a))-Number([x.artist,...(x.artistAliases||[])].some(v=>normalize(v)===a))).map(i => ({ label: `${i.song} · ${i.artist}`, item: i }));
+    const artists = new Set(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v) === a)).map(i => normalize(i.artist)));
+    candidates = items.filter(i => (!a || artists.has(normalize(i.artist))) && [i.song, ...(i.aliases || [])].some(v => normalize(v).includes(value))).map(i => ({ label: `${i.song} · ${i.artist}`, item: i }));
   }
   for (const candidate of candidates.slice(0, 7)) {
     const button = document.createElement('button'); button.type = 'button'; button.textContent = candidate.label;
