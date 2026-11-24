@@ -27,6 +27,7 @@ spinDuration?.addEventListener('change', () => safeSet(spinDurationKey, spinDura
 const spinTime = () => Number(spinDuration?.value || 5) * 1000;
 let state, busy = false, dismissedResult = null, drawCategory = defaultCategory;
 let refreshVersion = 0;
+const hasWinner = entry => entry?.status === 'selected' || (entry?.status === 'done' && Boolean(entry.autoDone));
 const resultKey = entry => entry ? `${entry.id}:${entry.drawnAt}:${entry.status}` : null;
 function stageMessage(value){$('roulette-message').hidden=!value;$('roulette-message').textContent=value;}
 function node(tag, text, className) { const e=document.createElement(tag); e.textContent=text;if(className)e.className=className;return e; }
@@ -149,7 +150,7 @@ async function action(action, extra = {}) {
   const drawing = ['draw', 'advance'].includes(action);
   try {
     if (!await postAdminAction({action, ...extra, ...(drawing ? {category:drawCategory} : {})})) return;
-    await refresh(drawing);
+    await refresh(drawing, action === 'selectSong');
     if (action === 'undo' && state) undoFeedback('直前の操作を取り消しました。');
   } catch (error) {
     if (action === 'undo') undoFeedback(error.message, true);
@@ -180,23 +181,18 @@ function render() {
   $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件${held ? ' · 一時保留 '+held+'件' : ''}`;
   const current=state.entries.find(e=>e.id===state.current);
   renderRoulette(current);
-  const selected = current?.status === 'selected';
+  const selected = hasWinner(current);
   $('current-info').hidden = !selected && !state.undo && $('undo-feedback').hidden;
   $('current-song-details').hidden = !selected;
   $('undo').hidden = !selected && !state.undo;
   $('undo').disabled = busy || !state.undo;
   $('cant-sing').hidden = !selected;
   $('cant-sing').disabled = busy || !selected;
-  const markSungButton = $('mark-sung');
-  if (markSungButton) {
-    markSungButton.hidden = !selected;
-    markSungButton.disabled = busy || !selected;
-  }
   const currentLabel = $('current-song-label');
   if (currentLabel) currentLabel.textContent = current?.manualPick ? '手動選択中の曲' : '当選中の曲';
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;}
-  if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
+  if(!selected)$('cant-sing-dialog').close('cancel');
   const tables = { yamapi: $('entries-yamapi'), other: $('entries-other') };
   const processed = $('entries-processed');
   processed?.replaceChildren();
@@ -233,7 +229,7 @@ function renderRoulette(current = state.entries.find(entry => entry.id === state
   const selected = current?.status === 'selected';
   const result = $('result');
   const wasHidden = result.hidden;
-  result.hidden = !$('roulette-screen').open || !selected || dismissedResult === resultKey(current);
+  result.hidden = !$('roulette-screen').open || !hasWinner(current) || dismissedResult === resultKey(current);
   document.querySelector('.broadcast-wheel').inert = !result.hidden;
   $('close-roulette').hidden = !result.hidden;
   $('draw').setAttribute('aria-label', current ? '次を回す' : '回す');
@@ -247,21 +243,25 @@ function renderRoulette(current = state.entries.find(entry => entry.id === state
   }
   if (wasHidden && !result.hidden) $('dismiss-result').focus();
 }
-async function refresh(animate=false){
+async function refresh(animate = false, manual = false) {
   const version = ++refreshVersion;
   try{
-    const next = await api('/api/admin');
+    let next = await api('/api/admin');
     if (version !== refreshVersion) return;
     $('login').hidden=true;$('dashboard').hidden=false;
     if (adminMenu) adminMenu.hidden = false;
-    if (animate) {
-      const current = next.entries.find(entry => entry.id === next.current);
-      if (current?.status === 'selected') {
+    const current = next.entries.find(entry => entry.id === next.current);
+    if (current?.status === 'selected' && (animate || manual || current.revealedAt)) {
+      if (animate) {
         $('result').hidden = true;
         await spin(current.song, poolFor(next).map(entry => entry.song), spinTime());
-        state = next;
-        await api('/api/admin', {method:'POST', data:{action:'reveal', id:current.id, drawnAt:current.drawnAt}});
       }
+      if (version !== refreshVersion) return;
+      state = next;
+      const data = {action:'completeDraw', id:current.id, drawnAt:current.drawnAt};
+      await api('/api/admin', {method:'POST', data});
+      next = await api('/api/admin');
+      if (version !== refreshVersion) return;
     }
     state = next;
     render();
@@ -336,8 +336,6 @@ async function cantSing() {
   });
   if (['unknown', 'no_audio'].includes(reason)) await resolveWinner('cantSing', { id, reason });
 }
-const markSung = () => resolveWinner('done', {id:state.current});
-for (const id of ['mark-sung', 'result-done']) $(id)?.addEventListener('click', markSung);
 $('cant-sing').onclick = cantSing;
 $('result-cant-sing').onclick = cantSing;
 $('result-defer').onclick = () => resolveWinner('defer', { id:state.current, selected:true });

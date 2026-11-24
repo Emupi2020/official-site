@@ -409,3 +409,41 @@ test('誤った歌唱済みを取り消すと歌えない記録が復元され�
  assert.equal(songStatus(s,entry.artist,entry.song).unknownAt, null);
  assert.equal(publicState(s).played.length, 1);
 });
+
+test('停止で当選曲を歌唱済みに確定し、二重登録せず抽選ごと戻せる', () => {
+ const s = state();
+ const entry = submit(s, input('A'), 'a');
+ adminAction(s, {action:'advance'});
+ const complete = {action:'completeDraw', id:entry.id, drawnAt:entry.drawnAt};
+ assert.equal(entry.status, 'selected');
+ adminAction(s, complete);
+ assert.equal(entry.status, 'done');
+ assert.equal(publicState(s).played.length, 1);
+ adminAction(s, complete);
+ assert.equal(s.history.length, 1);
+ adminAction(s, {action:'undo'});
+ assert.equal(entry.status, 'pending');
+ assert.equal(s.current, null);
+ assert.equal(s.round, 1);
+ assert.equal(publicState(s).played.length, 0);
+});
+
+test('自動で歌唱済みになった当選曲を持ち越しや歌えないに変えられる', () => {
+ const s = state();
+ const entry = submit(s, input('A'), 'a');
+ const next = submit(s, input('B','別の曲'), 'b');
+ adminAction(s, {action:'selectSong',id:entry.id});
+ adminAction(s, {action:'completeDraw',id:entry.id,drawnAt:entry.drawnAt});
+ assert.throws(() => adminAction(s, {action:'cantSing',id:next.id,reason:'unknown'}), /当選曲が変わりました/);
+ adminAction(s, {action:'defer',id:entry.id,selected:true});
+ assert.equal(entry.deferReason, 'manual');
+ assert.equal(publicState(s).played.length, 0);
+ adminAction(s, {action:'undo'});
+ assert.equal(entry.status, 'done');
+ assert.equal(publicState(s).played.length, 1);
+ adminAction(s, {action:'cantSing',id:entry.id,reason:'no_audio'});
+ assert.equal(entry.deferReason, 'unknown');
+ assert.equal(publicState(s).played.length, 0);
+ assert.equal(songStatus(s,entry.artist,entry.song).reasons[0].reason, 'no_audio');
+ assert.deepEqual(eligible(s), [next]);
+});

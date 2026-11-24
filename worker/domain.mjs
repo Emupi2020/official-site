@@ -155,7 +155,7 @@ function byId(state, id) {
   if (!entry) throw new Problem('リクエストが見つかりません。', 404);
   return entry;
 }
-const queueFields = ['round', 'status', 'deferReason', 'retryHeld', 'allowRepeat', 'drawnAt', 'revealedAt', 'manualPick', 'unavailableReason', 'unavailableAt'];
+const queueFields = ['round', 'status', 'deferReason', 'retryHeld', 'allowRepeat', 'drawnAt', 'revealedAt', 'manualPick', 'autoDone', 'unavailableReason', 'unavailableAt'];
 function rememberQueueChange(state, entries) {
   const undo = { type:'queue', current:state.current, entries:entries.map(entry => ({
     id:entry.id, fields:Object.fromEntries(queueFields.filter(key => key in entry).map(key => [key, entry[key]]))
@@ -187,6 +187,7 @@ function queueForThisDraw(state, entry, replaced) {
   delete entry.revealedAt;
   delete entry.drawnAt;
   delete entry.manualPick;
+  delete entry.autoDone;
   if (state.current === entry.id || (replaced && state.current === replaced.id)) state.current = null;
 }
 function chooseEntry(state, entry, manual = false) {
@@ -209,6 +210,20 @@ export function adminAction(state, input) {
   const current = state.entries.find(e => e.id === state.current);
   const category = input.category ?? 'all';
   if (['draw','advance'].includes(input.action) && !['all','yamapi','other'].includes(category)) throw new Problem('抽選対象を選んでください。');
+  const overridesWinner = input.action === 'cantSing' || (input.action === 'defer' && input.selected);
+  if (overridesWinner && current?.status === 'done' && current.autoDone) {
+    if (input.id !== current.id || (input.drawnAt !== undefined && input.drawnAt !== current.drawnAt)) {
+      throw new Problem('当選曲が変わりました。確認してから操作してください。', 409);
+    }
+    if (input.action === 'cantSing' && !['unknown','no_audio'].includes(input.reason)) {
+      throw new Problem('歌えない理由を選んでください。');
+    }
+    state.undo = current.autoDone;
+    adminAction(state, {action:'undo'});
+    adminAction(state, input);
+    state.undo = {type:'autoOverride', id:current.id, action:state.undo};
+    return;
+  }
   switch (input.action) {
     case 'open': state.open = true; break;
     case 'close': throw new Problem('リクエストは常時受け付けています。');
@@ -243,6 +258,22 @@ export function adminAction(state, input) {
       }
       current.revealedAt ??= Date.now();
       return;
+    case 'completeDraw': {
+      if (current?.id !== input.id || current?.drawnAt !== input.drawnAt || !current) {
+        throw new Problem('当選曲が変わりました。確認してから操作してください。', 409);
+      }
+      if (current.status === 'done' && current.autoDone) return;
+      if (current.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
+      const previous = state.undo;
+      const lastDraw = previous?.type === 'advance' ? previous.drawn : previous;
+      const drawn = lastDraw?.type === 'draw' && lastDraw.id === current.id ? previous : null;
+      current.revealedAt ??= Date.now();
+      adminAction(state, {action:'done', id:current.id});
+      const completed = state.undo;
+      current.autoDone = completed.type === 'roundAdvance' ? completed.action : completed;
+      state.undo = {type:'autoDraw', drawn, completed};
+      return;
+    }
     case 'done': {
       if (current?.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
       if (input.id && current.id !== input.id) throw new Problem('当選曲が変わりました。', 409);
@@ -285,6 +316,25 @@ export function adminAction(state, input) {
       if (!u) throw new Problem('戻せる操作がありません。', 409);
       if (u.type === 'roundAdvance') {
         state.round = u.from; state.undo = u.action; adminAction(state,{action:'undo'}); break;
+      }
+      if (u.type === 'autoDraw') {
+        state.undo = u.completed;
+        adminAction(state, {action:'undo'});
+        if (u.drawn) {
+          state.undo = u.drawn;
+          adminAction(state, {action:'undo'});
+        }
+        break;
+      }
+      if (u.type === 'autoOverride') {
+        state.undo = u.action;
+        adminAction(state, {action:'undo'});
+        const entry = state.entries.find(item => item.id === u.id);
+        if (entry?.status === 'selected' && state.current === entry.id) {
+          adminAction(state, {action:'completeDraw', id:entry.id, drawnAt:entry.drawnAt});
+        }
+        state.undo = null;
+        break;
       }
       if (u.type === 'advance') {
         if (u.drawn) { state.undo = u.drawn; adminAction(state, { action: 'undo' }); }
@@ -347,10 +397,17 @@ export function adminAction(state, input) {
         if (e.status === 'selected') state.current = e.id;
       }
       if (u.type === 'done' && e) {
+        delete e.autoDone;
         e.status = 'selected';
         state.history = state.history.filter(item => item.id !== u.historyId);
         if ('unknownBefore' in u) { if (u.unknownBefore) state.unknown[u.key] = u.unknownBefore; else delete state.unknown[u.key]; }
-        if (u.newlySung) { state.sung = state.sung.filter(k => k !== u.key); for (const item of state.entries) if (item.status === 'deferred' && item.songKey === u.key && (!item.deferReason || item.deferReason === 'sung')) { item.status = 'pending'; item.deferReason = null; } }
+        if (u.newlySung) {
+          state.sung = state.sung.filter(key => key !== u.key);
+          for (const item of state.entries) if (item.status === 'deferred' && item.songKey === u.key && (!item.deferReason || item.deferReason === 'sung')) {
+            item.deferReason = drawBlock(state, item);
+            item.status = item.deferReason ? 'deferred' : 'pending';
+          }
+        }
       }
       state.undo = null; break;
     }
