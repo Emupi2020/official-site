@@ -131,7 +131,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #entry-title { margin: 0 0 26px; text-align: center; }
 .request-page #entry-form input { min-height: 50px; }
 .request-page #guest-entry-note { margin: 10px 0 0; color: var(--danger); line-height: 1.55; }
-.request-page #enter-request { margin-top: 16px; min-height: 48px; background: #0068d9; }
+.request-page #enter-request { margin-top: 16px; min-height: 48px; background: #0068d9; font-size: 16px; }
 .request-page #enter-request:hover { background: #005fc6; }
 .request-page #enter-request:disabled {
   background: color-mix(in srgb, var(--muted) 15%, var(--card));
@@ -149,8 +149,25 @@ body:has(.request-page) { background: #f2f2f7; }
   font-size: 14px;
 }
 .request-page #entry-line-feedback { margin: 12px 0 0; text-align: center; }
-.request-page .entry-options { display: grid; gap: 4px; margin-top: 12px; }
-.request-page .entry-options button,
+.request-page .entry-options { margin-top: 10px; }
+.request-page .entry-start-option {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff;
+  color: #1d1d1f;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+}
+.request-page .entry-signin {
+  margin-top: 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.request-page .entry-signin button,
 .request-page #cancel-passcode { min-height: 44px; font-size: 14px; }
 .request-page #cancel-passcode { width: 100%; }
 .request-page .passcode-field { margin-top: 16px; }
