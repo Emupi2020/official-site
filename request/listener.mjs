@@ -21,11 +21,10 @@ function renderDuplicateSlots() {
   part(slot, '.duplicate-error').hidden = !showError;
   part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
  }
- for (const category of ['yamapi', 'other']) {
-  const current = slots.find(slot => slot.category === category && !slot.reserved);
-  const next = slots.find(slot => slot.category === category && slot.reserved);
-  $('reserve-' + category).hidden = !current.entry && !next.entry && part(current, '.slot-duplicate').hidden;
- }
+ const reservation = $('next-reservation');
+ reservation.hidden = !slots.filter(slot => !slot.reserved)
+  .every(slot => slot.entry || !part(slot, '.slot-duplicate').hidden);
+ if (reservation.hidden) reservation.open = false;
 }
 window.addEventListener('pageshow', renderDuplicateSlots);
 document.addEventListener('visibilitychange', renderDuplicateSlots);

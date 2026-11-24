@@ -104,6 +104,19 @@ body:has(.request-page) { background: #f2f2f7; }
   background: var(--card);
 }
 .request-page .request-name { margin-top: 20px; }
+.request-page .request-name .input-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+}
+.request-page .request-name .input-group > .request-field { grid-column: 1 / -1; }
+.request-page .request-name .input-group:has(#edit-name:not([hidden])) > .request-field { grid-column: 1; }
+.request-page #name { min-width: 0; }
+.request-page #name:read-only:not(:focus) { text-overflow: ellipsis; }
+.request-page #name-actions { grid-column: 1 / -1; }
+.request-page #name-actions:has(#edit-name:not([hidden])) { grid-column: 2; grid-row: 1; }
+.request-page #name-feedback { grid-column: 1 / -1; }
 .request-page .request-block h2 {
   margin: 0 0 10px;
   font-size: 18px;
@@ -120,9 +133,9 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-field:has(input:not([readonly]), select) { border-bottom: 1px solid var(--border); }
 .request-page .request-field input::placeholder { color: var(--muted); opacity: .8; }
 .request-page .slot-receipt .receipt-song { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
-.request-page .reserve-details { margin: 8px 0 0; border-top: 1px solid var(--border); }
-.request-page .reserve-details:not([open]) { margin-bottom: -8px; }
-.request-page .reserve-details[open] > .request-slot { margin-top: 4px; }
+.request-page .next-reservation { margin: 8px 0 0; }
+.request-page .next-reservation > summary { justify-content: center; gap: 9px; color: var(--accent); }
+.request-page .next-reservation > .request-block:first-of-type { margin-top: 4px; }
 .request-page .slot-rename-form { margin-top: 14px; }
 .request-page .request-links { margin-top: 24px; border-top: 1px solid var(--border); }
 .request-page .request-links details { margin: 0; border-top: 0; }
