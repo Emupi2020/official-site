@@ -15,11 +15,36 @@ export async function mutate(env, action) {
   for (let n = 0; n < 12; n++) {
     const { revision, state } = await read(env);
     prune(state);
-    const value = action(state);
+    const value = await action(state);
     const result = await env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision').bind(JSON.stringify(state), revision).first();
     if (result) return { value, state };
   }
   throw new Problem('アクセスが重なりました。少し待ってもう一度お試しください。', 409);
+}
+function requestsToRecover(state, accountId, name) {
+  const slot = entry => `${entry.round}:${categoryOf(entry)}`;
+  const occupied = new Set(state.entries.filter(entry => entry.accountId === accountId).map(slot));
+  const key = nameKey(name);
+  return state.entries.filter(entry => {
+    if (entry.accountId || nameKey(entry.name) !== key || occupied.has(slot(entry))) return false;
+    occupied.add(slot(entry));
+    return true;
+  });
+}
+async function recoverPasscodeRequests(env, { accountId, name }) {
+  const { state } = await read(env);
+  prune(state);
+  if (!requestsToRecover(state, accountId, name).length) return 0;
+  const { value } = await mutate(env, latest => {
+    const entries = requestsToRecover(latest, accountId, name);
+    for (const entry of entries) entry.accountId = accountId;
+    return entries.length;
+  });
+  return value;
+}
+async function canManageRequest(env, entry, accountId) {
+  const protectedAccount = entry.accountId || await passcodeAccountId(env, entry.name);
+  return !protectedAccount || protectedAccount === accountId;
 }
 function origins(env, req) { return new Set([env.PUBLIC_ORIGIN || 'https://emupi2020.github.io', new URL(req.url).origin]); }
 async function requestToken(req) {
@@ -67,7 +92,9 @@ async function handle(req, env) {
         throw new Problem('この名前でリクエストを送ったブラウザーからパスコードを設定してください。', 409);
       }
     }
-    return passcodeAuth(env, path.split('/').at(-1), input);
+    const authenticated = await passcodeAuth(env, path.split('/').at(-1), input);
+    await recoverPasscodeRequests(env, authenticated);
+    return authenticated.response;
   }
   if (path === '/api/state' && req.method === 'GET') return json(publicState((await read(env)).state));
   if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
@@ -75,7 +102,14 @@ async function handle(req, env) {
     const { state } = await read(env);
     return json({ items: [...catalog, ...state.suggestions.map(s => ({ artist: s.artist, song: s.song }))] });
   }
-  if (path === '/api/mine' && req.method === 'GET') return json({ entry: receipt((await read(env)).state, await requestToken(req)) });
+  if (path === '/api/mine' && req.method === 'GET') {
+    const entry = receipt((await read(env)).state, await requestToken(req));
+    if (entry?.editable && await passcodeAccountId(env, entry.name)) {
+      entry.editable = false;
+      entry.songEditable = false;
+    }
+    return json({ entry });
+  }
   if (path === '/api/listener-account' && ['GET', 'POST'].includes(req.method)) {
     const session = await listenerSession(req, env);
     const accountId = session?.accountId;
@@ -87,14 +121,15 @@ async function handle(req, env) {
       prune(state);
       const account = accountRequests(state, accountId);
       const method = session.kind === 'pin-listener' ? 'passcode' : 'line';
-      return json({ ...account, name: account.name || session.name || '', enabled, passcodeEnabled, signedIn: true, method });
+      const needsRecovery = method === 'passcode' && requestsToRecover(state, accountId, session.name).length > 0;
+      return json({ ...account, name: account.name || session.name || '', enabled, passcodeEnabled, signedIn: true, method, needsRecovery });
     }
     if (!accountId) throw new Problem('ログインしてください。', 401);
     await limit(req, env);
+    if (session.kind === 'pin-listener') return json({ linked: await recoverPasscodeRequests(env, session) });
     const hashes = new Set(await requestTokenHashes((await body(req))?.tokens));
     const { value: linked } = await mutate(env, state => {
-      const entries = state.entries.filter(entry => !entry.accountId && hashes.has(entry.tokenHash) &&
-        (session.kind !== 'pin-listener' || nameKey(entry.name) === nameKey(session.name)));
+      const entries = state.entries.filter(entry => !entry.accountId && hashes.has(entry.tokenHash));
       for (const entry of entries) {
         if (state.entries.some(other => other.accountId === accountId && other.round === entry.round && categoryOf(other) === categoryOf(entry))) continue;
         entry.accountId = accountId;
@@ -130,9 +165,11 @@ async function handle(req, env) {
     const accountId = await listenerId(req, env);
     if (input?.action === 'renameAll') {
       const hashes = new Set(await requestTokenHashes(input.tokens));
-      const {value: updated} = await mutate(env, state => {
-        const entries = state.entries.filter(entry => canRename(state, entry) &&
+      const {value: updated} = await mutate(env, async state => {
+        const candidates = state.entries.filter(entry => canRename(state, entry) &&
           (entry.accountId ? input.account === true && entry.accountId === accountId : hashes.has(entry.tokenHash)));
+        const allowed = await Promise.all(candidates.map(entry => canManageRequest(env, entry, accountId)));
+        const entries = candidates.filter((_, i) => allowed[i]);
         if (!entries.length) throw new Problem('名前を修正できるリクエストがありません。', 409);
         for (const entry of entries) rename(state, entry, input.name);
         return entries.length;
@@ -142,12 +179,12 @@ async function handle(req, env) {
     const viaAccount = input?.action === 'editSong' && typeof input.requestId === 'string';
     if (viaAccount && !accountId) throw new Problem('ログインしてください。', 401);
     const token = viaAccount ? null : await requestToken(req);
-    const result = await mutate(env, state => {
+    const result = await mutate(env, async state => {
       const e = viaAccount
         ? state.entries.find(entry => entry.accountId === accountId && entry.id === input.requestId)
         : state.entries.findLast(entry => entry.tokenHash === token);
       if (!e) throw new Problem('応募が見つかりません。', 404);
-      if (e.accountId && e.accountId !== accountId) throw new Problem('連携したアカウントでログインしてください。', 401);
+      if (!await canManageRequest(env, e, accountId)) throw new Problem('連携したアカウントでログインしてください。', 401);
       if (input?.action === 'editSong') editSong(state, e, input);
       else rename(state, e, input?.name);
       return e;

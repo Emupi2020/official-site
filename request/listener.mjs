@@ -153,15 +153,7 @@ entryForm.onsubmit = async event => {
  if (mode === 'guest') {
   await refreshNameRequests(true);
  } else {
-  $('account-settings').open = true;
-  const savedTokens = Object.values(tokens).slice(-100);
-  if (savedTokens.length) {
-   await accountAction('/api/listener-account', {tokens:savedTokens}, result => result.linked
-    ? `${result.linked}件のリクエストを連携しました。`
-    : mode === 'register' ? 'パスコードを設定しました。' : 'ログインしました。');
-  } else {
-   try { await refresh(); } catch (error) { message(error.message, true); }
-  }
+  try { await refresh(); } catch (error) { message(error.message, true); }
  }
 };
 window.addEventListener('popstate', event => {
@@ -271,7 +263,7 @@ function renderAccount() {
  $('manage-passcode-login').hidden = !account.passcodeEnabled || account.signedIn;
  $('line-start').hidden = !account.enabled || account.signedIn;
  const linked = new Set(account.entries.map(entry => entry.id));
- $('line-link').hidden = !account.signedIn || !myRequests.some(entry => !linked.has(entry.id));
+ $('line-link').hidden = account.method !== 'line' || !myRequests.some(entry => !linked.has(entry.id));
  $('account-settings').hidden = ['manage-passcode', 'manage-passcode-login', 'line-start', 'line-link'].every(id => $(id).hidden) &&
   !$('line-feedback').textContent;
 }
@@ -577,8 +569,8 @@ try {
    showRequestScreen(true);
   }
  }
- if (account.method === 'passcode' && myRequests.some(entry => !account.entries.some(linked => linked.id === entry.id))) {
-  const {linked} = await api('/api/listener-account', {method:'POST', data:{tokens:Object.values(tokens).slice(-100)}});
+ if (account.needsRecovery) {
+  const {linked} = await api('/api/listener-account', {method:'POST', data:{}});
   if (linked) await refresh();
  }
  items = (await api('/api/suggestions')).items;

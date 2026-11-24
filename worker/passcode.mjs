@@ -35,8 +35,9 @@ export async function passcodeAuth(env, action, input) {
     if (!record || !matches) throw new Problem('Pocochaの名前かパスコードが違います。', 401);
   }
   const token = await sign(env, { kind:'pin-listener', accountId:record.account_id, name:record.name, exp:Date.now()+sessionAge*1000 });
-  return new Response(JSON.stringify({ name:record.name }), { headers:{
+  const response = new Response(JSON.stringify({ name:record.name }), { headers:{
     'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store',
     'Set-Cookie':setCookie(sessionCookie, token, sessionAge)
   } });
+  return { accountId:record.account_id, name:record.name, response };
 }

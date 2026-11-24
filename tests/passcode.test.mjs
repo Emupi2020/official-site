@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker, { mutate } from '../worker/index.mjs';
-import { adminAction } from '../worker/domain.mjs';
+import { adminAction, submit } from '../worker/domain.mjs';
 import { database } from '../scripts/local-db.mjs';
 
 const origin = 'https://requests.example';
@@ -68,6 +68,31 @@ test('過去に使われた名前のパスコードは送信時のトークン�
   });
   assert.equal((await register([])).status, 409);
   assert.equal((await register([token])).status, 200);
+});
+
+test('以前の未連携リクエストは送信時のデータがないブラウザーでもパスコードログインで管理できる', async () => {
+  const env = environment();
+  const register = await send(env, '/api/passcode/register', {method:'POST', data:{name:key, passcode:'0123'}});
+  assert.equal(register.status, 200);
+  const record = await env.DB.prepare('SELECT account_id FROM listener_passcodes WHERE name_key = ?').bind('listener').first();
+  await mutate(env, state => {
+    const entry = submit(state, {name:'Listener', artist:'山下智久', song:'Loveless'}, 'legacy-owned');
+    entry.accountId = record.account_id;
+    submit(state, {name:'Listener', artist:'星野源', song:'恋'}, 'legacy-guest');
+    const foreign = submit(state, {name:'Listener', artist:'山下智久', song:'予約曲', round:2}, 'legacy-foreign');
+    foreign.accountId = 'another-account';
+  });
+  const signIn = async () => send(env, '/api/passcode/login', {method:'POST', data:{name:'listener', passcode:'0123'}});
+  const login = await signIn();
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get('Set-Cookie').split(';')[0];
+  const { receipts } = await (await send(env, '/api/listener-account', { cookie })).json();
+  assert.deepEqual(receipts.map(entry => entry.song), ['Loveless','恋']);
+  const edit = await send(env, '/api/mine', {
+    method:'PATCH', cookie, data:{action:'editSong', requestId:receipts[1].id, artist:'星野源', song:'SUN'}
+  });
+  assert.equal(edit.status, 200);
+  assert.equal((await edit.json()).entry.song, 'SUN');
 });
 
 test('パスコードの試行回数は端末やIPを変えても同じ名前で制限する', async () => {
