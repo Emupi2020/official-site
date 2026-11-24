@@ -12,8 +12,13 @@ const duplicateKey = (round, category, name) => JSON.stringify([round, category,
 function renderDuplicateSlots() {
  if (!state) return;
  for (const slot of slots) {
-  const duplicate = !slot.entry && confirmedDuplicates.includes(duplicateKey(slot.round, slot.category, $('name').value));
-  part(slot, '.slot-duplicate').hidden = !duplicate;
+  const key = duplicateKey(slot.round, slot.category, $('name').value);
+  const duplicate = !slot.entry && confirmedDuplicates.includes(key);
+  const showError = duplicate && slot.rejectedSubmission?.key === key && Date.now() < slot.rejectedSubmission.until;
+  const receipt = part(slot, '.slot-duplicate');
+  receipt.hidden = !duplicate;
+  receipt.classList.toggle('has-error', showError);
+  part(slot, '.duplicate-error').hidden = !showError;
   part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
  }
  for (const category of ['yamapi', 'other']) {
@@ -22,6 +27,8 @@ function renderDuplicateSlots() {
   $('reserve-' + category).hidden = !current.entry && !next.entry && part(current, '.slot-duplicate').hidden;
  }
 }
+window.addEventListener('pageshow', renderDuplicateSlots);
+document.addEventListener('visibilitychange', renderDuplicateSlots);
 const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:root.id,category:root.dataset.category,reserved:root.dataset.reserved==='true',entry:null,token:null,round:null,draftRound:null}));
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
@@ -40,7 +47,7 @@ function lock(value) {
 function feedback(slot, text, error = true) {
  const box = part(slot, '.slot-feedback');
  const container = slot.editing || !slot.entry ? part(slot, '.input-group') : part(slot, '.slot-receipt');
- const actions = container.querySelector('.edit-actions');
+ const actions = container.querySelector(':scope > .edit-actions, :scope > .slot-receipt-footer');
  container.insertBefore(box, actions);
  box.textContent = text;
  box.hidden = !text;
@@ -67,7 +74,7 @@ async function refresh(){
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-name').textContent=`${mine.name} さん`;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'次回の抽選に入ります。':statusText[mine.status];part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
+  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'予約済み':mine.status==='pending'?'抽選待ち':mine.status==='done'?'歌唱済み':statusText[mine.status];part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
  renderNameControls();
@@ -183,6 +190,7 @@ for(const slot of slots){
  duplicate.setAttribute('role', 'status');
  const rejected = document.createElement('p');
  rejected.className = 'edit-feedback error duplicate-error';
+ rejected.hidden = true;
  rejected.textContent = slot.reserved ? 'すでに予約があるため、今入力した曲は予約されませんでした。' : 'すでにリクエストがあるため、今入力した曲は送信されませんでした。';
  const status = document.createElement('p');
  status.className = 'duplicate-label';
@@ -223,6 +231,9 @@ for(const slot of slots){
   } catch (error) {
    if (!editing && error.code === 'duplicate_request') {
     const key = duplicateKey(round, slot.category, name);
+    const errorDuration = 30_000;
+    slot.rejectedSubmission = {key, until: Date.now() + errorDuration};
+    setTimeout(renderDuplicateSlots, errorDuration);
     confirmedDuplicates = [...new Set([...confirmedDuplicates, key])].slice(-24);
     safeSet(duplicateStorageKey, JSON.stringify(confirmedDuplicates));
     safeSet('emupi-request-name', name.trim());

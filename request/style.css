@@ -135,15 +135,14 @@ body:has(.request-page) { background: #f2f2f7; }
   box-shadow: none;
   background: color-mix(in srgb, var(--bg) 58%, var(--card));
 }
-.request-page .slot-receipt-title { margin: 0; font-size: 12px; color: var(--muted); }
-.request-page .slot-receipt .receipt-song { margin: 2px 0 0; font-size: 22px; }
+.request-page .slot-receipt .receipt-song { margin: 0; font-size: 22px; line-height: 1.35; }
 .request-page .reserve-details { margin: 4px 0 0; border-top: 1px solid var(--border); }
 .request-page .reserve-details > summary { color: var(--accent); font-size: 14px; }
 .request-page .reserve-details[open] > .request-slot { margin-top: 4px; }
 .request-page .slot-rename-form { margin-top: 14px; }
 .request-page .request-links { margin-top: 20px; padding: 0 16px; }
-.request-page .request-links details { margin: 0; }
-.request-page .request-links .listener-history { margin: 0; }
+.request-page .request-links details { margin: 0; border-top: 0; }
+.request-page .request-links details:not([hidden]) + details { border-top: 1px solid var(--border); }
 .request-page .request-links summary {
   min-height: 46px;
   justify-content: flex-start;
@@ -154,7 +153,8 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-links summary::after { margin-left: auto; }
 .request-page .request-links summary > span { margin-right: 0; }
 .request-page .request-links summary:has(> span)::after { margin-left: 0; }
-.request-page .request-links details .note { padding-bottom: 14px; }
+.request-page .request-notes { margin: 12px 16px 0; }
+.request-page .request-notes > summary { color: var(--muted); }
 
 .request-page .edit-actions {
   display: flex;
@@ -165,7 +165,6 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .input-group > .edit-actions,
 .request-page .input-group > .edit-feedback { margin-inline: 12px; }
-.request-page .slot-receipt > .edit-actions { margin-top: 4px; }
 .request-page .edit-actions .text-button { min-height: 44px; }
 .request-page .edit-actions .edit-save { font-weight: 600; }
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
@@ -180,16 +179,28 @@ body:has(.request-page) { background: #f2f2f7; }
   font-size: 14px;
 }
 
-.request-page .slot-receipt .slot-artist,
-.request-page .slot-receipt .slot-name { margin: 2px 0 0; }
-.request-page .slot-receipt .slot-status { margin: 6px 0 0; padding: 0; background: none; color: var(--muted); font-size: 13px; }
+.request-page .slot-receipt .slot-artist { margin: 3px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.request-page .slot-receipt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  min-height: 40px;
+  margin-top: 3px;
+}
+.request-page .slot-receipt-footer .edit-actions { margin-left: auto; border-top: 0; }
+.request-page .slot-receipt .slot-status { margin: 0; color: var(--muted); font-size: 13px; }
+.request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--muted); font-size: 14px; }
 .request-page .slot-duplicate {
-  padding: 10px 12px;
   margin-bottom: 8px;
+}
+.request-page .slot-duplicate.has-error {
+  padding: 10px 12px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--danger) 8%, var(--card));
 }
-.request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--danger); }
+.request-page .slot-duplicate.has-error .duplicate-label { color: var(--danger); }
 .request-page .slot-duplicate .duplicate-error { margin: 4px 0 0; }
 .request-page .slot-submit:disabled { opacity: .45; cursor: default; }
 .request-page .slot-actions:not(.edit-actions) > .slot-submit:disabled {
