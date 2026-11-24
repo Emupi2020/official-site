@@ -33,13 +33,11 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .request-page .status.closed { color: var(--muted); }
 .request-page #form-card { margin-top: 30px; padding: 0; border: 0; background: transparent; border-radius: 0; }
-.request-page .input-group { background: var(--card); border-radius: 18px; box-shadow: 0 1px 2px #00000003; }
-.request-page .request-field { position: relative; padding: 15px 20px 11px; }
-.request-page .request-field + .request-field::before { content: ''; position: absolute; top: 0; right: 20px; left: 20px; height: 1px; background: var(--border); }
+.request-page .request-field + .request-field { border-top: 1px solid var(--border); }
 .request-page .request-field label { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; font-weight: 400; }
 .request-page .request-field select { display:block; width:100%; color:var(--text); }
 .request-page .request-field input,
-.request-page .request-field select { min-height: 43px; padding: 7px 0 3px; border: 0; border-radius: 5px; background: transparent; font-family: inherit; font-size: 17px; line-height: 1.5; }
+.request-page .request-field select { min-height: 46px; padding: 0; border: 0; border-radius: 5px; background: transparent; font-family: inherit; font-size: 16px; line-height: 1.5; }
 .request-page .request-field:focus-within label { color: var(--accent); }
 .request-page .request-field input:focus,
 .request-page .request-field select:focus-visible { outline: 0; box-shadow: 0 2px 0 -1px var(--accent); }
@@ -49,11 +47,11 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page button:focus-visible, .request-page summary:focus-visible { outline: 3px solid color-mix(in srgb,var(--accent) 40%,transparent); outline-offset: 4px; }
 .request-page #request-form > .note { margin: 16px 4px 20px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .request-page details { margin: 0 4px; }
-.request-page summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 9px 0; color: var(--muted); font-size: 13px; list-style: none; }
+.request-page summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 9px 0; color: var(--text); font-size: 14px; list-style: none; cursor: pointer; }
 .request-page summary::-webkit-details-marker { display: none; }
 .request-page summary::after { content: ''; width: 6px; height: 6px; margin-right: 3px; border-right: 1.5px solid currentColor; border-top: 1.5px solid currentColor; transform: rotate(45deg); transition: transform .15s; }
 .request-page details[open] summary::after { transform: rotate(135deg); }
-.request-page details .note { margin: 6px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; }
+.request-page details .note { margin: 0; padding: 4px 0 12px; font-size: 13px; }
 .request-page details .note p + p { margin-top: 10px; }
 .request-page #receipt, .request-page #waiting { border: 0; border-radius: 18px; padding: 24px; }
 .request-page .suggestions { top: calc(100% + 9px); border-radius: 13px; box-shadow: 0 8px 30px #00000012; }
@@ -109,11 +107,12 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .request-block {
   margin: 12px 0 0;
-  padding: 14px 16px 12px;
+  padding: 16px;
 }
 .request-page .request-block h2 {
   margin: 0 0 10px;
   font-size: 18px;
+  font-weight: 650;
   line-height: 1.4;
   letter-spacing: -.025em;
 }
@@ -122,22 +121,12 @@ body:has(.request-page) { background: #f2f2f7; }
   grid-template-columns: 5.75rem minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  padding: 0 12px;
 }
-.request-page .request-field + .request-field::before { left: 12px; right: 12px; }
-.request-page .request-field input,
-.request-page .request-field select { min-height: 46px; padding: 0; font-size: 16px; }
 .request-page .request-field input::placeholder { color: var(--muted); opacity: .8; }
-.request-page .request-name .request-field { padding-inline: 16px; }
-.request-page .slot-form .input-group {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: none;
-  background: color-mix(in srgb, var(--bg) 58%, var(--card));
-}
-.request-page .slot-receipt .receipt-song { margin: 0; font-size: 22px; line-height: 1.35; }
-.request-page .reserve-details { margin: 4px 0 0; border-top: 1px solid var(--border); }
-.request-page .reserve-details > summary { color: var(--accent); font-size: 14px; }
+.request-page .request-name .input-group { padding: 0 16px; }
+.request-page .slot-receipt .receipt-song { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
+.request-page .reserve-details { margin: 8px 0 0; border-top: 1px solid var(--border); }
+.request-page .reserve-details:not([open]) { margin-bottom: -8px; }
 .request-page .reserve-details[open] > .request-slot { margin-top: 4px; }
 .request-page .slot-rename-form { margin-top: 14px; }
 .request-page .request-links { margin-top: 20px; padding: 0 16px; }
@@ -154,17 +143,13 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-links summary > span { margin-right: 0; }
 .request-page .request-links summary:has(> span)::after { margin-left: 0; }
 .request-page .request-notes { margin: 12px 16px 0; }
-.request-page .request-notes > summary { color: var(--muted); }
 
 .request-page .edit-actions {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 4px 16px;
-  border-top: 1px solid var(--border);
 }
-.request-page .input-group > .edit-actions,
-.request-page .input-group > .edit-feedback { margin-inline: 12px; }
 .request-page .edit-actions .text-button { min-height: 44px; }
 .request-page .edit-actions .edit-save { font-weight: 600; }
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
@@ -189,22 +174,17 @@ body:has(.request-page) { background: #f2f2f7; }
   min-height: 40px;
   margin-top: 3px;
 }
-.request-page .slot-receipt-footer .edit-actions { margin-left: auto; border-top: 0; }
+.request-page .slot-receipt-footer .edit-actions { margin-left: auto; }
 .request-page .slot-receipt .slot-status { margin: 0; color: var(--muted); font-size: 13px; }
 .request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--muted); font-size: 14px; }
 .request-page .slot-duplicate {
   margin-bottom: 8px;
-}
-.request-page .slot-duplicate.has-error {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--danger) 8%, var(--card));
 }
 .request-page .slot-duplicate.has-error .duplicate-label { color: var(--danger); }
 .request-page .slot-duplicate .duplicate-error { margin: 4px 0 0; }
 .request-page .slot-submit:disabled { opacity: .45; cursor: default; }
 .request-page .slot-actions:not(.edit-actions) > .slot-submit:disabled {
   color: var(--muted);
-  background: color-mix(in srgb, var(--muted) 12%, var(--card));
+  background: var(--bg);
   opacity: 1;
 }
