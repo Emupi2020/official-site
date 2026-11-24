@@ -3,6 +3,20 @@ import { api, $, message, safeGet, safeSet } from './common.mjs';
 import { setWheel, spin, settle } from './wheel.mjs?spin=natural-stop';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
+const adminMenu = $('admin-menu');
+if (adminMenu) {
+  document.addEventListener('click', event => {
+    if (adminMenu.open && !adminMenu.contains(event.target)) adminMenu.open = false;
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !adminMenu.open) return;
+    adminMenu.open = false;
+    adminMenu.querySelector('summary').focus();
+  });
+  adminMenu.addEventListener('toggle', () => {
+    if (!adminMenu.open) for (const section of adminMenu.querySelectorAll('details[open]')) section.open = false;
+  });
+}
 const spinDuration = $('spin-duration');
 const rouletteSettings = $('roulette-settings');
 const previewSpin = $('preview-spin');
@@ -101,7 +115,7 @@ async function action(action, extra = {}) {
   }
 }
 function lock(value) {
-  for (const button of document.querySelectorAll('#dashboard button, #roulette-screen button')) button.disabled = value;
+  for (const button of document.querySelectorAll('#dashboard button, #roulette-screen button, #admin-menu button')) button.disabled = value;
   if (spinDuration) spinDuration.disabled = value;
 }
 const poolFor = ({ entries, round }) => entries.filter(entry =>
@@ -179,6 +193,7 @@ async function refresh(animate=false){
     const next = await api('/api/admin');
     if (version !== refreshVersion) return;
     $('login').hidden=true;$('dashboard').hidden=false;
+    if (adminMenu) adminMenu.hidden = false;
     if (animate) {
       const current = next.entries.find(entry => entry.id === next.current);
       if (current?.status === 'selected') {
@@ -190,7 +205,7 @@ async function refresh(animate=false){
     }
     state = next;
     render();
-  }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
+  }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;if(adminMenu){adminMenu.open=false;adminMenu.hidden=true;}$('roulette-screen').close();state=null;}else throw error;}
 }
 $('login-form').onsubmit=async event=>{
   event.preventDefault();$('login-submit').disabled=true;message('');

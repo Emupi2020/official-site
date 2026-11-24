@@ -331,3 +331,40 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-row-menu button:hover, .request-row-menu button:focus-visible { background: var(--soft); }
 .request-row-menu button.danger { color: var(--danger); }
+
+.admin-header-tools { display: flex; align-items: center; gap: 8px; }
+.admin-header-menu { position: relative; }
+.admin-header-menu > summary {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 8px;
+  list-style: none;
+  color: var(--text);
+}
+.admin-header-menu > summary::-webkit-details-marker { display: none; }
+.admin-header-menu[open] > summary { background: var(--soft); }
+.admin-menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  width: min(400px, calc(100vw - 48px));
+  max-height: calc(100dvh - 72px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 8px 24px #0002;
+}
+.admin-menu-panel > details + details { border-top: 1px solid var(--border); }
+.admin-menu-panel > details > summary { min-height: 44px; color: var(--text); font-weight: 600; }
+.admin-menu-panel .card { background: var(--bg); padding: 12px; border-radius: 10px; }
+.admin-menu-panel .card h2 { margin: 0 0 8px; font-size: 16px; }
+.admin-menu-panel .entry { overflow-wrap: anywhere; }
+.admin-menu-panel .entry button { flex: 0 0 auto; }
