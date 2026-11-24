@@ -11,7 +11,7 @@ export async function passcodeAccountId(env, name) {
   return (await env.DB.prepare('SELECT account_id FROM listener_passcodes WHERE name_key = ?').bind(key).first())?.account_id ?? null;
 }
 
-export async function passcodeAuth(env, action, input) {
+export async function passcodeAuth(env, action, input, fromOfficialSite) {
   if (!(env.SESSION_SECRET?.length >= 32)) throw new Problem('パスコードは現在利用できません。', 503);
   const name = text(input?.name, 'Pocochaの名前', 50);
   const key = nameKey(name);
@@ -35,9 +35,9 @@ export async function passcodeAuth(env, action, input) {
     if (!record || !matches) throw new Problem('Pocochaの名前かパスコードが違います。', 401);
   }
   const token = await sign(env, { kind:'pin-listener', accountId:record.account_id, name:record.name, exp:Date.now()+sessionAge*1000 });
-  const response = new Response(JSON.stringify({ name:record.name }), { headers:{
-    'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store',
-    'Set-Cookie':setCookie(sessionCookie, token, sessionAge)
-  } });
+  const data = fromOfficialSite ? { name:record.name, sessionToken:token } : { name:record.name };
+  const headers = { 'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store' };
+  if (!fromOfficialSite) headers['Set-Cookie'] = setCookie(sessionCookie, token, sessionAge);
+  const response = new Response(JSON.stringify(data), { headers });
   return { accountId:record.account_id, name:record.name, response };
 }

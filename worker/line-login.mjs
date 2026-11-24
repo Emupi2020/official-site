@@ -9,8 +9,17 @@ const random = () => crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID
 
 export const lineEnabled = env => Boolean(env.LINE_CHANNEL_ID && env.LINE_CHANNEL_SECRET && env.SESSION_SECRET?.length >= 32);
 
+export function isOfficialSiteRequest(req, env) {
+  const origin = req.headers.get('Origin');
+  return Boolean(origin && origin === env.PUBLIC_ORIGIN && origin !== new URL(req.url).origin);
+}
+
 export async function listenerSession(req, env) {
-  const session = await verify(env, cookie(req, sessionCookie));
+  const fromOfficialSite = isOfficialSiteRequest(req, env);
+  const token = fromOfficialSite
+    ? req.headers.get('Authorization')?.match(/^Bearer (\S+)$/i)?.[1]
+    : cookie(req, sessionCookie);
+  const session = await verify(env, token);
   if (session?.kind === 'pin-listener') return session;
   return lineEnabled(env) && session?.kind === 'line-listener' && session.channel === env.LINE_CHANNEL_ID ? session : null;
 }
@@ -35,7 +44,7 @@ async function lineRequest(action, data) {
 export async function lineAuth(req, env) {
   const url = new URL(req.url);
   if (req.method === 'POST' && url.pathname === '/auth/line/logout') {
-    if (req.headers.get('Origin') !== url.origin) throw new Problem('リクエスト画面から操作してください。', 403);
+    if (req.headers.get('Origin') !== url.origin && !isOfficialSiteRequest(req, env)) throw new Problem('リクエスト画面から操作してください。', 403);
     return new Response('{}', { headers: {
       'Content-Type': 'application/json', 'Cache-Control': 'no-store',
       'Set-Cookie': setCookie(sessionCookie, '', 0)

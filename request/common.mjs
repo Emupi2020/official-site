@@ -1,4 +1,7 @@
 export const apiBase = (window.EMUPI_API || '').replace(/\/$/, '');
+const crossOrigin = Boolean(apiBase && new URL(apiBase).origin !== location.origin);
+const sessionKey = 'emupi-request-account-session';
+let listenerSession = crossOrigin ? safeGet(sessionKey) : null;
 export const $ = id => document.getElementById(id);
 export async function api(path, { method = 'GET', data, token } = {}) {
   if (window.EMUPI_DEMO?.request) return window.EMUPI_DEMO.request(path, { method, data, token });
@@ -6,11 +9,21 @@ export async function api(path, { method = 'GET', data, token } = {}) {
   const headers = {};
   if (data) headers['Content-Type'] = 'application/json';
   if (token) headers['X-Request-Token'] = token;
+  if (listenerSession) headers.Authorization = 'Bearer ' + listenerSession;
   let response;
-  try { response = await fetch(`${apiBase}${path}`, { method, headers, body: data ? JSON.stringify(data) : undefined, credentials: apiBase && new URL(apiBase).origin !== location.origin ? 'omit' : 'same-origin' }); }
+  try { response = await fetch(`${apiBase}${path}`, { method, headers, body: data ? JSON.stringify(data) : undefined, credentials: crossOrigin ? 'omit' : 'same-origin' }); }
   catch { throw new Error('接続できませんでした。通信を確認してお試しください。'); }
   const result = await response.json();
   if (!response.ok) { const error = new Error(result.error || '処理できませんでした。'); error.status = response.status; error.code = result.code; throw error; }
+  if (crossOrigin && method === 'POST') {
+    if (path === '/api/passcode/login' || path === '/api/passcode/register') {
+      listenerSession = result.sessionToken || null;
+      safeSet(sessionKey, listenerSession || '');
+    } else if (path === '/auth/line/logout') {
+      listenerSession = null;
+      safeSet(sessionKey, '');
+    }
+  }
   return result;
 }
 export function message(value, error = false) { $('message').hidden = !value; $('message').textContent = value; $('message').classList.toggle('error', error); }

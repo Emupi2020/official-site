@@ -109,3 +109,48 @@ test('パスコードの試行回数は端末やIPを変えても同じ名前で
   });
   assert.equal(blocked.status, 429);
 });
+
+test('公式サイトでパスコードログインするとCookieなしで両枠の曲を修正できる', async () => {
+  const env = { ...environment(), PUBLIC_ORIGIN:'https://emupi2020.github.io' };
+  const credentials = { name:'Listener', passcode:'0123' };
+  const official = (path, { method = 'GET', data, session, requestToken } = {}) => worker.fetch(
+    new Request(origin + path, {
+      method, body:data && JSON.stringify(data), headers:{
+        Origin:env.PUBLIC_ORIGIN,
+        ...(data && {'Content-Type':'application/json'}),
+        ...(requestToken && {'X-Request-Token':requestToken}),
+        ...(session && {Authorization:'Bearer ' + session})
+      }
+    }), env);
+  const registration = await official('/api/passcode/register', {method:'POST', data:credentials});
+  assert.equal(registration.status, 200);
+  assert.equal(registration.headers.get('Access-Control-Allow-Origin'), env.PUBLIC_ORIGIN);
+  assert.match(registration.headers.get('Access-Control-Allow-Headers'), /Authorization/i);
+  const {sessionToken} = await registration.json();
+  assert.ok(sessionToken);
+  const requests = [
+    {artist:'山下智久', song:'Loveless', category:'yamapi'},
+    {artist:'星野源', song:'恋', category:'other'}
+  ];
+  for (const request of requests) {
+    const response = await official('/api/requests', {method:'POST', data:{name:credentials.name, ...request}, session:sessionToken, requestToken:crypto.randomUUID()});
+    assert.equal(response.status, 201);
+  }
+  const login = await official('/api/passcode/login', {method:'POST', data:credentials});
+  assert.equal(login.status, 200);
+  const {sessionToken: newSession} = await login.json();
+  const account = await (await official('/api/listener-account', {session:newSession})).json();
+  assert.equal(account.receipts.length, 2);
+  for (const entry of account.receipts) {
+    assert.equal(entry.songEditable, true);
+    const edited = await official('/api/mine', {method:'PATCH', data:{
+      action:'editSong', requestId:entry.id, artist:entry.artist, song:entry.song + ' ライブ版'
+    }, session:newSession});
+    assert.equal(edited.status, 200);
+  }
+  const unrelated = await worker.fetch(new Request(origin + '/api/listener-account', {
+    headers:{Origin:'https://other.example', Authorization:'Bearer ' + newSession}
+  }), env);
+  assert.equal((await unrelated.json()).signedIn, false);
+  assert.equal((await official('/auth/line/logout', {method:'POST', data:{}, session:newSession})).status, 200);
+});

@@ -1,6 +1,6 @@
 import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
-import { lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
+import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
 import { passcodeAuth, passcodeAccountId, passcodeRequiredMessage } from './passcode.mjs';
 import { catalog } from '../request/catalog.mjs';
 import { categoryOf } from '../request/categories.mjs';
@@ -92,7 +92,7 @@ async function handle(req, env) {
         throw new Problem('この名前でリクエストを送ったブラウザーからパスコードを設定してください。', 409);
       }
     }
-    const authenticated = await passcodeAuth(env, path.split('/').at(-1), input);
+    const authenticated = await passcodeAuth(env, path.split('/').at(-1), input, isOfficialSiteRequest(req, env));
     await recoverPasscodeRequests(env, authenticated);
     return authenticated.response;
   }
@@ -222,7 +222,7 @@ export default {
     try { response = await handle(req, env); }
     catch (error) { response = json({ error: error instanceof Problem ? error.message : '処理できませんでした。時間をおいてお試しください。', code: error instanceof Problem ? error.code : undefined }, error.status || 500); }
     const headers = new Headers(response.headers), origin = req.headers.get('Origin');
-    if (origins(env, req).has(origin)) { headers.set('Access-Control-Allow-Origin', origin); headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-Token'); headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS'); }
+    if (origins(env, req).has(origin)) { headers.set('Access-Control-Allow-Origin', origin); headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-Token, Authorization'); headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS'); }
     headers.set('Vary', 'Origin'); headers.set('X-Content-Type-Options', 'nosniff'); headers.set('Referrer-Policy', 'strict-origin-when-cross-origin'); headers.set('X-Frame-Options', 'DENY');
     headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.workers.dev; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
     return new Response(response.body, { status: response.status, headers });

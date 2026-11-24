@@ -264,8 +264,7 @@ function renderAccount() {
  $('line-start').hidden = !account.enabled || account.signedIn;
  const linked = new Set(account.entries.map(entry => entry.id));
  $('line-link').hidden = account.method !== 'line' || !myRequests.some(entry => !linked.has(entry.id));
- $('account-settings').hidden = ['manage-passcode', 'manage-passcode-login', 'line-start', 'line-link'].every(id => $(id).hidden) &&
-  !$('line-feedback').textContent;
+ $('account-settings').hidden = ['manage-passcode', 'manage-passcode-login', 'line-start', 'line-link'].every(id => $(id).hidden);
 }
 async function confirmSong(data){
  const status=await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);if(!status.unknownAt)return true;
