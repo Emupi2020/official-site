@@ -28,8 +28,8 @@ function renderDuplicateSlots() {
  if (reservation.hidden) {
   reservation.open = false;
   if (activeSlot?.reserved) {
-   window.history.replaceState({requestScreen:true}, '');
-   showSlot(null, true);
+   window.history.replaceState({...window.history.state, currentSlot:null}, '');
+   showSlot(null, !activeMenuPage);
   }
  }
  $('after-draw-note').hidden = !currentSlots.some(slot => slot.entry && slot.entry.status !== 'pending');
@@ -113,6 +113,10 @@ const entryPasscode = $('entry-passcode');
 const nameSettings = $('listener-name-settings');
 const newName = $('new-name');
 const namePasscode = $('name-passcode');
+const menuPage = $('menu-page');
+const menuPageTitle = $('menu-page-title');
+const menuPages = [...document.querySelectorAll('[data-menu-page]')].map(button => ({button, panel:$(button.dataset.menuPage)}));
+let activeMenuPage = null;
 const greeting = $('listener-greeting');
 const japanHour = new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Tokyo', hour:'2-digit', hourCycle:'h23'});
 const rememberedNameKey = 'emupi-request-last-name';
@@ -131,9 +135,9 @@ const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMod
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
- nameSettings.hidden = !open;
+ for (const {button} of menuPages) if (button.hasAttribute('data-login-required')) button.hidden = !open;
  if (!open) {
-  nameSettings.open = false;
+  showMenuPage(null);
   showSlot(null);
  }
  if (open) renderGreeting();
@@ -278,24 +282,59 @@ window.addEventListener('popstate', event => {
  clearLogoutNotice();
  if (typeof event.state?.requestScreen !== 'boolean') return;
  const open = event.state.requestScreen && Boolean(lookupName());
- if (!open) setEntryMode(event.state.entryMode || 'welcome');
- showRequestScreen(open, !open);
- if (open) showSlot(event.state.currentSlot, true);
+ const mode = event.state.entryMode || 'welcome';
+ if (!open && entryMode !== mode) setEntryMode(mode);
+ showRequestScreen(open);
+ showMenuPage(event.state.menuPage, true);
+ if (open) showSlot(event.state.currentSlot, !activeMenuPage);
+ else if (!activeMenuPage) entryTitle.focus();
 });
+function showMenuPage(id, focus = false) {
+ const previous = activeMenuPage;
+ activeMenuPage = menuPages.find(({button,panel}) => panel.id === id && !button.hidden) || null;
+ if (previous?.panel === nameSettings && previous !== activeMenuPage) namePasscode.value = '';
+ menuPage.hidden = !activeMenuPage;
+ for (const page of menuPages) page.panel.hidden = page !== activeMenuPage;
+ if (!activeMenuPage) return;
+ const {button,panel} = activeMenuPage;
+ menuPageTitle.textContent = button.firstChild.textContent.trim();
+ if (panel === nameSettings && activeMenuPage !== previous) {
+  newName.value = lookupName();
+  namePasscode.value = '';
+  nameFeedback('');
+ }
+ if (focus) {
+  window.scrollTo(0, 0);
+  menuPageTitle.focus();
+ }
+ if (panel.id === 'played-history') void refreshPlayed();
+ if (panel.id === 'playable-songs') void refreshPlayable();
+}
+for (const {button,panel} of menuPages) {
+ button.onclick = () => {
+  $('request-menu-toggle').click();
+  if (activeMenuPage?.panel === panel) { menuPageTitle.focus(); return; }
+  const next = {...window.history.state, menuPage:panel.id};
+  if (activeMenuPage) window.history.replaceState(next, '');
+  else window.history.pushState(next, '');
+  showMenuPage(panel.id, true);
+ };
+}
+$('menu-page-back').onclick = () => window.history.back();
 $('request-menu-top').onclick = () => {
  $('request-menu-toggle').click();
- if ($('request-screen').hidden) {
-  if (entryMode === 'welcome') entryTitle.focus();
-  else $('entry-back').click();
-  return;
- }
+ const loggedIn = !$('request-screen').hidden;
  const focusTop = () => {
   window.scrollTo(0, 0);
-  $('request-title').focus({preventScroll:true});
+  (loggedIn ? $('request-title') : entryTitle).focus({preventScroll:true});
  };
- if (activeSlot) {
+ if (activeMenuPage || activeSlot) {
+  const backToWelcome = !loggedIn && entryMode !== 'welcome' && window.history.state?.fromWelcome;
+  const steps = Number(Boolean(activeMenuPage)) + Number(Boolean(activeSlot || backToWelcome));
   window.addEventListener('popstate', focusTop, {once:true});
-  closeSlot();
+  window.history.go(-steps);
+ } else if (!loggedIn && entryMode !== 'welcome') {
+  $('entry-back').click();
  } else {
   focusTop();
  }
@@ -349,7 +388,7 @@ function historyRow(list, song, artist, status, timestamp) {
  list.append(row);
 }
 function renderHistory(myRequests){
- $('my-history').hidden=!myRequests.length;$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
+ $('my-history-empty').hidden=Boolean(myRequests.length);$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
  const labels={pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ保留',skipped:'見送り',removed:'取り下げ'};
  for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${entry.deferReason==='temporary'?'一時保留':labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt);
 }
@@ -361,7 +400,7 @@ const playable = $('playable-songs');
 const songOrdering = new Intl.Collator('ja');
 let playableLoading = false;
 async function refreshPlayable() {
- if (!playable.open || $('request-menu').hidden || document.hidden || playableLoading) return;
+ if (playable.hidden || document.hidden || playableLoading) return;
  playableLoading = true;
  const feedback = $('playable-feedback');
  if ($('playable-groups').hidden) {
@@ -386,7 +425,6 @@ async function refreshPlayable() {
   playableLoading = false;
  }
 }
-playable.addEventListener('toggle', refreshPlayable);
 setInterval(refreshPlayable, 15000);
 const playedHistory = $('played-history');
 let publicReadVersion = 0, playedVersion = 0, playedLoading = false;
@@ -400,13 +438,12 @@ async function readPublicState() {
  return next;
 }
 async function refreshPlayed() {
- if (!playedHistory?.open || document.hidden || playedLoading) return;
+ if (playedHistory.hidden || document.hidden || playedLoading) return;
  playedLoading = true;
  try { await readPublicState(); }
  catch { /* Keep the last visible list; the next poll retries. */ }
  finally { playedLoading = false; }
 }
-playedHistory?.addEventListener('toggle', refreshPlayed);
 document.addEventListener('visibilitychange', refreshPlayed);
 setInterval(refreshPlayed, 3000);
 async function refresh({useAccountName = false} = {}){
@@ -427,7 +464,7 @@ async function refresh({useAccountName = false} = {}){
    safeSet('emupi-request-name', nextAccount.name);
   }
   if (!account.signedIn) {
-   window.history.replaceState({requestScreen:true, currentSlot:activeSlot?.id}, '');
+   window.history.replaceState({requestScreen:true, currentSlot:activeSlot?.id, menuPage:activeMenuPage?.panel.id}, '');
    showRequestScreen(true);
   }
  }
@@ -551,18 +588,7 @@ function nameFeedback(text, error = false) {
  node.textContent = text;
  node.classList.toggle('danger', error);
 }
-const nameSummary = nameSettings.querySelector('summary');
-nameSummary.addEventListener('click', () => {
- if (nameSettings.open) return;
- newName.value = lookupName();
- namePasscode.value = '';
- nameFeedback('');
-});
-$('cancel-name').onclick = () => {
- nameSettings.open = false;
- namePasscode.value = '';
- nameSummary.focus();
-};
+$('cancel-name').onclick = () => window.history.back();
 newName.addEventListener('input', () => nameFeedback(''));
 $('name-form').onsubmit = async event => {
  event.preventDefault();

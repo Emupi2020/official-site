@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=centered-draw-message"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=compact-menu-top"><link rel="stylesheet" href="./bug-reports.css"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=request-menu-top"></script><script type="module" src="./site-menu.mjs"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=menu-pages"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=menu-pages"><link rel="stylesheet" href="./bug-reports.css"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=menu-pages"></script><script type="module" src="./site-menu.mjs"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
 <header class="global-nav listener-nav">
   <div class="nav-content">
     <a href="https://emupi2020.github.io/official-site/" class="nav-icon-container" aria-label="公式サイトのホーム"><svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text></svg></a>
@@ -11,63 +11,13 @@
   </div>
   <nav id="request-menu" class="request-menu" aria-label="リクエストメニュー" hidden>
     <div class="request-menu-content">
-<button id="request-menu-top" class="request-menu-top" type="button">リクエストトップ</button>
-<details id="listener-name-settings" hidden>
-  <summary>ユーザー名の変更</summary>
-  <form id="name-form" class="listener-name-form">
-    <label for="new-name">Pocochaの名前</label>
-    <input id="new-name" maxlength="50" autocomplete="nickname" required>
-    <div id="name-passcode-field" hidden>
-      <label for="name-passcode">現在のパスコード</label>
-      <input id="name-passcode" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="半角数字4桁">
-    </div>
-    <p id="name-feedback" class="note small" role="status" hidden></p>
-    <div class="name-form-actions">
-      <button id="cancel-name" class="text-button" type="button">キャンセル</button>
-      <button id="save-name" class="text-button" type="submit">保存</button>
-    </div>
-  </form>
-</details><section class="listener-history request-links" aria-label="リクエストと歌唱の確認"><details id="my-history" hidden><summary>リクエスト履歴<span id="my-history-count"></span></summary><ul id="my-history-list" class="song-history"></ul></details><details id="played-history"><summary>今回の募集で歌い終った曲<span id="played-count"></span></summary><ul id="played-list" class="song-history"></ul><p id="played-empty" class="small muted">まだ歌唱済みの曲はありません。</p></details></section>
-<details id="playable-songs">
-  <summary>歌える曲</summary>
-  <p id="playable-feedback" class="note" role="status" hidden></p>
-  <div id="playable-groups" hidden>
-    <section aria-labelledby="playable-yamapi-heading"><h3 id="playable-yamapi-heading">山Pの歌まね</h3><ul id="playable-yamapi" class="song-history"></ul><p id="playable-yamapi-empty" class="note" hidden>まだ曲がありません。</p></section>
-    <section aria-labelledby="playable-other-heading"><h3 id="playable-other-heading">それ以外の歌まね</h3><ul id="playable-other" class="song-history"></ul><p id="playable-other-empty" class="note" hidden>まだ曲がありません。</p></section>
-  </div>
-</details>
-<details class="request-notes">
-  <summary>注意事項</summary>
-  <div class="request-rules">
-    <h3>リクエスト・予約</h3>
-    <ul>
-      <li>山Pの歌まねとそれ以外は、1回の募集につき1人1曲ずつ送れます。NEWS・修二と彰・亀と山Pの曲は山P枠です。途中参加もできます。</li>
-      <li>両方の枠を送ると、画面下の「次回の予約」から次の募集分を予約できます。曲の変更は、枠を開いて「曲を修正」が表示されている間にできます。</li>
-      <li>同じ配信ですでに歌った曲は、次の配信に持ち越します。歌えない理由の案内が出た曲も、内容を確認してから送れます。</li>
-    </ul>
-    <h3>曲や履歴の確認</h3>
-    <ul>
-      <li>三本メニューの「リクエスト履歴」で、送った曲・予約・抽選状況を確認できます。リクエスト履歴は30日間表示されます。</li>
-      <li>「今回の募集で歌い終った曲」では今回の結果を、「歌える曲」ではこれまでの歌唱記録をもとにした曲リストを確認できます。</li>
-    </ul>
-    <h3>名前・ログイン</h3>
-    <ul>
-      <li>えむぴーが分かる名前なら、略称やニックネームでもOKです。本名や連絡先は入力しないでください。</li>
-      <li>名前だけで使う場合、同じ名前を入力した人にも履歴が表示される場合があります。曲の変更は、送信したブラウザーにデータが残っている間にできます。パスコードを設定すると、別の端末からもログインして曲を変更できます。</li>
-      <li>曲名・歌手名は一覧に表示されたり、入力候補に使われたりします。</li>
-    </ul>
-  </div>
-</details>
-<details>
-  <summary>バグ報告/ご意見</summary>
-  <p id="bug-report-login-note" class="note">報告を送るには、Pocochaの名前でログインしてください。</p>
-  <form id="bug-report-form">
-    <textarea id="bug-report-message" aria-label="報告内容" rows="4" maxlength="1000" placeholder="どの画面で何が起きたか" required></textarea>
-    <p class="note small">本名や連絡先は書かないでください。</p>
-    <button type="submit" disabled>送信</button>
-    <p id="bug-report-status" class="small" role="status" hidden></p>
-  </form>
-</details></div>
+<button id="request-menu-top" class="request-menu-link" type="button">リクエストトップ</button>
+<button class="request-menu-link" type="button" data-menu-page="listener-name-settings" data-login-required aria-controls="listener-name-settings" hidden>ユーザー名の変更</button>
+<button class="request-menu-link" type="button" data-menu-page="my-history" data-login-required aria-controls="my-history" hidden>リクエスト履歴<span id="my-history-count"></span></button>
+<button class="request-menu-link" type="button" data-menu-page="played-history" aria-controls="played-history">今回の募集で歌い終った曲<span id="played-count"></span></button>
+<button class="request-menu-link" type="button" data-menu-page="playable-songs" aria-controls="playable-songs">歌える曲</button>
+<button class="request-menu-link" type="button" data-menu-page="feedback-page" aria-controls="feedback-page">バグ報告/ご意見</button>
+</div>
   </nav>
 </header>
 <div class="listener-content">
@@ -135,9 +85,77 @@
     <span class="slot-overview-end"><span class="slot-overview-status">予約する</span><span class="slot-overview-chevron" aria-hidden="true"></span></span>
   </button>
 </div>
-</details></div>
-<div id="request-detail" hidden><button id="request-detail-back" class="text-button" type="button"><span class="slot-overview-chevron" aria-hidden="true"></span>戻る</button><p id="reservation-detail-label" class="note" hidden>次回の予約</p><section id="yamapi-detail" class="request-block" aria-labelledby="yamapi-heading" tabindex="-1" hidden><h2 id="yamapi-heading">山Pの歌まね</h2><div id="current-yamapi" class="request-slot" data-category="yamapi" data-reserved="false"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="current-yamapi-artist">歌手名</label><select id="current-yamapi-artist" name="artist" required><option>山下智久</option><option>NEWS</option><option>修二と彰</option><option>亀と山P</option></select></div><div class="request-field"><label for="current-yamapi-song">曲名</label><div class="sug-wrap"><input id="current-yamapi-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="current-yamapi-song-suggestions" aria-expanded="false" required><div id="current-yamapi-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>リクエスト</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section><section id="other-detail" class="request-block" aria-labelledby="other-heading" tabindex="-1" hidden><h2 id="other-heading">それ以外の歌まね</h2><div id="current-other" class="request-slot" data-category="other" data-reserved="false"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="current-other-artist">歌手名</label><div class="sug-wrap"><input id="current-other-artist" name="artist" placeholder="歌手名を入力" maxlength="100" autocomplete="off" aria-controls="current-other-artist-suggestions" aria-expanded="false" required><div id="current-other-artist-suggestions" class="suggestions" hidden></div></div></div><div class="request-field"><label for="current-other-song">曲名</label><div class="sug-wrap"><input id="current-other-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="current-other-song-suggestions" aria-expanded="false" required><div id="current-other-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>リクエスト</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section><section id="reserve-yamapi-detail" class="request-block" aria-labelledby="reserve-yamapi-heading" tabindex="-1" hidden><h2 id="reserve-yamapi-heading">山Pの歌まね</h2><div id="next-yamapi" class="request-slot" data-category="yamapi" data-reserved="true"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="next-yamapi-artist">歌手名</label><select id="next-yamapi-artist" name="artist" required><option>山下智久</option><option>NEWS</option><option>修二と彰</option><option>亀と山P</option></select></div><div class="request-field"><label for="next-yamapi-song">曲名</label><div class="sug-wrap"><input id="next-yamapi-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="next-yamapi-song-suggestions" aria-expanded="false" required><div id="next-yamapi-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>予約する</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section><section id="reserve-other-detail" class="request-block" aria-labelledby="reserve-other-heading" tabindex="-1" hidden><h2 id="reserve-other-heading">それ以外の歌まね</h2><div id="next-other" class="request-slot" data-category="other" data-reserved="true"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="next-other-artist">歌手名</label><div class="sug-wrap"><input id="next-other-artist" name="artist" placeholder="歌手名を入力" maxlength="100" autocomplete="off" aria-controls="next-other-artist-suggestions" aria-expanded="false" required><div id="next-other-artist-suggestions" class="suggestions" hidden></div></div></div><div class="request-field"><label for="next-other-song">曲名</label><div class="sug-wrap"><input id="next-other-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="next-other-song-suggestions" aria-expanded="false" required><div id="next-other-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>予約する</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section></div>
-<dialog id="unknown-warning" aria-labelledby="unknown-title" aria-describedby="unknown-description"><form method="dialog"><h2 id="unknown-title">リクエストの確認</h2><p id="unknown-description"></p><div class="buttons"><button class="secondary" value="cancel">曲を変更する</button><button value="request">リクエストする</button></div></form></dialog></div></main>
+</details>
+<details class="request-notes">
+  <summary>注意事項</summary>
+  <div class="request-rules">
+    <h3>リクエスト・予約</h3>
+    <ul>
+      <li>山Pの歌まねとそれ以外は、1回の募集につき1人1曲ずつ送れます。NEWS・修二と彰・亀と山Pの曲は山P枠です。途中参加もできます。</li>
+      <li>両方の枠を送ると、画面下の「次回の予約」から次の募集分を予約できます。曲の変更は、枠を開いて「曲を修正」が表示されている間にできます。</li>
+      <li>同じ配信ですでに歌った曲は、次の配信に持ち越します。歌えない理由の案内が出た曲も、内容を確認してから送れます。</li>
+    </ul>
+    <h3>曲や履歴の確認</h3>
+    <ul>
+      <li>三本メニューの「リクエスト履歴」で、送った曲・予約・抽選状況を確認できます。リクエスト履歴は30日間表示されます。</li>
+      <li>「今回の募集で歌い終った曲」では今回の結果を、「歌える曲」ではこれまでの歌唱記録をもとにした曲リストを確認できます。</li>
+    </ul>
+    <h3>名前・ログイン</h3>
+    <ul>
+      <li>えむぴーが分かる名前なら、略称やニックネームでもOKです。本名や連絡先は入力しないでください。</li>
+      <li>名前だけで使う場合、同じ名前を入力した人にも履歴が表示される場合があります。曲の変更は、送信したブラウザーにデータが残っている間にできます。パスコードを設定すると、別の端末からもログインして曲を変更できます。</li>
+      <li>曲名・歌手名は一覧に表示されたり、入力候補に使われたりします。</li>
+    </ul>
+  </div>
+</details>
+</div>
+<div id="request-detail" hidden><button id="request-detail-back" class="text-button request-back" type="button"><span class="slot-overview-chevron" aria-hidden="true"></span>戻る</button><p id="reservation-detail-label" class="note" hidden>次回の予約</p><section id="yamapi-detail" class="request-block" aria-labelledby="yamapi-heading" tabindex="-1" hidden><h2 id="yamapi-heading">山Pの歌まね</h2><div id="current-yamapi" class="request-slot" data-category="yamapi" data-reserved="false"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="current-yamapi-artist">歌手名</label><select id="current-yamapi-artist" name="artist" required><option>山下智久</option><option>NEWS</option><option>修二と彰</option><option>亀と山P</option></select></div><div class="request-field"><label for="current-yamapi-song">曲名</label><div class="sug-wrap"><input id="current-yamapi-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="current-yamapi-song-suggestions" aria-expanded="false" required><div id="current-yamapi-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>リクエスト</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section><section id="other-detail" class="request-block" aria-labelledby="other-heading" tabindex="-1" hidden><h2 id="other-heading">それ以外の歌まね</h2><div id="current-other" class="request-slot" data-category="other" data-reserved="false"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="current-other-artist">歌手名</label><div class="sug-wrap"><input id="current-other-artist" name="artist" placeholder="歌手名を入力" maxlength="100" autocomplete="off" aria-controls="current-other-artist-suggestions" aria-expanded="false" required><div id="current-other-artist-suggestions" class="suggestions" hidden></div></div></div><div class="request-field"><label for="current-other-song">曲名</label><div class="sug-wrap"><input id="current-other-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="current-other-song-suggestions" aria-expanded="false" required><div id="current-other-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>リクエスト</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section><section id="reserve-yamapi-detail" class="request-block" aria-labelledby="reserve-yamapi-heading" tabindex="-1" hidden><h2 id="reserve-yamapi-heading">山Pの歌まね</h2><div id="next-yamapi" class="request-slot" data-category="yamapi" data-reserved="true"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="next-yamapi-artist">歌手名</label><select id="next-yamapi-artist" name="artist" required><option>山下智久</option><option>NEWS</option><option>修二と彰</option><option>亀と山P</option></select></div><div class="request-field"><label for="next-yamapi-song">曲名</label><div class="sug-wrap"><input id="next-yamapi-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="next-yamapi-song-suggestions" aria-expanded="false" required><div id="next-yamapi-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>予約する</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section><section id="reserve-other-detail" class="request-block" aria-labelledby="reserve-other-heading" tabindex="-1" hidden><h2 id="reserve-other-heading">それ以外の歌まね</h2><div id="next-other" class="request-slot" data-category="other" data-reserved="true"><form class="slot-form"><div class="input-group"><div class="request-field"><label for="next-other-artist">歌手名</label><div class="sug-wrap"><input id="next-other-artist" name="artist" placeholder="歌手名を入力" maxlength="100" autocomplete="off" aria-controls="next-other-artist-suggestions" aria-expanded="false" required><div id="next-other-artist-suggestions" class="suggestions" hidden></div></div></div><div class="request-field"><label for="next-other-song">曲名</label><div class="sug-wrap"><input id="next-other-song" name="song" placeholder="曲名を入力" maxlength="100" autocomplete="off" aria-controls="next-other-song-suggestions" aria-expanded="false" required><div id="next-other-song-suggestions" class="suggestions" hidden></div></div></div></div><div class="slot-actions"><button class="primary slot-submit" type="submit" disabled>予約する</button><button class="slot-cancel text-button" type="button" hidden>キャンセル</button></div></form><div class="slot-receipt" hidden><div class="slot-song receipt-song"></div><p class="slot-artist muted"></p><div class="slot-receipt-footer"><p class="slot-status"></p><div class="edit-actions"><button class="slot-edit text-button" type="button">曲を修正</button></div></div></div></div></section></div>
+<dialog id="unknown-warning" aria-labelledby="unknown-title" aria-describedby="unknown-description"><form method="dialog"><h2 id="unknown-title">リクエストの確認</h2><p id="unknown-description"></p><div class="buttons"><button class="secondary" value="cancel">曲を変更する</button><button value="request">リクエストする</button></div></form></dialog></div>
+<section id="menu-page" aria-labelledby="menu-page-title" hidden>
+  <button id="menu-page-back" class="text-button request-back" type="button"><span class="slot-overview-chevron" aria-hidden="true"></span>戻る</button>
+  <h1 id="menu-page-title" tabindex="-1"></h1>
+  <div id="listener-name-settings" class="menu-page-form" hidden>
+<form id="name-form" class="listener-name-form">
+    <label for="new-name">Pocochaの名前</label>
+    <input id="new-name" maxlength="50" autocomplete="nickname" required>
+    <div id="name-passcode-field" hidden>
+      <label for="name-passcode">現在のパスコード</label>
+      <input id="name-passcode" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="半角数字4桁">
+    </div>
+    <p id="name-feedback" class="note small" role="status" hidden></p>
+    <div class="name-form-actions">
+      <button id="cancel-name" class="text-button" type="button">キャンセル</button>
+      <button id="save-name" class="text-button" type="submit">保存</button>
+    </div>
+  </form>
+  </div>
+  <div id="my-history" hidden>
+    <ul id="my-history-list" class="song-history"></ul>
+    <p id="my-history-empty" class="note">まだリクエストはありません。</p>
+  </div>
+  <div id="played-history" hidden>
+    <ul id="played-list" class="song-history"></ul>
+    <p id="played-empty" class="note">まだ歌い終った曲はありません。</p>
+  </div>
+  <div id="playable-songs" hidden>
+<p id="playable-feedback" class="note" role="status" hidden></p>
+  <div id="playable-groups" hidden>
+    <section aria-labelledby="playable-yamapi-heading"><h3 id="playable-yamapi-heading">山Pの歌まね</h3><ul id="playable-yamapi" class="song-history"></ul><p id="playable-yamapi-empty" class="note" hidden>まだ曲がありません。</p></section>
+    <section aria-labelledby="playable-other-heading"><h3 id="playable-other-heading">それ以外の歌まね</h3><ul id="playable-other" class="song-history"></ul><p id="playable-other-empty" class="note" hidden>まだ曲がありません。</p></section>
+  </div>
+
+  </div>
+  <div id="feedback-page" class="menu-page-form" hidden>
+<p id="bug-report-login-note" class="note">報告を送るには、Pocochaの名前でログインしてください。</p>
+  <form id="bug-report-form">
+    <textarea id="bug-report-message" aria-label="報告内容" rows="4" maxlength="1000" placeholder="どの画面で何が起きたか" required></textarea>
+    <p class="note small">本名や連絡先は書かないでください。</p>
+    <button type="submit" disabled>送信</button>
+    <p id="bug-report-status" class="small" role="status" hidden></p>
+  </form>
+  </div>
+</section>
+</main>
 <footer class="site-footer"><p>&copy; 2025 Emupi Official. All rights reserved.</p></footer>
 </div>
 </body></html>
