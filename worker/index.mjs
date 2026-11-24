@@ -115,7 +115,7 @@ export default {
   async fetch(req, env) {
     let response;
     try { response = await handle(req, env); }
-    catch (error) { response = json({ error: error instanceof Problem ? error.message : '処理できませんでした。時間をおいてお試しください。' }, error.status || 500); }
+    catch (error) { response = json({ error: error instanceof Problem ? error.message : '処理できませんでした。時間をおいてお試しください。', code: error instanceof Problem ? error.code : undefined }, error.status || 500); }
     const headers = new Headers(response.headers), origin = req.headers.get('Origin');
     if (origins(env, req).has(origin)) { headers.set('Access-Control-Allow-Origin', origin); headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Request-Token'); headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS'); }
     headers.set('Vary', 'Origin'); headers.set('X-Content-Type-Options', 'nosniff'); headers.set('Referrer-Policy', 'strict-origin-when-cross-origin'); headers.set('X-Frame-Options', 'DENY');

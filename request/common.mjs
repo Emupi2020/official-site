@@ -10,7 +10,7 @@ export async function api(path, { method = 'GET', data, token } = {}) {
   try { response = await fetch(`${apiBase}${path}`, { method, headers, body: data ? JSON.stringify(data) : undefined, credentials: apiBase && new URL(apiBase).origin !== location.origin ? 'omit' : 'same-origin' }); }
   catch { throw new Error('接続できませんでした。通信を確認してお試しください。'); }
   const result = await response.json();
-  if (!response.ok) { const error = new Error(result.error || '処理できませんでした。'); error.status = response.status; throw error; }
+  if (!response.ok) { const error = new Error(result.error || '処理できませんでした。'); error.status = response.status; error.code = result.code; throw error; }
   return result;
 }
 export function message(value, error = false) { $('message').hidden = !value; $('message').textContent = value; $('message').classList.toggle('error', error); }

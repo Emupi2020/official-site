@@ -2,6 +2,26 @@ import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
 let state, items=[], tokens, busy=false, nameEditing=false;
 try { tokens=JSON.parse(safeGet('emupi-request-tokens')||'{}'); } catch { tokens={}; }
+const duplicateStorageKey = 'emupi-duplicate-requests';
+let confirmedDuplicates = [];
+try {
+ const saved = JSON.parse(safeGet(duplicateStorageKey) || '[]');
+ if (Array.isArray(saved)) confirmedDuplicates = saved;
+} catch {}
+const duplicateKey = (round, category, name) => JSON.stringify([round, category, name.normalize('NFKC').trim().replace(/s+/g, ' ').toLowerCase()]);
+function renderDuplicateSlots() {
+ if (!state) return;
+ for (const slot of slots) {
+  const duplicate = !slot.entry && confirmedDuplicates.includes(duplicateKey(slot.round, slot.category, $('name').value));
+  part(slot, '.slot-duplicate').hidden = !duplicate;
+  part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
+ }
+ for (const category of ['yamapi', 'other']) {
+  const current = slots.find(slot => slot.category === category && !slot.reserved);
+  const next = slots.find(slot => slot.category === category && slot.reserved);
+  $('reserve-' + category).hidden = !current.entry && !next.entry && part(current, '.slot-duplicate').hidden;
+ }
+}
 const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:root.id,category:root.dataset.category,reserved:root.dataset.reserved==='true',entry:null,token:null,round:null,draftRound:null}));
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
@@ -45,7 +65,7 @@ async function refresh(){
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
   if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-name').textContent=`${mine.name} さん`;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'次回の抽選に入ります。':statusText[mine.status];part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
- for(const category of ['yamapi','other']){const current=slots.find(s=>s.category===category&&!s.reserved),nextSlot=slots.find(s=>s.category===category&&s.reserved);$(`reserve-${category}`).hidden=!current.entry&&!nextSlot.entry;}
+ renderDuplicateSlots();
  renderNameControls();
  renderHistory(myRequests);
 }
@@ -126,6 +146,7 @@ $('edit-name').onclick = () => {
 $('cancel-name').onclick = () => {
  $('name').value = nameBeforeEdit;
  nameEditing = false;
+ renderDuplicateSlots();
  renderNameControls();
  $('edit-name').focus();
 };
@@ -152,6 +173,12 @@ $('name-form').onsubmit = async event => {
  }
 };
 for(const slot of slots){
+ const duplicate = document.createElement('div');
+ duplicate.className = 'slot-receipt slot-duplicate';
+ duplicate.hidden = true;
+ duplicate.setAttribute('role', 'status');
+ duplicate.textContent = slot.reserved ? '予約済みです。' : 'リクエスト済みです。';
+ slot.root.append(duplicate);
  const box=document.createElement('div');box.className='slot-feedback edit-feedback';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
  part(slot, '.slot-form').onsubmit = async event => {
   event.preventDefault();
@@ -163,6 +190,7 @@ for(const slot of slots){
   message('');
   const round = slot.draftRound ?? slot.round;
   const data = Object.fromEntries(new FormData(event.target));
+  const name = $('name').value;
   let savedEdit = false;
   try {
    if (!await confirmSong(data)) { field(slot, 'song').focus(); return; }
@@ -174,7 +202,7 @@ for(const slot of slots){
     savedEdit = true;
    } else {
     const {entry} = await api('/api/requests', {
-     method: 'POST', data: {...data, name: $('name').value, round, category: slot.category},
+     method: 'POST', data: {...data, name, round, category: slot.category},
      token: tokenFor(round, slot.category)
     });
     safeSet('emupi-request-name', entry.name);
@@ -183,6 +211,15 @@ for(const slot of slots){
     await refresh();
    }
   } catch (error) {
+   if (!editing && error.code === 'duplicate_request') {
+    const key = duplicateKey(round, slot.category, name);
+    confirmedDuplicates = [...new Set([...confirmedDuplicates, key])].slice(-24);
+    safeSet(duplicateStorageKey, JSON.stringify(confirmedDuplicates));
+    safeSet('emupi-request-name', name.trim());
+    slot.draftRound = null;
+    await refresh().catch(() => renderDuplicateSlots());
+    return;
+   }
    feedback(slot, error.message);
    if (error.status === 409) { slot.draftRound = null; await refresh().catch(() => {}); }
   } finally {
@@ -231,6 +268,7 @@ for(const slot of slots){
   }
   input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
 }
+$('name').addEventListener('input', renderDuplicateSlots);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try{await refresh();items=(await api('/api/suggestions')).items;message('');}catch(error){message(error.message,true);}
 setInterval(()=>{if(!document.hidden&&!busy)refresh().catch(error=>message(error.message,true));},15000);

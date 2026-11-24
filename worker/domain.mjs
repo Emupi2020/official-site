@@ -2,7 +2,7 @@ import { categoryOf, classifyArtist, categoryLabel } from '../request/categories
 import { catalog } from '../request/catalog.mjs';
 
 export class Problem extends Error {
-  constructor(message, status = 400) { super(message); this.status = status; }
+  constructor(message, status = 400, code) { super(message); this.status = status; this.code = code; }
 }
 export const normalize = value => String(value ?? '').normalize('NFKC').trim().toLowerCase().replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/[\s・･._\-’']/g, '');
 export const nameKey = value => String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -72,10 +72,10 @@ export function submit(state, input, tokenHash, now = Date.now()) {
   if (input.category !== undefined && input.category !== category) throw new Problem('歌手名に合う歌まね枠を選んでください。');
   const roundLabel = round === state.round ? '今回' : '次回の予約';
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.tokenHash === tokenHash)) {
-    throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409);
+    throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
   }
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.usedNames.includes(key))) {
-    throw new Problem(`この名前では、${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。送信したときのブラウザーで控えを確認できます。`, 409);
+    throw new Problem(`この名前では、${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。送信したときのブラウザーで控えを確認できます。`, 409, 'duplicate_request');
   }
   if (state.entries.length >= 3000) throw new Problem('応募が上限に達しました。配信者にお知らせください。', 409);
   const songKey = songIdentity(artist, song, state.suggestions);
