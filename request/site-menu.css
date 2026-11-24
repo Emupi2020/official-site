@@ -27,6 +27,27 @@ body.listener-layout {
   flex-direction: column;
 }
 .listener-content > .site-footer { flex-shrink: 0; margin-top: auto; padding-block: 16px; }
+.site-footer .request-notes {
+  display: none;
+  max-width: 456px;
+  margin: 0 auto;
+  color: var(--text);
+}
+.listener-layout:has(#request-screen:not([hidden]) #request-overview:not([hidden])):has(#menu-page[hidden]) .request-notes {
+  display: block;
+}
+.request-notes > summary {
+  min-height: 44px;
+  padding-block: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.request-rules { padding-block-end: 12px; font-size: 14px; line-height: 1.65; text-align: start; }
+.request-rules h3 { margin: 0 0 4px; font-size: 15px; }
+.request-rules ul { margin: 0; padding-inline-start: 1.3em; }
+.request-rules ul + h3 { margin-top: 16px; }
+.request-rules li + li { margin-top: 6px; }
 .listener-nav {
   padding-inline: 0;
   border-bottom-color: var(--border);
