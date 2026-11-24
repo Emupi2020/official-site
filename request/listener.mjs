@@ -24,20 +24,27 @@ function renderDuplicateSlots() {
   part(slot, '.duplicate-error').hidden = !showError;
   part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
  }
- const reservation = $('next-reservation');
  reservation.hidden = !currentSlots.every(slot => slot.entry || !part(slot, '.slot-duplicate').hidden);
- if (reservation.hidden) reservation.open = false;
- for (const slot of currentSlots) renderSlotOverview(slot);
+ if (reservation.hidden) {
+  reservation.open = false;
+  if (activeSlot?.reserved) {
+   window.history.replaceState({requestScreen:true}, '');
+   showSlot(null, true);
+  }
+ }
+ for (const slot of slots) renderSlotOverview(slot);
 }
 window.addEventListener('pageshow', renderDuplicateSlots);
 document.addEventListener('visibilitychange', renderDuplicateSlots);
-const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:root.id,category:root.dataset.category,reserved:root.dataset.reserved==='true',entry:null,token:null,round:null,draftRound:null}));
+const slots = [...document.querySelectorAll('.request-slot')].map(root => {
+ const overview = $(`open-${root.id}`);
+ return {root, id:root.id, category:root.dataset.category, reserved:root.dataset.reserved === 'true',
+  entry:null, token:null, round:null, draftRound:null, overview, detail:$(overview.getAttribute('aria-controls'))};
+});
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
-const currentSlots = slots.filter(slot => !slot.reserved).map(slot => {
- const overview = $(`open-${slot.id}`);
- return Object.assign(slot, {overview, detail:$(overview.getAttribute('aria-controls'))});
-});
+const currentSlots = slots.filter(slot => !slot.reserved);
+const reservation = $('next-reservation');
 let activeSlot = null;
 const overviewStatus = {pending:'抽選待ち', selected:'当選', done:'歌唱済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
 
@@ -47,30 +54,38 @@ function renderSlotOverview(slot) {
  const empty = !slot.entry && part(slot, '.slot-duplicate').hidden;
  song.textContent = slot.entry?.song || '';
  song.hidden = !song.textContent;
- status.textContent = slot.entry
-  ? (slot.entry.status === 'deferred' && slot.entry.deferReason === 'temporary' ? '一時保留' : overviewStatus[slot.entry.status])
-  : empty ? 'リクエスト' : 'リクエスト済み';
+ const submitted = slot.reserved ? '予約済み' : 'リクエスト済み';
+ if (!slot.entry) {
+  status.textContent = empty ? (slot.reserved ? '予約する' : 'リクエスト') : submitted;
+ } else if (slot.reserved && slot.entry.status === 'pending') {
+  status.textContent = submitted;
+ } else {
+  status.textContent = slot.entry.status === 'deferred' && slot.entry.deferReason === 'temporary' ? '一時保留' : overviewStatus[slot.entry.status];
+ }
  slot.overview.classList.toggle('is-empty', empty);
 }
-function showCurrentSlot(id, focus = false) {
+function showSlot(id, focus = false) {
  const previous = activeSlot;
- activeSlot = currentSlots.find(slot => slot.id === id) || null;
+ activeSlot = slots.find(slot => slot.id === id && (!slot.reserved || !reservation.hidden)) || null;
+ if (activeSlot?.reserved) reservation.open = true;
  $('request-overview').hidden = Boolean(activeSlot);
- $('current-request-detail').hidden = !activeSlot;
- for (const slot of currentSlots) slot.detail.hidden = slot !== activeSlot;
- if (focus) (activeSlot?.detail || previous?.overview || $('request-title')).focus();
+ $('request-detail').hidden = !activeSlot;
+ $('reservation-detail-label').hidden = !activeSlot?.reserved;
+ for (const slot of slots) slot.detail.hidden = slot !== activeSlot;
+ const previousRow = previous && (!previous.reserved || !reservation.hidden) && previous.overview;
+ if (focus) (activeSlot?.detail || previousRow || $('request-title')).focus();
 }
-function closeCurrentSlot() {
+function closeSlot() {
  if (activeSlot) window.history.back();
 }
-for (const slot of currentSlots) {
+for (const slot of slots) {
  slot.overview.onclick = () => {
   if (activeSlot || busy) return;
   window.history.pushState({requestScreen:true, currentSlot:slot.id}, '');
-  showCurrentSlot(slot.id, true);
+  showSlot(slot.id, true);
  };
 }
-$('current-request-back').onclick = closeCurrentSlot;
+$('request-detail-back').onclick = closeSlot;
 $('name').value=safeGet('emupi-request-name')||'';
 const viewport = window.visualViewport;
 if (viewport) {
@@ -110,7 +125,7 @@ function showRequestScreen(open, focus = false) {
  nameSettings.hidden = !open;
  if (!open) {
   nameSettings.open = false;
-  showCurrentSlot(null);
+  showSlot(null);
  }
  if (open) renderGreeting();
  if (focus) (open ? $('request-title') : entryTitle).focus();
@@ -256,7 +271,7 @@ window.addEventListener('popstate', event => {
  const open = event.state.requestScreen && Boolean(lookupName());
  if (!open) setEntryMode(event.state.entryMode || 'welcome');
  showRequestScreen(open, !open);
- if (open) showCurrentSlot(event.state.currentSlot, true);
+ if (open) showSlot(event.state.currentSlot, true);
 });
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
@@ -265,7 +280,7 @@ function canSubmit(slot) {
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, #current-request-back, .slot-overview-row')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, #request-detail-back, .slot-overview-row')) button.disabled = busy;
  newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
@@ -543,7 +558,7 @@ for(const slot of slots){
     field(slot, 'song').value = '';
     slot.draftRound = null;
     await refresh();
-    if (activeSlot === slot) closeCurrentSlot();
+    if (activeSlot === slot) closeSlot();
    }
   } catch (error) {
    if (error.code === 'passcode_required') {

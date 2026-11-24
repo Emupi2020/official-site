@@ -156,16 +156,17 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-overview-end { display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: var(--muted); font-size: 13px; }
 .slot-overview-row.is-empty .slot-overview-end { color: var(--accent); }
 .slot-overview-chevron { width: 7px; height: 7px; margin-inline: 2px; border-block-start: 1.5px solid currentColor; border-inline-end: 1.5px solid currentColor; transform: rotate(45deg); }
-.request-page #current-request-back { min-height: 44px; }
-#current-request-back .slot-overview-chevron { transform: rotate(-135deg); }
-.request-page #current-request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
-#current-request-detail .request-block:focus { outline: none; }
-.request-page #current-request-detail h2 { margin-bottom: 10px; font-size: 22px; }
-.request-page #current-request-detail :is(.input-group, .slot-receipt) { padding: 0 14px; border-radius: 14px; background: var(--card); }
-.request-page #current-request-detail .request-field:last-of-type { border-bottom: 0; }
-.request-page #current-request-detail .suggestions { position: static; margin-block: 4px 8px; box-shadow: none; }
-.request-page #current-request-detail .slot-receipt { padding-block: 12px; }
-.request-page #current-request-detail .slot-actions:not(.edit-actions) > .primary { width: 100%; margin-top: 10px; border-radius: 999px; }
+.request-page #request-detail-back { min-height: 44px; }
+#request-detail-back .slot-overview-chevron { transform: rotate(-135deg); }
+.request-page #reservation-detail-label { margin: 0 0 3px; }
+.request-page #request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
+#request-detail .request-block:focus { outline: none; }
+.request-page #request-detail h2 { margin-bottom: 10px; font-size: 22px; }
+.request-page #request-detail :is(.input-group, .slot-receipt) { padding: 0 14px; border-radius: 14px; background: var(--card); }
+.request-page #request-detail .request-field:last-of-type { border-bottom: 0; }
+.request-page #request-detail .suggestions { position: static; margin-block: 4px 8px; box-shadow: none; }
+.request-page #request-detail .slot-receipt { padding-block: 12px; }
+.request-page #request-detail .slot-actions:not(.edit-actions) > .primary { width: 100%; margin-top: 10px; border-radius: 999px; }
 .request-page #entry-screen {
   max-width: 384px;
   width: 100%;
@@ -246,7 +247,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .slot-receipt .receipt-song { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
 .request-page .next-reservation { margin: 8px 0 0; }
 .request-page .next-reservation > summary { justify-content: center; gap: 9px; color: var(--accent); }
-.request-page .next-reservation > .request-block:first-of-type { margin-top: 4px; }
+.next-reservation .request-overview-rows { margin-top: 4px; }
 .request-page .slot-rename-form { margin-top: 14px; }
 .request-page .account-settings { margin: 4px 0 0; }
 .request-page .account-settings > summary { color: var(--muted); }
