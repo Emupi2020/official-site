@@ -138,8 +138,10 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .listener-greeting { margin: 8px 0 10px; font-size: 20px; line-height: 1.4; font-weight: 650; overflow-wrap: anywhere; }
 .request-overview-rows { display: grid; gap: 8px; margin-top: 10px; }
-.request-page .after-draw-note { margin: 12px 0 0; }
+.request-page .after-draw-note { margin: 16px 0 0; }
 .request-page .after-draw-note p { margin: 0; }
+.request-page .after-draw-message { color: var(--text); font-size: 18px; font-weight: 600; line-height: 1.4; }
+.request-page .after-draw-note p:not(.after-draw-message) { margin-top: 4px; }
 .request-page .slot-overview-row {
   display: flex;
   justify-content: space-between;
