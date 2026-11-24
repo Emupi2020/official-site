@@ -58,6 +58,8 @@ function render() {
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
   const tables = { yamapi: $('entries-yamapi'), other: $('entries-other') };
+  const processed = $('entries-processed');
+  processed?.replaceChildren();
   for (const table of Object.values(tables)) table.replaceChildren();
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
@@ -74,11 +76,15 @@ function render() {
       const song=prompt('曲名',e.song);if(song===null)return;action('edit',{id:e.id,name,artist,song});
     };buttons.append(edit);
     if(e.status==='pending'){const defer=node('button','次回へ','secondary');defer.disabled=busy;defer.onclick=()=>action('defer',{id:e.id});buttons.append(defer);}
-    if(e.status!=='removed'){const remove=node('button','削除','secondary danger');remove.disabled=busy;remove.onclick=()=>{if(confirm('この応募を抽選対象から削除しますか？'))action('remove',{id:e.id});};buttons.append(remove);}actionCell.append(buttons);tables[categoryOf(e)].append(row);
+    if(e.status!=='removed'){const remove=node('button','削除','secondary danger');remove.disabled=busy;remove.onclick=()=>{if(confirm('この応募を抽選対象から削除しますか？'))action('remove',{id:e.id});};buttons.append(remove);}actionCell.append(buttons);
+    const active = e.status === 'pending' || e.status === 'selected';
+    const table = !active && processed ? processed : tables[categoryOf(e)];
+    table.append(row);
   }
+  if (processed) $('processed-requests').hidden = !processed.rows.length;
   for (const table of Object.values(tables)) {
     if (table.rows.length) continue;
-    const row = node('tr'), cell = node('td', 'まだリクエストはありません。', 'empty-requests');
+    const row = node('tr'), cell = node('td', '抽選待ち・選択中のリクエストはありません。', 'empty-requests');
     cell.colSpan = 4;
     row.append(cell);
     table.append(row);
