@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState, submit, rename, adminAction, eligible, publicState, ownRequests, songIdentity, songStatus, prune } from '../worker/domain.mjs';
-import worker from '../worker/index.mjs';
+import { initialState, submit, rename, adminAction, eligible, publicState, ownRequests, songIdentity, songStatus, prune, rolloverSession } from '../worker/domain.mjs';
+import worker, { read } from '../worker/index.mjs';
 import { database } from '../scripts/local-db.mjs';
 import { sign,verify,isAdmin,passwordRecord,hash } from '../worker/auth.mjs';
 const input=(name='リスナーA',song='らぶれす',artist='やまぴー')=>({name,song,artist});
@@ -446,4 +446,81 @@ test('自動で歌唱済みになった当選曲を持ち越しや歌えない�
  assert.equal(publicState(s).played.length, 0);
  assert.equal(songStatus(s,entry.artist,entry.song).reasons[0].reason, 'no_audio');
  assert.deepEqual(eligible(s), [next]);
+});
+
+test('毎日15時 JSTに一度だけ配信を切り替え、持ち越しと保留を抽選に戻す', () => {
+ const before = Date.parse('2026-11-25T14:59:59+09:00');
+ const cutoff = before + 1000;
+ const s = initialState(before);
+ const sung = submit(s, input('A','歌った曲'), 'a');
+ const held = submit(s, input('B','保留曲'), 'b');
+ const next = submit(s, input('C','持ち越し曲'), 'c');
+ adminAction(s, {action:'selectSong',id:sung.id});
+ adminAction(s, {action:'done',id:sung.id});
+ adminAction(s, {action:'hold',id:held.id});
+ adminAction(s, {action:'defer',id:next.id});
+ assert.equal(rolloverSession(s,before), false);
+ assert.equal(publicState(s).played.length,1);
+ assert.equal(rolloverSession(s,cutoff), true);
+ assert.equal(s.session,2);
+ assert.deepEqual(eligible(s),[held,next]);
+ assert.deepEqual(publicState(s).played,[]);
+ assert.equal(s.history.length,1);
+ assert.equal(rolloverSession(s,cutoff+60_000),false);
+});
+
+test('15時前に手動で開始した日の自動切替を省き、翌日は切り替える', () => {
+ const morning = Date.parse('2026-11-25T11:00:00+09:00');
+ const s = initialState(morning);
+ adminAction(s,{action:'session'},morning);
+ assert.equal(rolloverSession(s,Date.parse('2026-11-25T15:00:00+09:00')),false);
+ assert.equal(s.session,2);
+ assert.equal(rolloverSession(s,Date.parse('2026-11-26T15:00:00+09:00')),true);
+ assert.equal(s.session,3);
+});
+
+test('15時に回転している抽選は猶予後、表示前なら抽選待ちに戻す', () => {
+ const cutoff = Date.parse('2026-11-25T15:00:00+09:00');
+ const s = initialState(cutoff-2000);
+ const pending = submit(s,input(),'a',cutoff-2000);
+ adminAction(s,{action:'draw'});
+ pending.drawnAt = cutoff-1000;
+ assert.equal(rolloverSession(s,cutoff),false);
+ assert.equal(pending.status,'selected');
+ assert.equal(rolloverSession(s,cutoff+60_000),true);
+ assert.equal(pending.status,'pending');
+ assert.deepEqual(publicState(s).played,[]);
+});
+
+test('定時処理とページ読込が重なっても保存済みの配信を一度だけ更新する', async () => {
+ const env = {DB:database()};
+ const before = Date.parse('2026-11-25T14:59:59+09:00');
+ const cutoff = before+1000;
+ const snapshot = initialState(before);
+ delete snapshot.sessionSwitchDate;
+ env.DB.native.prepare('INSERT INTO app_state (id, revision, body) VALUES (1, 0, ?)').run(JSON.stringify(snapshot));
+ assert.equal((await read(env,before)).state.session,1);
+ await Promise.all([
+  worker.scheduled({cron:'0,1 6 * * *',scheduledTime:cutoff}, env),
+  read(env,cutoff), read(env,cutoff+60_000)
+ ]);
+ const after=await read(env,cutoff+60_000);
+ assert.equal(after.state.session,2);
+ assert.equal(after.state.sessionSwitchDate,'2026-11-25');
+ assert.equal(after.revision,2);
+});
+
+test('15時をまたいで確定した当選曲は結果表示の猶予中に消えない', () => {
+ const cutoff = Date.parse('2026-11-25T15:00:00+09:00');
+ const s = initialState(cutoff-2000);
+ const entry = submit(s,input(),'a',cutoff-2000);
+ adminAction(s,{action:'draw'});
+ entry.drawnAt = cutoff-1000;
+ adminAction(s,{action:'completeDraw',id:entry.id,drawnAt:entry.drawnAt});
+ assert.equal(rolloverSession(s,cutoff+3000),false);
+ assert.equal(s.current,entry.id);
+ assert.equal(publicState(s).played.length,1);
+ assert.equal(rolloverSession(s,cutoff+60_000),true);
+ assert.equal(s.current,null);
+ assert.equal(s.history.length,1);
 });

@@ -1,4 +1,4 @@
-import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune } from './domain.mjs';
+import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
 import { passcodeAuth, passcodeAccountId, passcodeRequiredMessage } from './passcode.mjs';
@@ -6,20 +6,31 @@ import { catalog } from '../request/catalog.mjs';
 import { categoryOf } from '../request/categories.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
-export async function read(env) {
-  await env.DB.prepare('INSERT OR IGNORE INTO app_state (id, revision, body) VALUES (1, 0, ?)').bind(JSON.stringify(initialState())).run();
-  const row = await env.DB.prepare('SELECT revision, body FROM app_state WHERE id = 1').first();
-  return { revision: row.revision, state: { ...JSON.parse(row.body), open: true } };
+const stateConflict = () => new Problem('アクセスが重なりました。少し待ってもう一度お試しください。', 409);
+function saveState(env, revision, state) {
+  return env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision')
+    .bind(JSON.stringify(state), revision).first();
+}
+export async function read(env, now = Date.now()) {
+  await env.DB.prepare('INSERT OR IGNORE INTO app_state (id, revision, body) VALUES (1, 0, ?)').bind(JSON.stringify(initialState(now))).run();
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const row = await env.DB.prepare('SELECT revision, body FROM app_state WHERE id = 1').first();
+    const state = { ...JSON.parse(row.body), open: true };
+    if (!rolloverSession(state, now)) return { revision:row.revision, state };
+    const saved = await saveState(env, row.revision, state);
+    if (saved) return { revision:saved.revision, state };
+  }
+  throw stateConflict();
 }
 export async function mutate(env, action) {
   for (let n = 0; n < 12; n++) {
     const { revision, state } = await read(env);
     prune(state);
     const value = await action(state);
-    const result = await env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision').bind(JSON.stringify(state), revision).first();
+    const result = await saveState(env, revision, state);
     if (result) return { value, state };
   }
-  throw new Problem('アクセスが重なりました。少し待ってもう一度お試しください。', 409);
+  throw stateConflict();
 }
 function requestsToRecover(state, accountId, name) {
   const slot = entry => `${entry.round}:${categoryOf(entry)}`;
@@ -243,7 +254,11 @@ export default {
     headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.workers.dev; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
     return new Response(response.body, { status: response.status, headers });
   },
-  async scheduled(_event, env) {
+  async scheduled(event, env) {
+    if (event.cron === '0,1 6 * * *') {
+      await read(env, event.scheduledTime ?? Date.now());
+      return;
+    }
     await mutate(env, state => prune(state));
     await env.DB.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(Date.now()).run();
   }

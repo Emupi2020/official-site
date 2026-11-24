@@ -18,8 +18,37 @@ export function songIdentity(artist, song, custom = []) {
   const item = [...catalog, ...custom].find(c => [c.artist, ...(c.artistAliases || [])].some(v => normalize(v) === a) && [c.song, ...(c.aliases || [])].some(v => normalize(v) === s));
   return item ? `${normalize(item.artist)}:${normalize(item.song)}` : `${a}:${s}`;
 }
-export function initialState() {
-  return { round: 1, session: 1, open: true, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
+const hour = 60 * 60 * 1000;
+const jstDay = now => new Date(now + 9 * hour).toISOString().slice(0, 10);
+const sessionCutoffDay = now => jstDay(now - 15 * hour);
+export function initialState(now = Date.now()) {
+  return { round: 1, session: 1, sessionSwitchDate:sessionCutoffDay(now), open: true, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
+}
+export function rolloverSession(state, now = Date.now()) {
+  const due = sessionCutoffDay(now);
+  if (!state.sessionSwitchDate) {
+    // Preserve the currently active session when an older save is first loaded.
+    state.sessionSwitchDate = due;
+    return true;
+  }
+  if (state.sessionSwitchDate >= due) return false;
+  const current = state.entries.find(entry => entry.id === state.current);
+  // A draw crossing the cutoff gets time to finish and display its result.
+  const cutoff = Date.parse(due + 'T15:00:00+09:00');
+  const recentWinner = current?.status === 'selected' || (current?.status === 'done' && current.autoDone);
+  if (recentWinner && now < cutoff + 30_000 && now - current.drawnAt < 30_000) return false;
+  if (current?.status === 'selected') {
+    if (current.revealedAt) adminAction(state, {action:'done', id:current.id});
+    else {
+      current.status = 'pending';
+      current.deferReason = null;
+      delete current.drawnAt;
+      delete current.manualPick;
+    }
+  }
+  adminAction(state, {action:'session'}, now);
+  state.sessionSwitchDate = due;
+  return true;
 }
 function drawBlock(state, entry) {
   if (state.sung.includes(entry.songKey) && !entry.allowRepeat) return 'sung';
@@ -205,7 +234,7 @@ function performanceFor(state, entry) {
   return state.history.filter(item => !item.requestId && item.song === entry.song && item.artist === entry.artist
     && item.performedAt >= entry.drawnAt).sort((a, b) => a.performedAt - b.performedAt)[0];
 }
-export function adminAction(state, input) {
+export function adminAction(state, input, now = Date.now()) {
   state.held ||= []; state.unknown ||= {}; state.history ||= [];
   const current = state.entries.find(e => e.id === state.current);
   const category = input.category ?? 'all';
@@ -415,6 +444,7 @@ export function adminAction(state, input) {
     case 'session':
       if (current?.status === 'selected') throw new Problem('今の曲を処理してから配信を切り替えてください。', 409);
       state.session++; state.sung = []; state.held = []; state.current = null; state.undo = null;
+      state.sessionSwitchDate = jstDay(now);
       for (const e of state.entries) {
         delete e.allowRepeat;
         delete e.retryHeld;
