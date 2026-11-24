@@ -51,6 +51,7 @@ const entryName = $('entry-name');
 const entryPasscode = $('entry-passcode');
 const nameSettings = $('listener-name-settings');
 const newName = $('new-name');
+const namePasscode = $('name-passcode');
 const greeting = $('listener-greeting');
 const japanHour = new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Tokyo', hour:'2-digit', hourCycle:'h23'});
 const rememberedNameKey = 'emupi-request-last-name';
@@ -224,7 +225,7 @@ function canSubmit(slot) {
 function lock(value) {
  busy = value;
  for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout')) button.disabled = busy;
- newName.readOnly = busy;
+ newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
 function feedback(slot, text, error = true) {
@@ -279,13 +280,15 @@ async function refresh({useAccountName = false} = {}){
  if (version !== refreshVersion) return;
  receipts = new Map(owned);
  myRequests = history.entries;
- if (!account.signedIn && nextAccount.signedIn && nextAccount.name) {
-  if (useAccountName || !lookupName()) {
+ if (nextAccount.signedIn && nextAccount.name) {
+  if (nextAccount.method === 'passcode' || (!account.signedIn && (useAccountName || !lookupName()))) {
    $('name').value = nextAccount.name;
    safeSet('emupi-request-name', nextAccount.name);
   }
-  window.history.replaceState({requestScreen:true}, '');
-  showRequestScreen(true);
+  if (!account.signedIn) {
+   window.history.replaceState({requestScreen:true}, '');
+   showRequestScreen(true);
+  }
  }
  account = nextAccount;
  state=next;
@@ -346,7 +349,8 @@ function renderEntryOptions() {
 }
 function renderAccount() {
  renderEntryOptions();
- $('name-login-help').hidden = account.method !== 'passcode';
+ namePasscode.required = account.method === 'passcode';
+ $('name-passcode-field').hidden = !namePasscode.required;
  $('manage-passcode').hidden = !account.passcodeEnabled || account.signedIn;
  $('manage-passcode-login').hidden = !account.passcodeEnabled || account.signedIn;
  $('line-start').hidden = !account.enabled || account.signedIn;
@@ -410,10 +414,12 @@ const nameSummary = nameSettings.querySelector('summary');
 nameSummary.addEventListener('click', () => {
  if (nameSettings.open) return;
  newName.value = lookupName();
+ namePasscode.value = '';
  nameFeedback('');
 });
 $('cancel-name').onclick = () => {
  nameSettings.open = false;
+ namePasscode.value = '';
  nameSummary.focus();
 };
 newName.addEventListener('input', () => nameFeedback(''));
@@ -426,12 +432,17 @@ $('name-form').onsubmit = async event => {
  lock(true);
  nameFeedback('');
  try {
-  if (await requiresPasscode(name)) {
-   nameFeedback('この名前にはパスコードが設定されています。別の名前を入力してください。', true);
-   return;
-  }
-  if (editable.length) {
-   await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, account: editable.some(slot => !slot.token), name}});
+  if (account.method === 'passcode') {
+   await api('/api/passcode/rename', {method:'POST', data:{name, passcode:namePasscode.value}});
+   namePasscode.value = '';
+  } else {
+   if (await requiresPasscode(name)) {
+    nameFeedback('この名前にはパスコードが設定されています。別の名前を入力してください。', true);
+    return;
+   }
+   if (editable.length) {
+    await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, account: editable.some(slot => !slot.token), name}});
+   }
   }
   $('name').value = newName.value = name;
   safeSet('emupi-request-name', name);

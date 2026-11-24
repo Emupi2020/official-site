@@ -70,6 +70,35 @@ test('過去に使われた名前のパスコードは送信時のトークン�
   assert.equal((await register([token])).status, 200);
 });
 
+test('パスコードで登録名を変更し、同じアカウントとリクエストを新しい名前で利用できる', async () => {
+  const env = environment();
+  const pin = '0123';
+  const post = (path, name, passcode = pin, cookie) => send(env, path, {method:'POST', data:{name, passcode}, cookie});
+  const registration = await post('/api/passcode/register', '変更前');
+  const cookie = registration.headers.get('Set-Cookie').split(';')[0];
+  assert.equal((await post('/api/passcode/register', '使用中')).status, 200);
+  const submitted = await send(env, '/api/requests', {
+    method:'POST', cookie, requestToken:token, data:{name:'変更前', artist:'山下智久', song:'Loveless'}
+  });
+  const {entry} = await submitted.json();
+
+  assert.equal((await post('/api/passcode/rename', '変更後')).status, 401);
+  assert.equal((await post('/api/passcode/rename', '変更後', '9876', cookie)).status, 401);
+  assert.equal((await post('/api/passcode/rename', '使用中', pin, cookie)).status, 409);
+  assert.equal((await post('/api/passcode/rename', '変更後', pin, cookie)).status, 200);
+  assert.equal((await post('/api/passcode/login', '変更前')).status, 401);
+
+  const login = await post('/api/passcode/login', '変更後');
+  assert.equal(login.status, 200);
+  for (const session of [cookie, login.headers.get('Set-Cookie').split(';')[0]]) {
+    const account = await (await send(env, '/api/listener-account', {cookie:session})).json();
+    assert.equal(account.name, '変更後');
+    assert.equal(account.receipts[0].id, entry.id);
+    assert.equal(account.receipts[0].name, '変更後');
+    assert.equal(account.receipts[0].songEditable, true);
+  }
+});
+
 test('以前の未連携リクエストは送信時のデータがないブラウザーでもパスコードログインで管理できる', async () => {
   const env = environment();
   const register = await send(env, '/api/passcode/register', {method:'POST', data:{name:key, passcode:'0123'}});

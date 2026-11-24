@@ -1,7 +1,7 @@
 import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
-import { passcodeAuth, passcodeAccountId, passcodeRequiredMessage } from './passcode.mjs';
+import { passcodeAuth, passcodeAccount, passcodeAccountId, passcodeRequiredMessage, preparePasscodeRename } from './passcode.mjs';
 import { catalog } from '../request/catalog.mjs';
 import { categoryOf } from '../request/categories.mjs';
 
@@ -53,6 +53,37 @@ async function recoverPasscodeRequests(env, { accountId, name }) {
   });
   return value;
 }
+async function renamePasscodeAccount(env, accountId, input) {
+  const {previous, name, key, pinRecord} = await preparePasscodeRename(env, accountId, input);
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const {revision, state} = await read(env);
+    prune(state);
+    const current = await passcodeAccount(env, accountId);
+    if (current?.pin_record !== previous.pin_record) throw stateConflict();
+    const occupied = await passcodeAccountId(env, name);
+    if ((occupied && occupied !== accountId) || (key !== previous.name_key && state.entries.some(entry =>
+      entry.accountId !== accountId && entry.status !== 'removed' && nameKey(entry.name) === key
+    ))) throw new Problem('この名前はすでに使われています。', 409);
+
+    for (const entry of requestsToRecover(state, accountId, previous.name)) entry.accountId = accountId;
+    for (const entry of state.entries) {
+      if (entry.accountId === accountId && canRename(state, entry)) rename(state, entry, name);
+    }
+    // Both updates depend on this revision. The request update also requires the new credential from this batch.
+    const [accountResult] = await env.DB.batch([
+      env.DB.prepare(`UPDATE listener_passcodes SET name_key = ?, name = ?, pin_record = ?
+        WHERE account_id = ? AND pin_record = ?
+        AND EXISTS (SELECT 1 FROM app_state WHERE id = 1 AND revision = ?)
+        AND NOT EXISTS (SELECT 1 FROM listener_passcodes WHERE name_key = ? AND account_id != ?)`)
+        .bind(key, name, pinRecord, accountId, previous.pin_record, revision, key, accountId),
+      env.DB.prepare(`UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ?
+        AND EXISTS (SELECT 1 FROM listener_passcodes WHERE account_id = ? AND pin_record = ?)`)
+        .bind(JSON.stringify(state), revision, accountId, pinRecord)
+    ]);
+    if (accountResult.meta.changes === 1) return {name};
+  }
+  throw stateConflict();
+}
 async function canManageRequest(env, entry, accountId) {
   const protectedAccount = entry.accountId || await passcodeAccountId(env, entry.name);
   return !protectedAccount || protectedAccount === accountId;
@@ -99,6 +130,12 @@ async function handle(req, env) {
     await limit(req, env, ':passcode-entry');
     return json({ requiresPasscode: Boolean(await passcodeAccountId(env, (await body(req))?.name)) });
   }
+  if (path === '/api/passcode/rename' && req.method === 'POST') {
+    const session = await listenerSession(req, env);
+    if (session?.kind !== 'pin-listener') throw new Problem('パスコードでログインしてください。', 401);
+    await limit(req, env, ':passcode');
+    return json(await renamePasscodeAccount(env, session.accountId, await body(req)));
+  }
   if (['/api/passcode/register', '/api/passcode/login'].includes(path) && req.method === 'POST') {
     await limit(req, env, ':passcode');
     const input = await body(req);
@@ -133,6 +170,8 @@ async function handle(req, env) {
   if (path === '/api/listener-account' && ['GET', 'POST'].includes(req.method)) {
     const session = await listenerSession(req, env);
     const accountId = session?.accountId;
+    const pinAccount = session?.kind === 'pin-listener' ? await passcodeAccount(env, accountId) : null;
+    if (session?.kind === 'pin-listener' && !pinAccount) throw new Problem('パスコードでログインしてください。', 401);
     const enabled = lineEnabled(env);
     const passcodeEnabled = Boolean(env.SESSION_SECRET?.length >= 32);
     if (req.method === 'GET') {
@@ -141,12 +180,12 @@ async function handle(req, env) {
       prune(state);
       const account = accountRequests(state, accountId);
       const method = session.kind === 'pin-listener' ? 'passcode' : 'line';
-      const needsRecovery = method === 'passcode' && requestsToRecover(state, accountId, session.name).length > 0;
-      return json({ ...account, name: account.name || session.name || '', enabled, passcodeEnabled, signedIn: true, method, needsRecovery });
+      const needsRecovery = Boolean(pinAccount && requestsToRecover(state, accountId, pinAccount.name).length);
+      return json({ ...account, name: pinAccount?.name || account.name || '', enabled, passcodeEnabled, signedIn: true, method, needsRecovery });
     }
     if (!accountId) throw new Problem('ログインしてください。', 401);
     await limit(req, env);
-    if (session.kind === 'pin-listener') return json({ linked: await recoverPasscodeRequests(env, session) });
+    if (pinAccount) return json({ linked: await recoverPasscodeRequests(env, {accountId, name:pinAccount.name}) });
     const hashes = new Set(await requestTokenHashes((await body(req))?.tokens));
     const { value: linked } = await mutate(env, state => {
       const entries = state.entries.filter(entry => !entry.accountId && hashes.has(entry.tokenHash));

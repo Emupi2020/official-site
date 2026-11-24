@@ -6,5 +6,28 @@ export function database(path = ':memory:') {
   for (const file of readdirSync(migrations).filter(name => name.endsWith('.sql')).sort()) {
     db.exec(readFileSync(new URL(file, migrations), 'utf8'));
   }
-  return { native: db, prepare(sql) { let args=[]; const stmt=db.prepare(sql); return { bind(...values){args=values;return this;}, async first(){return stmt.get(...args)||null;}, async run(){return stmt.run(...args);}, async all(){return { results: stmt.all(...args) };} }; } };
+  return {
+    native: db,
+    prepare(sql) {
+      let args = [];
+      const statement = db.prepare(sql);
+      return {
+        bind(...values) { args = values; return this; },
+        first() { return statement.get(...args) || null; },
+        run() { return statement.run(...args); },
+        all() { return { results: statement.all(...args) }; }
+      };
+    },
+    batch(statements) {
+      db.exec('BEGIN');
+      try {
+        const results = statements.map(statement => ({meta:statement.run()}));
+        db.exec('COMMIT');
+        return results;
+      } catch (error) {
+        db.exec('ROLLBACK');
+        throw error;
+      }
+    }
+  };
 }

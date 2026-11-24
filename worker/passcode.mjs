@@ -5,6 +5,32 @@ import { sessionCookie } from './line-login.mjs';
 const sessionAge = 30 * 86400;
 const attemptWindow = 15 * 60_000;
 export const passcodeRequiredMessage = 'この名前にはパスコードが設定されています。';
+const credentialFor = (env, key, pin) => JSON.stringify([env.SESSION_SECRET, 'listener-passcode', key, pin]);
+
+export function passcodeAccount(env, accountId) {
+  return env.DB.prepare('SELECT name_key, name, pin_record FROM listener_passcodes WHERE account_id = ?').bind(accountId).first();
+}
+
+async function verifyPasscode(env, key, pin, record) {
+  if (typeof pin !== 'string' || !/^\d{4}$/.test(pin)) throw new Problem('パスコードは半角数字4桁で入力してください。');
+  const bucket = Math.floor(Date.now() / attemptWindow);
+  const limitKey = await hash(JSON.stringify([env.SESSION_SECRET, 'passcode-attempt', key, bucket]));
+  const attempt = await env.DB.prepare('INSERT INTO rate_limits(key, count, expires_at) VALUES (?, 1, ?) ON CONFLICT(key) DO UPDATE SET count = count + 1 RETURNING count')
+    .bind(limitKey, (bucket + 1) * attemptWindow).first();
+  if (attempt.count > 5) throw new Problem('入力回数の上限です。しばらく待ってからお試しください。', 429);
+  return matchesPassword(credentialFor(env, key, pin), record || 'passcode-dummy-salt.passcode-dummy-hash');
+}
+
+export async function preparePasscodeRename(env, accountId, input) {
+  const previous = await passcodeAccount(env, accountId);
+  if (!previous) throw new Problem('パスコードでログインしてください。', 401);
+  const name = text(input?.name, 'Pocochaの名前', 50);
+  const key = nameKey(name);
+  if (!await verifyPasscode(env, previous.name_key, input?.passcode, previous.pin_record)) {
+    throw new Problem('パスコードが違います。', 401);
+  }
+  return {previous, name, key, pinRecord:await passwordRecord(credentialFor(env, key, input.passcode))};
+}
 
 export async function passcodeAccountId(env, name) {
   const key = nameKey(text(name, 'Pocochaの名前', 50));
@@ -18,20 +44,14 @@ export async function passcodeAuth(env, action, input, fromOfficialSite) {
   if (typeof input?.passcode !== 'string' || !/^\d{4}$/.test(input.passcode)) {
     throw new Problem('パスコードは半角数字4桁で入力してください。');
   }
-  const credential = JSON.stringify([env.SESSION_SECRET, 'listener-passcode', key, input.passcode]);
   let record;
   if (action === 'register') {
     record = await env.DB.prepare('INSERT INTO listener_passcodes (name_key, name, account_id, pin_record) VALUES (?, ?, ?, ?) ON CONFLICT(name_key) DO NOTHING RETURNING name, account_id')
-      .bind(key, name, crypto.randomUUID(), await passwordRecord(credential)).first();
+      .bind(key, name, crypto.randomUUID(), await passwordRecord(credentialFor(env, key, input.passcode))).first();
     if (!record) throw new Problem(passcodeRequiredMessage, 409, 'passcode_required');
   } else {
-    const bucket = Math.floor(Date.now() / attemptWindow);
-    const limitKey = await hash(JSON.stringify([env.SESSION_SECRET, 'passcode-attempt', key, bucket]));
-    const attempt = await env.DB.prepare('INSERT INTO rate_limits(key, count, expires_at) VALUES (?, 1, ?) ON CONFLICT(key) DO UPDATE SET count = count + 1 RETURNING count')
-      .bind(limitKey, (bucket + 1) * attemptWindow).first();
-    if (attempt.count > 5) throw new Problem('入力回数の上限です。しばらく待ってからお試しください。', 429);
     record = await env.DB.prepare('SELECT name, account_id, pin_record FROM listener_passcodes WHERE name_key = ?').bind(key).first();
-    const matches = await matchesPassword(credential, record?.pin_record || 'passcode-dummy-salt.passcode-dummy-hash');
+    const matches = await verifyPasscode(env, key, input.passcode, record?.pin_record);
     if (!record || !matches) throw new Problem('Pocochaの名前かパスコードが違います。', 401);
   }
   const token = await sign(env, { kind:'pin-listener', accountId:record.account_id, name:record.name, exp:Date.now()+sessionAge*1000 });

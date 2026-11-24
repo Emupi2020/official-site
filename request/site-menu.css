@@ -84,7 +84,7 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
 .request-menu .listener-name-form { padding-bottom: 8px; }
 .request-menu .name-form-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 6px; }
 .request-menu .name-form-actions button { min-height: 44px; padding-inline: 8px; }
-.request-menu :is(#name-login-help, #name-feedback) { margin: 8px 0 0; }
+.request-menu #name-feedback { margin: 8px 0 0; }
 .request-menu #name-feedback.danger { color: var(--danger); }
 .listener-layout:has(#request-screen[hidden]) #my-history { display: none; }
 
