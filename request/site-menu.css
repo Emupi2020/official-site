@@ -56,7 +56,7 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
   padding: 12px max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 .request-menu details { border-bottom: 1px solid var(--card-border); }
-.request-menu summary {
+.request-menu :is(summary, .request-menu-top) {
   min-height: 52px;
   display: flex;
   align-items: center;
@@ -65,8 +65,18 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
   color: var(--text);
   font-weight: 600;
 }
+.request-menu .request-menu-top {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0;
+  border-bottom: 1px solid var(--card-border);
+  border-radius: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+}
 .request-menu summary::-webkit-details-marker { display: none; }
-.request-menu summary::after {
+.request-menu :is(summary, .request-menu-top)::after {
   content: '';
   width: 6px;
   height: 6px;

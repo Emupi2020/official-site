@@ -282,6 +282,24 @@ window.addEventListener('popstate', event => {
  showRequestScreen(open, !open);
  if (open) showSlot(event.state.currentSlot, true);
 });
+$('request-menu-top').onclick = () => {
+ $('request-menu-toggle').click();
+ if ($('request-screen').hidden) {
+  if (entryMode === 'welcome') entryTitle.focus();
+  else $('entry-back').click();
+  return;
+ }
+ const focusTop = () => {
+  window.scrollTo(0, 0);
+  $('request-title').focus({preventScroll:true});
+ };
+ if (activeSlot) {
+  window.addEventListener('popstate', focusTop, {once:true});
+  closeSlot();
+ } else {
+  focusTop();
+ }
+};
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
  const fields = [field(slot, 'artist'), field(slot, 'song')];
