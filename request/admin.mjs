@@ -47,6 +47,11 @@ async function refresh(animate=false){
     state=next;render();
   }catch(error){if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;state=null;}else throw error;}
 }
+$('login-form').onsubmit=async event=>{
+  event.preventDefault();$('login-submit').disabled=true;message('');
+  try{await api('/auth/login',{method:'POST',data:{password:$('password').value}});$('password').value='';await refresh();}
+  catch(error){message(error.message,true);}finally{$('login-submit').disabled=false;}
+};
 $('toggle').onclick=()=>action(state.open?'close':'open');$('draw').onclick=()=>action('advance');$('cant-sing').onclick=async()=>{
   const dialog=$('cant-sing-dialog');dialog.returnValue='';
   const reason=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true});dialog.showModal();});

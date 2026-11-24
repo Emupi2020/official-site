@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { initialState, submit, rename, adminAction, eligible, publicState, ownRequests, songIdentity, songStatus, prune } from '../worker/domain.mjs';
 import worker from '../worker/index.mjs';
 import { database } from '../scripts/local-db.mjs';
-import { sign,verify,isAdmin } from '../worker/auth.mjs';
+import { sign,verify,isAdmin,passwordRecord,hash } from '../worker/auth.mjs';
 const input=(name='リスナーA',song='らぶれす',artist='やまぴー')=>({name,song,artist});
 function state(){const s=initialState();s.open=true;return s;}
 test('歌唱済み一覧には実際に消化した曲だけを匿名で公開、戻すも反映',()=>{
@@ -56,7 +56,7 @@ test('実DBの同時応募で同名は1件だけ成功',async()=>{const e=env();
 test('修正トークンのない端末から既存応募は取得も変更もできない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input()),e);const own=await(await worker.fetch(req('/api/mine'),e)).json();assert.equal(own.entry.name,'リスナーA');const other=await(await worker.fetch(req('/api/mine',undefined,'b'.repeat(40)),e)).json();assert.equal(other.entry,null);const update=new Request('https://requests.example/api/mine',{method:'PATCH',headers:{Origin:e.PUBLIC_ORIGIN,'Content-Type':'application/json','X-Request-Token':'b'.repeat(40)},body:JSON.stringify({name:'乗っ取り'})});assert.equal((await worker.fetch(update,e)).status,404);});
 test('未認証の管理API・外部Originによる書込みを拒否',async()=>{const e=env();assert.equal((await worker.fetch(req('/api/admin'),e)).status,401);assert.equal((await worker.fetch(req('/api/requests',input(),'a'.repeat(40),'https://evil.example'),e)).status,403);});
 test('本人履歴APIはトークンで限定し空・不正な照会で他人を返さない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input('PRIVATE_NAME')),e);const result=await(await worker.fetch(req('/api/my-requests',{tokens:['a'.repeat(40)]}),e)).json();assert.equal(result.entries.length,1);assert(!JSON.stringify(result).includes('PRIVATE_NAME'));const other=await(await worker.fetch(req('/api/my-requests',{tokens:['b'.repeat(40)]}),e)).json();assert.equal(other.entries.length,0);assert.equal((await worker.fetch(req('/api/my-requests',{tokens:['bad']}),e)).status,400);});
-test('管理セッションの署名・期限・許可メールを検証',async()=>{const e=env();e.ADMIN_EMAIL='admin@example.test';const signed=await sign(e,{kind:'admin',email:e.ADMIN_EMAIL,exp:Date.now()+60000});assert(await verify(e,signed));assert.equal(await verify(e,signed+'broken'),null);assert.equal(await verify(e,await sign(e,{exp:Date.now()-1})),null);const r=new Request('https://requests.example/api/admin',{headers:{Cookie:`__Host-emupi_admin=${signed}`}});assert(await isAdmin(r,e));e.ADMIN_EMAIL='other@example.test';assert.equal(await isAdmin(r,e),false);});
+test('管理セッションの署名・期限・パスワード変更を検証',async()=>{const e=env();e.ADMIN_PASSWORD_HASH=await passwordRecord('test-password');const signed=await sign(e,{kind:'admin',passwordVersion:await hash(e.ADMIN_PASSWORD_HASH),exp:Date.now()+60000});assert(await verify(e,signed));assert.equal(await verify(e,signed+'broken'),null);assert.equal(await verify(e,await sign(e,{exp:Date.now()-1})),null);const r=new Request('https://requests.example/api/admin',{headers:{Cookie:`__Host-emupi_admin=${signed}`}});assert(await isAdmin(r,e));e.ADMIN_PASSWORD_HASH=await passwordRecord('changed-password');assert.equal(await isAdmin(r,e),false);});
 test('LOCAL_DEVを本番ホストで有効にしても管理権限を与えない',async()=>{const e=env();e.LOCAL_DEV='1';assert.equal(await isAdmin(req('/api/admin'),e),false);});
 test('CloudflareのHTML正規化で管理画面がリダイレクトループにならない',async()=>{const e=env();e.ASSETS.fetch=async r=>new URL(r.url).pathname==='/admin'?new Response('admin screen'):Response.redirect('https://requests.example/admin',307);for(const path of ['/admin','/admin/']){const r=await worker.fetch(req(path),e);assert.equal(r.status,200);assert.equal(await r.text(),'admin screen');}});
 test('同一IPの過剰送信を制限し匿名APIに応募者情報が出ない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});for(let i=0;i<20;i++)await worker.fetch(req('/api/requests',input('名前'+i),String(i).padStart(40,'x')),e);assert.equal((await worker.fetch(req('/api/requests',input('追加'),'z'.repeat(40)),e)).status,429);const text=await(await worker.fetch(req('/api/state'),e)).text();assert(!text.includes('名前'));});
@@ -81,4 +81,22 @@ test('古い知らない記録の引継ぎと不正な理由の拒否',()=>{
  assert.deepEqual(songStatus(s,'山下智久','Loveless').reasons,[{reason:'unknown',at:123}]);adminAction(s,{action:'advance'});
  assert.throws(()=>adminAction(s,{action:'cantSing',reason:'other'}),/理由/);assert.equal(s.entries[0].status,'selected');
  adminAction(s,{action:'cantSing',reason:'no_audio'});assert.equal(songStatus(s,'山下智久','Loveless').reasons[0].at,123);
+});
+
+test('パスワードログインから管理APIを利用でき、ログアウトでCookieを消す',async()=>{
+ const e=env();e.ADMIN_PASSWORD_HASH=await passwordRecord('correct-password');const login=await worker.fetch(req('/auth/login',{password:'correct-password'},undefined,'https://requests.example'),e);assert.equal(login.status,200);
+ const cookie=login.headers.get('Set-Cookie');assert(cookie.includes('HttpOnly'));assert(cookie.includes('Secure'));assert(cookie.includes('SameSite=Lax'));assert(cookie.includes('Max-Age=2592000'));
+ const admin=await worker.fetch(new Request('https://requests.example/api/admin',{headers:{Cookie:cookie.split(';')[0]}}),e);assert.equal(admin.status,200);
+ const logout=await worker.fetch(req('/auth/logout',{},undefined,'https://requests.example'),e);assert.equal(logout.status,204);assert(logout.headers.get('Set-Cookie').includes('Max-Age=0'));
+});
+test('間違ったパスワード・外部Originを拒否し、連続ログインを制限',async()=>{
+ const e=env();e.ADMIN_PASSWORD_HASH=await passwordRecord('correct-password');
+ assert.equal((await worker.fetch(req('/auth/login',{password:'correct-password'}),e)).status,403);
+ for(let i=0;i<10;i++){const r=await worker.fetch(req('/auth/login',{password:'incorrect-password'},undefined,'https://requests.example'),e);assert.equal(r.status,401);assert.equal(r.headers.get('Set-Cookie'),null);}
+ assert.equal((await worker.fetch(req('/auth/login',{password:'correct-password'},undefined,'https://requests.example'),e)).status,429);
+});
+test('未設定・入力不正・古いGoogle認証経路はログイン不可',async()=>{
+ const e=env();assert.equal((await worker.fetch(req('/auth/login',{password:'x'},undefined,'https://requests.example'),e)).status,503);
+ e.ADMIN_PASSWORD_HASH=await passwordRecord('correct-password');assert.equal((await worker.fetch(req('/auth/login',{password:[]},undefined,'https://requests.example'),e)).status,400);
+ assert.equal((await worker.fetch(req('/auth/callback'),e)).status,404);
 });

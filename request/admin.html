@@ -1,7 +1,7 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css"><script src="/config.js"></script><script type="module" src="/admin.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header><a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a><span class="small muted">管理者専用</span></header>
 <main class="admin-main"><div id="message" class="message" role="status" hidden></div>
-<section id="login" class="card" hidden><h2>配信者ログイン</h2><p class="muted">管理者のGoogleアカウントでログインしてください。</p><a class="button primary" href="/auth/login">Googleでログイン</a></section>
+<section id="login" class="card" hidden><h2>配信者ログイン</h2><form id="login-form"><label for="password">パスワード</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button id="login-submit" class="primary" type="submit">ログイン</button></form></section>
 <div id="dashboard" hidden><div class="row admin-top"><div><span id="round"></span> · <span id="status" class="status"></span><div class="small muted" id="counts"></div></div><button id="toggle" class="secondary">受付開始</button></div>
 <section class="card draw-card admin-stage" aria-label="歌まねルーレット"><div class="wheel-wrap"><canvas id="wheel" width="800" height="800" role="img" aria-label="曲名ルーレット"></canvas><span class="wheel-center" aria-hidden="true">P</span></div><button id="draw" class="draw-button">回す</button>
 <div id="result" hidden aria-live="polite"><div id="result-song" class="result-song"></div><div id="result-artist" class="result-artist"></div></div>

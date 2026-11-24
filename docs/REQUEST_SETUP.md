@@ -5,14 +5,14 @@
 ## 構成
 
 - `index.html`：既存トップとSinging欄にリクエストへのリンクを追加。
-- `request/`：GitHub Pagesの応募画面と公開ルーレット。Cloudflare上でも同じファイルを配信する。
-- `worker/`：応募・名前修正・抽選・Google認証のAPI。
+- `request/`：リスナーのリクエスト画面と管理ルーレット。Cloudflare上でも同じファイルを配信する。
+- `worker/`：応募・名前修正・抽選・パスワード認証のAPI。
 - `migrations/`：今回専用D1のテーブル。ポケカのDBには適用しない。
 - `tests/`：SQLite実DBを使う並行応募と、業務ルール・認証のテスト。
 
 ## スマホからの操作テスト
 
-`/demo.html` はGoogleログイン不要の操作テスト専用。リクエスト・管理・公開画面を切り替え、同じ端末の中だけで応募から抽選まで試せる。サンプル3件を用意し、リセットで初期状態に戻せる。
+`/demo.html` は認証なしで画面を操作できる、端末内だけのテスト版。
 
 本番APIやD1には接続せず、本番と別のキーでlocalStorageに保存する。他の端末とは同期しない。本番の管理APIの認証は変更しない。業務ルールの変更時は `npm run build:demo` でブラウザ用ルールを再生成する。
 
@@ -34,13 +34,13 @@ npm run dev
 1. Cloudflareの同じアカウントに `emupi-requests` D1を新規作成する。
 2. そのIDを `wrangler.jsonc` の `database_id` に設定し、今回のDBだけにmigrationを適用する。
 3. Workerを配備し、Workerの正確なURLを確認する。
-4. Google Cloudでウェブアプリ用OAuthクライアントを準備する。リダイレクトURIは `https://<今回のWorkerホスト>/auth/callback`。scopeはopenidとemailだけ。
-5. `GOOGLE_CLIENT_ID` をWorker設定に入れる。`GOOGLE_CLIENT_SECRET`、32文字以上のランダムな `SESSION_SECRET`、管理者本人の `ADMIN_EMAIL` はWorkerのSecretsに設定する。本物の値をGitHubにコミットしない。
-6. Googleログインで許可したアカウントだけが入れることと、未認証時に管理APIが401になることを確認する。
+4. パスワード認証はサーバー側のADMIN_PASSWORD_HASHで照合する。平文パスワードは保存しない。
+5. 32文字以上のランダムな `SESSION_SECRET` と、パスワードのsalt付き照合値 `ADMIN_PASSWORD_HASH` をWorkerのSecretsに設定する。平文パスワードや照合値はGitHubに保存しない。
+6. パスワード認証はサーバー側のADMIN_PASSWORD_HASHで照合する。平文パスワードは保存しない。
 7. `request/config.js` の `window.EMUPI_API` にWorkerのURLを設定する。GitHub Pagesからの応募・名前修正・CORSを実ブラウザで確認する。
 8. 公式サイトに反映する。管理画面はWorkerの `/admin/`。公開ルーレットもWorker側を使えば受付画面と独立して開ける。
 
-Google OAuthの認証情報はチャットに貼らず、CloudflareのSecretsやローカルの追跡対象外設定を使って受け渡す。
+パスワード認証はサーバー側のADMIN_PASSWORD_HASHで照合する。平文パスワードは保存しない。
 
 ## データと挙動
 
@@ -49,8 +49,8 @@ Google OAuthの認証情報はチャットに貼らず、CloudflareのSecretsや
 - 名前が同じだけでは応募内容の取得・編集はできない。端末が持つランダムな応募トークンを検証する。
 - 応募処理はD1のrevision条件付きUPDATEで確定し、競合時は最新状態から再検証する。同時送信も重複登録しない。
 - 公開APIは応募者名・応募トークン・使用済み名を返さない。
-- 管理操作は署名付きHttpOnly Cookieと許可メールを検証し、書込み時には同一Originも確認する。
-- Google認証はPKCE、state、nonce、Googleの公開鍵によるIDトークンの署名・audience・issuer・期限・email_verifiedを検証する。
+- 管理操作は署名付きHttpOnly Cookieとパスワード設定のバージョンを検証し、書込み時には同一Originも確認する。
+- パスワード認証はサーバー側のADMIN_PASSWORD_HASHで照合する。平文パスワードは保存しない。
 - 応募履歴の保存は30日。毎日JST 04:17のCronと書込み時の整理で期限切れを削除する。匿名の歌手・曲候補は残す。
 - IPそのものは独自DBに保存しない。短期の送信制限用に秘密値でハッシュ化した識別子を使う。Cloudflare自身のアクセス記録は別。
 - 1分20送信まで。URL・制御文字・極端な同一文字連続などの明白なスパムを拒否する。曖昧な内容は自動削除せず管理者が処理する。
@@ -59,7 +59,7 @@ Google OAuthの認証情報はチャットに貼らず、CloudflareのSecretsや
 
 - 242件の初期候補を投入。全作品との完全照合は `CATALOG.md` に記載した残件がある。
 - 自由入力された未知の曲に、読み仮名をAIで自動生成する機能はない。入力された表記そのものは自動で候補になる。
-- 高頻度のプッシュ配信ではなく、応募画面15秒・管理画面10秒・公開抽選画面5秒の確認間隔を使う。抽選結果にはそのぶん表示遅延がある。
+- 高頻度のプッシュ配信ではなく、応募画面15秒・管理画面10秒の確認間隔を使う。抽選結果にはそのぶん表示遅延がある。
 - 抽選の演出中も受付できる。対象はサーバーで抽選処理を確定した時点までの応募。
 - 本人確認は配信名による運用。別名・別端末を使うなりすましを完全に防ぐ仕組みではない。
 - 応募名の誤入力は本人または管理者が訂正できる。歌手・曲の訂正は管理者が行う。
@@ -68,4 +68,12 @@ Google OAuthの認証情報はチャットに貼らず、CloudflareのSecretsや
 
 ## 公開前の残件
 
-管理者のGoogleアカウント指定、Google OAuthクライアントの設定と実ログイン、楽曲データの完全照合、GitHub Pages上での本番接続確認。契約枠と使用量を確認し、有料プランへの変更は行わない。
+管理者のパスワード認証はサーバー側のADMIN_PASSWORD_HASHで照合する。平文パスワードは保存しない。
+
+## 管理者パスワード認証（2026-11-24更新）
+
+- Google OAuthの設定は不要。管理画面からパスワードでログインする。
+- ADMIN_PASSWORD_HASHはランダムsaltとPBKDF2-SHA256（100,000回）の照合値。Cloudflare Secretsに保存し、ブラウザへ返さない。SESSION_SECRETは引き続き必要。
+- 署名付きSecure/HttpOnly/SameSite=Lax Cookieを30日保持する。パスワード設定の変更で既存セッションも無効化する。
+- ログインとログアウトは管理画面と同じOriginのみ許可。ログイン試行はIP識別子ごと15分枠で10回まで。
+- 秘密値はGitに保存しない。リスナーのログインは不要。

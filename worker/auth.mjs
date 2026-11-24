@@ -25,43 +25,44 @@ export async function verify(env, token) {
 }
 function cookie(req, name) { return (req.headers.get('Cookie') || '').split(';').map(c => c.trim()).find(c => c.startsWith(`${name}=`))?.slice(name.length + 1); }
 const setCookie = (name, value, age) => `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
+
+const sessionAge = 30 * 86400;
+export async function passwordKey(password, salt) {
+  const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({name:'PBKDF2',salt:encoder.encode(salt),iterations:100000,hash:'SHA-256'},key,256));
+}
+export async function passwordRecord(password, salt = b64(crypto.getRandomValues(new Uint8Array(24)))) {
+  return salt + '.' + await passwordKey(password, salt);
+}
 export async function isAdmin(req, env) {
   if (env.LOCAL_DEV === '1' && ['localhost', '127.0.0.1'].includes(new URL(req.url).hostname)) return true;
   const session = await verify(env, cookie(req, '__Host-emupi_admin'));
-  return !!env.ADMIN_EMAIL && session?.kind === 'admin' && session.email === env.ADMIN_EMAIL.toLowerCase();
+  return !!env.ADMIN_PASSWORD_HASH && session?.kind === 'admin' && session.passwordVersion === await hash(env.ADMIN_PASSWORD_HASH);
 }
 export async function auth(req, env) {
-  const url = new URL(req.url), callback = `${url.origin}/auth/callback`;
-  if (url.pathname === '/auth/login') {
-    if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.ADMIN_EMAIL) throw new Problem('Googleログインの設定がまだ完了していません。', 503);
-    const nonce = crypto.randomUUID(), state = crypto.randomUUID(), verifier = b64(crypto.getRandomValues(new Uint8Array(32)));
-    const token = await sign(env, { state, nonce, verifier, exp: Date.now() + 600000 });
-    const to = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    for (const [key, value] of Object.entries({ client_id: env.GOOGLE_CLIENT_ID, redirect_uri: callback, response_type: 'code', scope: 'openid email', state, nonce, code_challenge: await hash(verifier), code_challenge_method: 'S256' })) to.searchParams.set(key, value);
-    return new Response(null, { status: 302, headers: { Location: to.href, 'Set-Cookie': setCookie('__Host-emupi_oauth', token, 600), 'Cache-Control': 'no-store' } });
-  }
-  if (url.pathname === '/auth/callback') {
-    const flow = await verify(env, cookie(req, '__Host-emupi_oauth'));
-    if (!flow || flow.state !== url.searchParams.get('state') || !url.searchParams.get('code')) throw new Problem('ログインの有効期限が切れました。もう一度お試しください。', 401);
-    const response = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET, redirect_uri: callback, code: url.searchParams.get('code'), grant_type: 'authorization_code', code_verifier: flow.verifier }) });
-    const token = await response.json();
-    if (!response.ok || !token.id_token) throw new Problem('Googleログインに失敗しました。', 401);
-    // Verify Google's signature and the claims locally, never trust a decoded-only ID token.
-    const [header, payload, signature] = token.id_token.split('.');
-    const metadata = JSON.parse(new TextDecoder().decode(unb64(header)));
-    if (metadata.alg !== 'RS256') throw new Problem('認証方式を確認できませんでした。', 401);
-    const keys = await (await fetch('https://www.googleapis.com/oauth2/v3/certs', { cf: { cacheTtl: 3600 } })).json();
-    const jwk = keys.keys?.find(k => k.kid === metadata.kid);
-    if (!jwk) throw new Problem('認証キーを確認できませんでした。', 401);
-    const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-    if (!await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, unb64(signature), encoder.encode(`${header}.${payload}`))) throw new Problem('認証結果を確認できませんでした。', 401);
-    const claims = JSON.parse(new TextDecoder().decode(unb64(payload)));
-    if (!['accounts.google.com', 'https://accounts.google.com'].includes(claims.iss) || claims.aud !== env.GOOGLE_CLIENT_ID || claims.exp * 1000 <= Date.now() || claims.nonce !== flow.nonce || claims.email_verified !== true || claims.email?.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) throw new Problem('このアカウントには管理権限がありません。', 403);
-    const headers = new Headers({ Location: '/admin/', 'Cache-Control': 'no-store' });
-    headers.append('Set-Cookie', setCookie('__Host-emupi_admin', await sign(env, { kind: 'admin', email: claims.email.toLowerCase(), exp: Date.now() + 43200000 }), 43200));
-    headers.append('Set-Cookie', setCookie('__Host-emupi_oauth', '', 0));
-    return new Response(null, { status: 302, headers });
-  }
-  if (url.pathname === '/auth/logout' && req.method === 'POST') return new Response(null, { status: 204, headers: { 'Set-Cookie': setCookie('__Host-emupi_admin', '', 0) } });
-  throw new Problem('ページが見つかりません。', 404);
+  const url = new URL(req.url);
+  if (req.method !== 'POST') throw new Problem('ページが見つかりません。', 404);
+  if (req.headers.get('Origin') !== url.origin) throw new Problem('管理画面から操作してください。', 403);
+  if (url.pathname === '/auth/logout') return new Response(null, {status:204,headers:{'Set-Cookie':setCookie('__Host-emupi_admin','',0),'Cache-Control':'no-store'}});
+  if (url.pathname !== '/auth/login') throw new Problem('ページが見つかりません。',404);
+  if (!env.ADMIN_PASSWORD_HASH || !env.SESSION_SECRET) throw new Problem('パスワードの設定がまだ完了していません。',503);
+  if (!(req.headers.get('Content-Type') || '').startsWith('application/json')) throw new Problem('送信形式を確認してください。',415);
+  const bucket = Math.floor(Date.now()/900000);
+  const ip = req.headers.get('CF-Connecting-IP') || 'local';
+  const key = await hash(env.SESSION_SECRET+':login:'+ip+':'+bucket);
+  const attempt = await env.DB.prepare('INSERT INTO rate_limits(key, count, expires_at) VALUES (?, 1, ?) ON CONFLICT(key) DO UPDATE SET count = count + 1 RETURNING count').bind(key,Date.now()+1800000).first();
+  if (attempt.count > 10) throw new Problem('ログインの試行が続いています。15分ほど待ってお試しください。',429);
+  const raw = await req.text();
+  if (raw.length>2048) throw new Problem('入力が長すぎます。',413);
+  let input;try {input=JSON.parse(raw);}catch{throw new Problem('パスワードを入力してください。');}
+  if(typeof input?.password !== 'string' || !input.password || input.password.length>256) throw new Problem('パスワードを入力してください。');
+  const [salt,expected] = env.ADMIN_PASSWORD_HASH.split('.');
+  if(!salt || !expected) throw new Problem('パスワード設定を確認してください。',503);
+  const actual = await passwordKey(input.password,salt);
+  // Compare fixed-length digests with Web Crypto's HMAC verifier.
+  const compareKey = await crypto.subtle.importKey('raw',encoder.encode(expected),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);
+  const signature = await crypto.subtle.sign('HMAC',compareKey,encoder.encode(actual));
+  if (!await crypto.subtle.verify('HMAC',compareKey,signature,encoder.encode(expected))) throw new Problem('パスワードが違います。',401);
+  const token = await sign(env,{kind:'admin',passwordVersion:await hash(env.ADMIN_PASSWORD_HASH),exp:Date.now()+sessionAge*1000});
+  return new Response(JSON.stringify({ok:true}),{headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Set-Cookie':setCookie('__Host-emupi_admin',token,sessionAge)}});
 }
