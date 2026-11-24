@@ -1,4 +1,5 @@
 body.listener-layout {
+  --bg: #fff;
   --bg-color: var(--bg);
   --primary-fill: var(--accent);
   --nav-bg: rgba(251, 251, 253, .8);
@@ -11,9 +12,6 @@ body.listener-layout {
   display: flex;
   flex-direction: column;
   padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 1px);
-}
-body.listener-layout:has(#request-screen[hidden]) {
-  --bg: #fff;
 }
 .listener-layout .request-page {
   --bg: inherit;
