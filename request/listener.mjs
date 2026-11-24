@@ -47,9 +47,12 @@ function showRequestScreen(open, focus = false) {
  if (focus) (open ? $('request-title') : entryName).focus();
 }
 const hasSavedName = Boolean($('name').value.trim());
-showRequestScreen(hasSavedName);
-window.history.replaceState({requestScreen:hasSavedName}, '');
+entryBusy = hasSavedName;
+showRequestScreen(false);
+window.history.replaceState({requestScreen:false}, '');
 function updateEntryButton() {
+ entryName.readOnly = entryBusy;
+ entryPasscode.readOnly = entryBusy;
  $('enter-request').disabled = entryBusy || !entryName.value.trim() || (entryMode !== 'guest' && !/^\d{4}$/.test(entryPasscode.value));
 }
 function passcodeFeedback(text) {
@@ -83,6 +86,20 @@ function openPasscode(mode) {
  showRequestScreen(false);
  setEntryMode(mode);
 }
+function promptForPasscode(name) {
+ ++lookupVersion;
+ $('name').value = '';
+ safeSet('emupi-request-name', '');
+ safeSet(rememberedNameKey, name);
+ entryName.value = name;
+ window.history.replaceState({requestScreen:false}, '');
+ showRequestScreen(false);
+ setEntryMode('login');
+ passcodeFeedback('この名前にはパスコードが設定されています。');
+}
+async function requiresPasscode(name) {
+ return (await api('/api/passcode/entry', {method:'POST', data:{name}})).requiresPasscode;
+}
 $('choose-passcode').onclick = () => setEntryMode('register');
 $('choose-passcode-login').onclick = () => setEntryMode('login');
 $('cancel-passcode').onclick = () => { setEntryMode('guest'); entryName.focus(); };
@@ -97,25 +114,38 @@ entryForm.onsubmit = async event => {
  event.preventDefault();
  const name = entryName.value.normalize('NFKC').trim();
  if (!name || entryBusy) return;
+ const mode = entryMode;
  let displayName = name;
- if (entryMode !== 'guest') {
-  entryBusy = true;
-  updateEntryButton();
-  passcodeFeedback('');
-  try {
-   const result = await api(`/api/passcode/${entryMode}`, {method:'POST', data:{name, passcode:entryPasscode.value}});
+ entryBusy = true;
+ updateEntryButton();
+ passcodeFeedback('');
+ message('');
+ let needsPasscode = false;
+ try {
+  if (mode === 'guest') {
+   needsPasscode = await requiresPasscode(name);
+  } else {
+   const tokensToLink = mode === 'register' ? {tokens:Object.values(tokens).slice(-100)} : {};
+   const result = await api(`/api/passcode/${mode}`, {method:'POST', data:{name, passcode:entryPasscode.value, ...tokensToLink}});
    displayName = result.name;
-  } catch (error) {
-   passcodeFeedback(error.message);
-   return;
-  } finally {
-   entryBusy = false;
-   updateEntryButton();
   }
+ } catch (error) {
+  needsPasscode = error.code === 'passcode_required';
+  if (!needsPasscode) {
+   if (mode === 'guest') message(error.message, true);
+   else passcodeFeedback(error.message);
+   return;
+  }
+ } finally {
+  entryBusy = false;
+  updateEntryButton();
+ }
+ if (needsPasscode) {
+  promptForPasscode(name);
+  return;
  }
  $('name').value = displayName;
  safeSet('emupi-request-name', displayName);
- const mode = entryMode;
  setEntryMode('guest');
  window.history.pushState({requestScreen:true}, '');
  showRequestScreen(true, true);
@@ -395,6 +425,10 @@ for(const slot of slots){
     await refresh();
    }
   } catch (error) {
+   if (error.code === 'passcode_required') {
+    promptForPasscode(name);
+    return;
+   }
    if (!editing && error.code === 'duplicate_request') {
     const key = duplicateKey(round, slot.category, name);
     const errorDuration = 30_000;
@@ -529,5 +563,23 @@ if (pageUrl.searchParams.has('line')) {
 }
 lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
-try{await refresh();items=(await api('/api/suggestions')).items;message('');}catch(error){message(error.message,true);}
+try {
+ await refresh();
+ if (hasSavedName) {
+  const name = lookupName();
+  const needsPasscode = !account.signedIn && await requiresPasscode(name);
+  entryBusy = false;
+  if (needsPasscode) promptForPasscode(name);
+  else {
+   window.history.replaceState({requestScreen:true}, '');
+   showRequestScreen(true);
+  }
+ }
+ items = (await api('/api/suggestions')).items;
+} catch (error) {
+ message(error.message, true);
+} finally {
+ entryBusy = false;
+ updateEntryButton();
+}
 setInterval(()=>{if(!document.hidden&&!busy)refresh().catch(error=>message(error.message,true));},15000);

@@ -4,6 +4,12 @@ import { sessionCookie } from './line-login.mjs';
 
 const sessionAge = 30 * 86400;
 const attemptWindow = 15 * 60_000;
+export const passcodeRequiredMessage = 'この名前にはパスコードが設定されています。';
+
+export async function passcodeAccountId(env, name) {
+  const key = nameKey(text(name, 'Pocochaの名前', 50));
+  return (await env.DB.prepare('SELECT account_id FROM listener_passcodes WHERE name_key = ?').bind(key).first())?.account_id ?? null;
+}
 
 export async function passcodeAuth(env, action, input) {
   if (!(env.SESSION_SECRET?.length >= 32)) throw new Problem('パスコードは現在利用できません。', 503);
@@ -17,7 +23,7 @@ export async function passcodeAuth(env, action, input) {
   if (action === 'register') {
     record = await env.DB.prepare('INSERT INTO listener_passcodes (name_key, name, account_id, pin_record) VALUES (?, ?, ?, ?) ON CONFLICT(name_key) DO NOTHING RETURNING name, account_id')
       .bind(key, name, crypto.randomUUID(), await passwordRecord(credential)).first();
-    if (!record) throw new Problem('この名前にはパスコードが設定されています。「パスコードでログイン」を選んでください。', 409);
+    if (!record) throw new Problem(passcodeRequiredMessage, 409, 'passcode_required');
   } else {
     const bucket = Math.floor(Date.now() / attemptWindow);
     const limitKey = await hash(JSON.stringify([env.SESSION_SECRET, 'passcode-attempt', key, bucket]));

@@ -1,7 +1,7 @@
 import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
-import { passcodeAuth } from './passcode.mjs';
+import { passcodeAuth, passcodeAccountId, passcodeRequiredMessage } from './passcode.mjs';
 import { catalog } from '../request/catalog.mjs';
 import { categoryOf } from '../request/categories.mjs';
 
@@ -50,9 +50,24 @@ async function handle(req, env) {
     return env.ASSETS.fetch(req);
   }
   if (!env.DB) throw new Problem('応募受付の準備中です。', 503);
+  if (path === '/api/passcode/entry' && req.method === 'POST') {
+    await limit(req, env, ':passcode-entry');
+    return json({ requiresPasscode: Boolean(await passcodeAccountId(env, (await body(req))?.name)) });
+  }
   if (['/api/passcode/register', '/api/passcode/login'].includes(path) && req.method === 'POST') {
     await limit(req, env, ':passcode');
-    return passcodeAuth(env, path.split('/').at(-1), await body(req));
+    const input = await body(req);
+    if (path === '/api/passcode/register') {
+      if (await passcodeAccountId(env, input?.name)) throw new Problem(passcodeRequiredMessage, 409, 'passcode_required');
+      const hashes = new Set(await requestTokenHashes(input?.tokens ?? []));
+      const { state } = await read(env);
+      prune(state);
+      const previous = state.entries.filter(entry => nameKey(entry.name) === nameKey(input.name) && entry.status !== 'removed');
+      if (previous.length && !previous.some(entry => !entry.accountId && hashes.has(entry.tokenHash))) {
+        throw new Problem('この名前でリクエストを送ったブラウザーからパスコードを設定してください。', 409);
+      }
+    }
+    return passcodeAuth(env, path.split('/').at(-1), input);
   }
   if (path === '/api/state' && req.method === 'GET') return json(publicState((await read(env)).state));
   if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
@@ -103,6 +118,8 @@ async function handle(req, env) {
     await limit(req, env);
     const token = await requestToken(req), input = await body(req);
     const accountId = await listenerId(req, env);
+    const protectedAccount = await passcodeAccountId(env, input?.name);
+    if (protectedAccount && protectedAccount !== accountId) throw new Problem(passcodeRequiredMessage, 401, 'passcode_required');
     const result = await mutate(env, state => submit(state, input, token, Date.now(), accountId));
     return json({ entry: listenerReceipt(result.state, result.value, true) }, 201);
   }
