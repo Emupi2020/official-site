@@ -97,7 +97,14 @@ body:has(.request-page) { background: #f2f2f7; }
 
 .request-page .slot-note { margin: 0; font-size: 13px; text-wrap: pretty; }
 .request-page .request-name { margin: 20px 0 0; }
-.request-page .request-block { margin: 26px 0 0; }
+.request-page .request-block {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+}
+.request-page .request-block + .request-block { margin-top: 12px; }
 .request-page .request-block h2 {
   margin: 0 0 10px;
   font-size: 18px;
@@ -121,14 +128,14 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-links { margin-top: 24px; border-top: 1px solid var(--border); }
 .request-page .request-links details { margin: 0; border-top: 0; }
 .request-page .request-links details:not([hidden]) + details { border-top: 1px solid var(--border); }
-.request-page .request-links summary {
+.request-page :is(.request-links, .request-notes) summary {
   min-height: 46px;
   justify-content: flex-start;
   gap: 8px;
   color: var(--text);
   font-size: 14px;
 }
-.request-page .request-links summary::after { margin-left: auto; }
+.request-page :is(.request-links, .request-notes) summary::after { margin-left: auto; flex-shrink: 0; }
 .request-page .request-links summary > span { margin-right: 0; }
 .request-page .request-links summary:has(> span)::after { margin-left: 0; }
 .request-page .request-notes { margin: 10px 0 0; }
