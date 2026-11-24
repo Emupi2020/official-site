@@ -48,6 +48,9 @@ export function publicState(state) {
     const entry = state.entries.findLast(e => e.songKey === key && e.status === 'done');
     if (entry) played.push({ song: entry.song, artist: entry.artist, performedAt: null });
   }
+  if (current?.status === 'selected' && current.revealedAt) {
+    played.push({ song: current.song, artist: current.artist, performedAt: current.revealedAt });
+  }
   return { round: state.round, session: state.session, open: true, nextRound: state.round + 1, reserved: state.entries.filter(e => e.round === state.round + 1 && !['done','removed','skipped'].includes(e.status)).length, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
 }
 export function ownRequests(state, hashes) {
@@ -161,16 +164,23 @@ export function adminAction(state, input) {
       if (!pool.length) throw new Problem('抽選できるリクエストがありません。', 409);
       const entry = pool[pick(pool.length)];
       state.undo = { type: 'draw', id: entry.id, previous: state.current };
+      delete entry.revealedAt;
       entry.status = 'selected'; entry.drawnAt = Date.now(); state.current = entry.id;
       break;
     }
+    case 'reveal':
+      if (current?.status !== 'selected' || current.id !== input.id || current.drawnAt !== input.drawnAt) {
+        throw new Problem('当選曲が変わりました。確認してから操作してください。', 409);
+      }
+      current.revealedAt ??= Date.now();
+      return;
     case 'done': {
       if (current?.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
       const key = current.songKey;
       const historyId = crypto.randomUUID();
       state.undo = { type: 'done', id: current.id, key, historyId, newlySung: !state.sung.includes(key), unknownBefore: state.unknown[key] || null };
       current.status = 'done';
-      state.history.push({ id: historyId, session: state.session, song: current.song, artist: current.artist, performedAt: Date.now() });
+      state.history.push({ id: historyId, session: state.session, song: current.song, artist: current.artist, performedAt: current.revealedAt ?? Date.now() });
       delete state.unknown[key];
       if (!state.sung.includes(key)) state.sung.push(key);
       for (const e of state.entries) if (e.status === 'pending' && e.songKey === key) { e.status = 'deferred'; e.deferReason = 'sung'; }

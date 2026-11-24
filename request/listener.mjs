@@ -190,12 +190,35 @@ function renderHistory(myRequests){
  $('my-history').hidden=!myRequests.length;$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
  const labels={pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ保留',skipped:'見送り',removed:'取り下げ'};
  for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`);
- const played=state.played||[];$('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
+}
+function renderPlayed(played) {
+ $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
  for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(entry.performedAt):'歌唱済み');
 }
+const playedHistory = $('played-history');
+let publicReadVersion = 0, playedVersion = 0, playedLoading = false;
+async function readPublicState() {
+ const version = ++publicReadVersion;
+ const next = await api('/api/state');
+ if (version > playedVersion) {
+  playedVersion = version;
+  renderPlayed(next.played || []);
+ }
+ return next;
+}
+async function refreshPlayed() {
+ if (!playedHistory?.open || document.hidden || playedLoading) return;
+ playedLoading = true;
+ try { await readPublicState(); }
+ catch { /* Keep the last visible list; the next poll retries. */ }
+ finally { playedLoading = false; }
+}
+playedHistory?.addEventListener('toggle', refreshPlayed);
+document.addEventListener('visibilitychange', refreshPlayed);
+setInterval(refreshPlayed, 3000);
 async function refresh(){
  const version = ++refreshVersion;
- const [next, nextAccount] = await Promise.all([api('/api/state'), api('/api/listener-account')]);
+ const [next, nextAccount] = await Promise.all([readPublicState(), api('/api/listener-account')]);
  const keys=[...new Set(slots.map(slot=>{const round=next.round+Number(slot.reserved);return tokens[`${round}:${slot.category}`]||tokens[round];}).filter(Boolean))];
  const savedTokens=Object.values(tokens).slice(-100);
  const [owned, history] = await Promise.all([

@@ -255,3 +255,28 @@ test('管理一覧で次回へ送った曲を戻すと抽選待ちと受付回�
  assert.equal(request.deferReason, null);
  assert.deepEqual(eligible(s), [request]);
 });
+
+test('停止時に当選曲を公開し、歌えない・次回歌うで消し、歌唱確定で二重に載せない', () => {
+ const s = state();
+ const entry = submit(s, input('非公開名'), 'a');
+ adminAction(s, {action:'advance'});
+ assert.deepEqual(publicState(s).played, []);
+ const reveal = {action:'reveal', id:entry.id, drawnAt:entry.drawnAt};
+ assert.throws(() => adminAction(s, {...reveal, drawnAt:entry.drawnAt - 1}), /当選曲が変わりました/);
+ adminAction(s, reveal);
+ const [shown] = publicState(s).played;
+ assert.deepEqual(shown, {song:entry.song, artist:entry.artist, performedAt:entry.revealedAt});
+ assert.deepEqual(s.history, []);
+ adminAction(s, reveal);
+ assert.deepEqual(publicState(s).played, [shown]);
+ adminAction(s, {action:'defer', id:entry.id, selected:true});
+ assert.deepEqual(publicState(s).played, []);
+ adminAction(s, {action:'undo'});
+ assert.deepEqual(publicState(s).played, [shown]);
+ adminAction(s, {action:'cantSing', id:entry.id, reason:'no_audio'});
+ assert.deepEqual(publicState(s).played, []);
+ adminAction(s, {action:'undo'});
+ adminAction(s, {action:'advance'});
+ assert.deepEqual(publicState(s).played, [shown]);
+ assert.equal(s.history.length, 1);
+});

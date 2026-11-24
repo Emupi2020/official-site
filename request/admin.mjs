@@ -129,8 +129,17 @@ async function refresh(animate=false){
     const next = await api('/api/admin');
     if (version !== refreshVersion) return;
     $('login').hidden=true;$('dashboard').hidden=false;
-    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song, poolFor(next).map(entry => entry.song), spinTime());}}
-    state=next;render();
+    if (animate) {
+      const current = next.entries.find(entry => entry.id === next.current);
+      if (current?.status === 'selected') {
+        $('result').hidden = true;
+        await spin(current.song, poolFor(next).map(entry => entry.song), spinTime());
+        state = next;
+        await api('/api/admin', {method:'POST', data:{action:'reveal', id:current.id, drawnAt:current.drawnAt}});
+      }
+    }
+    state = next;
+    render();
   }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
 }
 $('login-form').onsubmit=async event=>{
