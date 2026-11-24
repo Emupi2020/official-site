@@ -171,6 +171,8 @@ body:has(.request-page) { background: #f2f2f7; }
 #request-detail .request-block:focus { outline: none; }
 .request-page #request-detail h2 { margin-bottom: 10px; font-size: 22px; }
 .request-page #request-detail :is(.input-group, .slot-receipt) { padding: 0 14px; border-radius: 14px; background: var(--request-block-fill); }
+.request-page #request-detail .input-group { padding-block: 6px; }
+.request-page #request-detail .request-field { min-block-size: 44px; }
 .request-page #request-detail .request-field:last-of-type { border-bottom: 0; }
 .request-page #request-detail .suggestions { position: static; margin-block: 4px 8px; box-shadow: none; }
 .request-page #request-detail .slot-receipt { padding-block: 12px; }
