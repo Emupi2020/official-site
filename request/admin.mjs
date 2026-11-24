@@ -62,9 +62,13 @@ function render() {
   $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件`;
   const current=state.entries.find(e=>e.id===state.current);
   renderRoulette(current);
-  $('undo').disabled=busy||!state.undo;
-  $('cant-sing').disabled=busy||current?.status!=='selected';
-  $('current-info').hidden = current?.status !== 'selected';
+  const selected = current?.status === 'selected';
+  $('current-info').hidden = !selected && !state.undo && $('undo-feedback').hidden;
+  $('current-song-details').hidden = !selected;
+  $('undo').hidden = !selected && !state.undo;
+  $('undo').disabled = busy || !state.undo;
+  $('cant-sing').hidden = !selected;
+  $('cant-sing').disabled = busy || !selected;
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');

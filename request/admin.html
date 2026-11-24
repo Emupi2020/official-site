@@ -1,10 +1,21 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=current-song"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=current-song"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=song-actions"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=song-actions"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header><a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a><span class="small muted">管理者専用</span></header>
 <main class="admin-main"><div id="message" class="message" role="status" hidden></div>
 <section id="login" class="card" hidden><h2>配信者ログイン</h2><form id="login-form"><label for="password">パスワード</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button id="login-submit" class="primary" type="submit">ログイン</button></form></section>
 <div id="dashboard" hidden>
 <div class="row admin-top"><div><h1>リクエスト</h1><span id="round"></span> · <span id="status" class="status"></span><div class="small muted" id="counts"></div></div></div>
-<section id="current-info" class="card" hidden><p class="small muted current-label">当選中の曲</p><div id="selected-song" class="entry-title"></div><p id="result-name" class="small muted"></p></section>
+<section id="current-info" class="card" aria-label="当選曲の操作" hidden>
+  <div id="current-song-details" hidden>
+    <p class="small muted current-label">当選中の曲</p>
+    <div id="selected-song" class="entry-title"></div>
+    <p id="result-name" class="small muted"></p>
+  </div>
+  <div class="current-song-actions">
+    <button id="cant-sing" class="secondary" type="button" hidden>歌えない</button>
+    <button id="undo" class="text-button" type="button">戻す</button>
+  </div>
+  <p id="undo-feedback" class="small muted" role="status" hidden></p>
+</section>
 <button id="open-roulette" class="primary launch-roulette">ルーレット</button>
 <details class="request-table-card" aria-labelledby="admin-yamapi-heading">
   <summary id="admin-yamapi-heading">山Pの歌まね</summary>
@@ -20,8 +31,6 @@
     <tbody id="entries-other"></tbody>
   </table></div>
 </details>
-<div class="buttons admin-song-actions"><button id="cant-sing" class="secondary">歌えない</button><button id="undo" class="secondary">戻す</button></div>
-<p id="undo-feedback" class="small muted" role="status" hidden></p>
 <details id="processed-requests" class="request-table-card manage" aria-labelledby="processed-requests-heading" hidden>
   <summary id="processed-requests-heading">処理済みのリクエスト</summary>
   <div class="table-scroll"><table class="request-table" aria-labelledby="processed-requests-heading">
