@@ -1,4 +1,4 @@
-import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, Problem, prune } from './domain.mjs';
+import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
 import { passcodeAuth, passcodeAccountId, passcodeRequiredMessage } from './passcode.mjs';
@@ -75,6 +75,15 @@ async function handle(req, env) {
     return env.ASSETS.fetch(req);
   }
   if (!env.DB) throw new Problem('応募受付の準備中です。', 503);
+  if (path === '/api/bug-reports' && req.method === 'POST') {
+    await limit(req, env, ':bug-report');
+    const input = await body(req);
+    const message = typeof input?.message === 'string' ? input.message.trim() : '';
+    if (!message || [...message].length > 1000) throw new Problem('報告内容は1〜1,000文字で入力してください。');
+    const name = text(input?.name, 'Pocochaの名前', 50);
+    await env.DB.prepare('INSERT INTO bug_reports (name, message, created_at) VALUES (?, ?, ?)').bind(name, message, Date.now()).run();
+    return json({ ok: true }, 201);
+  }
   if (path === '/api/passcode/entry' && req.method === 'POST') {
     await limit(req, env, ':passcode-entry');
     return json({ requiresPasscode: Boolean(await passcodeAccountId(env, (await body(req))?.name)) });
@@ -194,6 +203,13 @@ async function handle(req, env) {
   if (path.startsWith('/api/admin')) {
     if (req.method !== 'GET' && req.headers.get('Origin') !== url.origin) throw new Problem('管理画面から操作してください。', 403);
     if (!await isAdmin(req, env)) throw new Problem('管理者ログインが必要です。', 401);
+    if (path === '/api/admin/bug-reports' && req.method === 'GET') {
+      const before = Number(url.searchParams.get('before') ?? Number.MAX_SAFE_INTEGER);
+      if (!Number.isSafeInteger(before) || before < 1) throw new Problem('取得位置を確認してください。');
+      const { results } = await env.DB.prepare('SELECT id, name, message, created_at AS createdAt FROM bug_reports WHERE id < ? ORDER BY id DESC LIMIT 21').bind(before).all();
+      const reports = results.slice(0, 20);
+      return json({ reports, next: results.length > 20 ? reports.at(-1).id : null });
+    }
     if (path === '/api/admin' && req.method === 'GET') {
       const { state } = await read(env);
       return json({ ...state, entries: state.entries.map(({ tokenHash, usedNames, accountId, ...entry }) => entry) });

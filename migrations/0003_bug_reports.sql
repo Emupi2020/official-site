@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS bug_reports (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  message TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
