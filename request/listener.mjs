@@ -25,15 +25,52 @@ function renderDuplicateSlots() {
   part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
  }
  const reservation = $('next-reservation');
- reservation.hidden = !slots.filter(slot => !slot.reserved)
-  .every(slot => slot.entry || !part(slot, '.slot-duplicate').hidden);
+ reservation.hidden = !currentSlots.every(slot => slot.entry || !part(slot, '.slot-duplicate').hidden);
  if (reservation.hidden) reservation.open = false;
+ for (const slot of currentSlots) renderSlotOverview(slot);
 }
 window.addEventListener('pageshow', renderDuplicateSlots);
 document.addEventListener('visibilitychange', renderDuplicateSlots);
 const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:root.id,category:root.dataset.category,reserved:root.dataset.reserved==='true',entry:null,token:null,round:null,draftRound:null}));
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
+const currentSlots = slots.filter(slot => !slot.reserved).map(slot => {
+ const overview = $(`open-${slot.id}`);
+ return Object.assign(slot, {overview, detail:$(overview.getAttribute('aria-controls'))});
+});
+let activeSlot = null;
+const overviewStatus = {pending:'抽選待ち', selected:'当選', done:'歌唱済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
+
+function renderSlotOverview(slot) {
+ const song = slot.overview.querySelector('.slot-overview-song');
+ const status = slot.overview.querySelector('.slot-overview-status');
+ const empty = !slot.entry && part(slot, '.slot-duplicate').hidden;
+ song.textContent = slot.entry?.song || '';
+ song.hidden = !song.textContent;
+ status.textContent = slot.entry
+  ? (slot.entry.status === 'deferred' && slot.entry.deferReason === 'temporary' ? '一時保留' : overviewStatus[slot.entry.status])
+  : empty ? 'リクエスト' : 'リクエスト済み';
+ slot.overview.classList.toggle('is-empty', empty);
+}
+function showCurrentSlot(id, focus = false) {
+ const previous = activeSlot;
+ activeSlot = currentSlots.find(slot => slot.id === id) || null;
+ $('request-overview').hidden = Boolean(activeSlot);
+ $('current-request-detail').hidden = !activeSlot;
+ for (const slot of currentSlots) slot.detail.hidden = slot !== activeSlot;
+ if (focus) (activeSlot?.detail || previous?.overview || $('request-title')).focus();
+}
+function closeCurrentSlot() {
+ if (activeSlot) window.history.back();
+}
+for (const slot of currentSlots) {
+ slot.overview.onclick = () => {
+  if (activeSlot || busy) return;
+  window.history.pushState({requestScreen:true, currentSlot:slot.id}, '');
+  showCurrentSlot(slot.id, true);
+ };
+}
+$('current-request-back').onclick = closeCurrentSlot;
 $('name').value=safeGet('emupi-request-name')||'';
 const viewport = window.visualViewport;
 if (viewport) {
@@ -71,7 +108,10 @@ function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
  nameSettings.hidden = !open;
- if (!open) nameSettings.open = false;
+ if (!open) {
+  nameSettings.open = false;
+  showCurrentSlot(null);
+ }
  if (open) renderGreeting();
  if (focus) (open ? $('request-title') : entryTitle).focus();
 }
@@ -215,7 +255,8 @@ window.addEventListener('popstate', event => {
  if (typeof event.state?.requestScreen !== 'boolean') return;
  const open = event.state.requestScreen && Boolean(lookupName());
  if (!open) setEntryMode(event.state.entryMode || 'welcome');
- showRequestScreen(open, true);
+ showRequestScreen(open, !open);
+ if (open) showCurrentSlot(event.state.currentSlot, true);
 });
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
@@ -224,7 +265,7 @@ function canSubmit(slot) {
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, #current-request-back, .slot-overview-row')) button.disabled = busy;
  newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
@@ -286,7 +327,7 @@ async function refresh({useAccountName = false} = {}){
    safeSet('emupi-request-name', nextAccount.name);
   }
   if (!account.signedIn) {
-   window.history.replaceState({requestScreen:true}, '');
+   window.history.replaceState({requestScreen:true, currentSlot:activeSlot?.id}, '');
    showRequestScreen(true);
   }
  }
@@ -502,6 +543,7 @@ for(const slot of slots){
     field(slot, 'song').value = '';
     slot.draftRound = null;
     await refresh();
+    if (activeSlot === slot) closeCurrentSlot();
    }
   } catch (error) {
    if (error.code === 'passcode_required') {
