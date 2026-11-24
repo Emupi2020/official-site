@@ -187,7 +187,7 @@ for(const slot of slots){
  const status = document.createElement('p');
  status.className = 'duplicate-label';
  status.textContent = slot.reserved ? 'この枠は予約済みです。' : 'この枠はリクエスト済みです。';
- duplicate.append(rejected, status);
+ duplicate.append(status, rejected);
  slot.root.append(duplicate);
  const box=document.createElement('div');box.className='slot-feedback edit-feedback';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
  part(slot, '.slot-form').onsubmit = async event => {

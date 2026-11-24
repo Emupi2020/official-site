@@ -98,7 +98,7 @@ body:has(.request-page) { background: #f2f2f7; }
 
 .category-choice{display:flex;gap:8px;margin-top:12px}.category-choice button{flex:1;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:12px 8px;font-size:13px}.category-choice button[aria-pressed=true]{background:var(--soft);border-color:var(--accent);color:var(--accent)}.draw-category-label{max-width:360px;margin:24px auto 8px}#draw-category{display:block;width:min(100%,360px);margin:0 auto;min-height:48px;border:1px solid var(--border);border-radius:12px;padding:10px 14px;font:inherit;color:var(--text);background:var(--card)}
 
-.request-page .request-name{margin-top:28px}.request-block{margin-top:36px}.request-block h2{font-size:21px;letter-spacing:-.03em;margin:0 0 16px}.request-block+.request-block{margin-top:42px;padding-top:32px;border-top:1px solid var(--border)}.request-block .slot-form>.primary{margin-top:16px}.request-page .slot-receipt{padding:22px;background:var(--card);border-radius:18px}.slot-receipt-title{font-size:14px;color:var(--muted);margin:0}.request-page .slot-receipt .receipt-song{margin-top:14px;font-size:24px}.request-page .reserve-details{margin:18px 0 0}.request-page .reserve-details>summary{color:var(--accent);font-size:14px}.request-page .reserve-details[open]>.request-slot{margin-top:14px}.request-page .slot-note{margin:0;font-size:13px}.request-page .slot-rename-form{margin-top:14px}
+.request-page .request-name{margin-top:28px}.request-block{margin-top:36px}.request-block h2{font-size:21px;letter-spacing:-.03em;margin:0 0 16px}.request-block+.request-block{margin-top:42px;padding-top:32px;border-top:1px solid var(--border)}.request-block .slot-form>.primary{margin-top:16px}.request-page .slot-receipt{padding:14px 20px;background:var(--card);border-radius:18px}.slot-receipt-title{font-size:14px;color:var(--muted);margin:0}.request-page .slot-receipt .receipt-song{margin:6px 0 0;font-size:24px}.request-page .reserve-details{margin:18px 0 0}.request-page .reserve-details>summary{color:var(--accent);font-size:14px}.request-page .reserve-details[open]>.request-slot{margin-top:14px}.request-page .slot-note{margin:0;font-size:13px}.request-page .slot-rename-form{margin-top:14px}
 
 .request-page .edit-actions {
   display: flex;
@@ -109,13 +109,16 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .input-group > .edit-actions,
 .request-page .input-group > .edit-feedback { margin-inline: 20px; }
-.request-page .slot-receipt > .edit-actions { margin-top: 12px; }
+.request-page .slot-receipt > .edit-actions { margin-top: 8px; }
 .request-page .edit-actions .text-button { min-height: 44px; }
 .request-page .edit-actions .edit-save { font-weight: 600; }
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
 .request-page .edit-feedback.error { color: var(--danger, #a72b2b); }
 .request-page .slot-actions:not(.edit-actions) > .primary { margin-top: 16px; }
 
-.request-page .slot-duplicate .duplicate-error { margin: 0 0 10px; }
-.request-page .slot-duplicate .duplicate-label { margin: 0; }
+.request-page .slot-receipt .slot-artist,
+.request-page .slot-receipt .slot-name { margin: 2px 0 0; }
+.request-page .slot-receipt .slot-status { margin: 8px 0 0; padding-block: 7px; }
+.request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--danger); }
+.request-page .slot-duplicate .duplicate-error { margin: 4px 0 0; }
 .request-page .slot-submit:disabled { opacity: .45; cursor: default; }
