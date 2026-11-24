@@ -1,4 +1,4 @@
-import { initialState, publicState, ownRequests, receipt, submit, rename, adminAction, songStatus, Problem, prune } from './domain.mjs';
+import { initialState, publicState, ownRequests, receipt, submit, rename, canRename, editSong, adminAction, songStatus, Problem, prune } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { catalog } from '../request/catalog.mjs';
 
@@ -55,8 +55,7 @@ async function handle(req, env) {
   if (path === '/api/mine' && req.method === 'GET') return json({ entry: receipt((await read(env)).state, await requestToken(req)) });
   if (path === '/api/my-requests' && req.method === 'POST') {
     const input = await body(req);
-    if (!input || !Array.isArray(input.tokens) || input.tokens.length > 100 || input.tokens.some(token => typeof token !== 'string' || !/^[a-zA-Z0-9_-]{32,100}$/.test(token))) throw new Problem('保存されたリクエスト情報を確認できません。');
-    const hashes = await Promise.all(input.tokens.map(hash));
+    const hashes = await requestTokenHashes(input?.tokens);
     return json({ entries: ownRequests((await read(env)).state, hashes) });
   }
   if (path === '/api/requests' && req.method === 'POST') {
@@ -67,11 +66,23 @@ async function handle(req, env) {
   }
   if (path === '/api/mine' && req.method === 'PATCH') {
     await limit(req, env);
-    const token = await requestToken(req), input = await body(req);
+    const input = await body(req);
+    if (input?.action === 'renameAll') {
+      const hashes = new Set(await requestTokenHashes(input.tokens));
+      const {value: updated} = await mutate(env, state => {
+        const entries = state.entries.filter(entry => hashes.has(entry.tokenHash) && canRename(state, entry));
+        if (!entries.length) throw new Problem('名前を修正できるリクエストがありません。', 409);
+        for (const entry of entries) rename(state, entry, input.name);
+        return entries.length;
+      });
+      return json({updated});
+    }
+    const token = await requestToken(req);
     const result = await mutate(env, state => {
       const e = state.entries.findLast(e => e.tokenHash === token);
       if (!e) throw new Problem('応募が見つかりません。', 404);
-      rename(state, e, input.name);
+      if (input?.action === 'editSong') editSong(state, e, input);
+      else rename(state, e, input?.name);
     });
     return json({ entry: receipt(result.state, token) });
   }
@@ -88,6 +99,12 @@ async function handle(req, env) {
     }
   }
   throw new Problem('見つかりません。', 404);
+}
+async function requestTokenHashes(tokens) {
+  if (!Array.isArray(tokens) || tokens.length > 100 || tokens.some(token => typeof token !== 'string' || !/^[a-zA-Z0-9_-]{32,100}$/.test(token))) {
+    throw new Problem('保存されたリクエスト情報を確認できません。');
+  }
+  return Promise.all(tokens.map(hash));
 }
 async function body(req) {
   const raw = await req.text();

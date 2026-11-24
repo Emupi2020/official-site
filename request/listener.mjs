@@ -7,7 +7,7 @@ const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 $('name').value=safeGet('emupi-request-name')||'';
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
-function lock(value){busy=value;for(const button of document.querySelectorAll('.slot-submit,.slot-rename-form button'))button.disabled=value;}
+function lock(value){busy=value;for(const button of document.querySelectorAll('.slot-submit, .slot-cancel, .slot-edit, #save-name'))button.disabled=value;}
 function feedback(slot,text){const box=part(slot,'.slot-feedback');box.textContent=text;box.hidden=!text;}
 function historyRow(list,song,artist,status){const row=document.createElement('li'),title=document.createElement('div'),subtitle=document.createElement('div'),label=document.createElement('span');title.textContent=song;title.className='history-song';subtitle.textContent=artist;subtitle.className='history-artist';label.textContent=status;label.className='history-status';row.append(title,subtitle,label);list.append(row);}
 function renderHistory(myRequests){
@@ -27,10 +27,13 @@ async function refresh(){
  for(const slot of slots){
   slot.round=state.round+Number(slot.reserved);const token=tokens[`${slot.round}:${slot.category}`]||tokens[slot.round];const entry=receipts.get(token);
   slot.entry=entry&&entry.round===slot.round&&(entry.category||classifyArtist(entry.artist))===slot.category?entry:null;slot.token=slot.entry?token:null;
-  part(slot,'.slot-form').hidden=!!slot.entry;part(slot,'.slot-receipt').hidden=!slot.entry;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-name').textContent=`${mine.name} さん`;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'次回の抽選に入ります。':statusText[mine.status];part(slot,'.slot-rename').hidden=!mine.editable;}
+  if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
+  part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
+  part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
+  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-name').textContent=`${mine.name} さん`;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'次回の抽選に入ります。':statusText[mine.status];part(slot,'.slot-edit').hidden=!mine.songEditable;}
  }
  for(const category of ['yamapi','other']){const current=slots.find(s=>s.category===category&&!s.reserved),nextSlot=slots.find(s=>s.category===category&&s.reserved);$(`reserve-${category}`).hidden=!current.entry&&!nextSlot.entry;}
+ $('save-name').hidden = !slots.some(slot => slot.entry?.editable);
  renderHistory(myRequests);
 }
 async function confirmSong(data){
@@ -52,16 +55,99 @@ function suggest(slot,kind){
  for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';button.textContent=candidate.label;button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');input.focus();};box.append(button);}
  box.hidden=!box.children.length;input.setAttribute('aria-expanded',String(!box.hidden));
 }
+function stopEditing(slot) {
+ slot.editing = null;
+ slot.draftRound = null;
+ const form = part(slot, '.slot-form');
+ form.reset();
+ form.hidden = !!slot.entry;
+ part(slot, '.slot-receipt').hidden = !slot.entry;
+ part(slot, '.slot-submit').textContent = slot.reserved ? '予約する' : 'リクエスト';
+ part(slot, '.slot-cancel').hidden = true;
+ hideSuggestions();
+}
+$('name-form').onsubmit = async event => {
+ event.preventDefault();
+ const ownedTokens = slots.filter(slot => slot.entry?.editable).map(slot => slot.token);
+ if (busy || !ownedTokens.length) return;
+ lock(true);
+ message('');
+ try {
+  const name = $('name').value;
+  await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, name}});
+  $('name').value = name.normalize('NFKC').trim();
+  safeSet('emupi-request-name', $('name').value);
+  await refresh();
+  message('名前を修正しました。');
+ } catch (error) {
+  message(error.message, true);
+ } finally {
+  lock(false);
+ }
+};
 for(const slot of slots){
  const box=document.createElement('div');box.className='slot-feedback message error';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
- part(slot,'.slot-form').onsubmit=async event=>{
-  event.preventDefault();if(busy||!state)return;if(!$('name').reportValidity())return;lock(true);feedback(slot,'');message('');
-  try {const round=slot.draftRound??slot.round,data={...Object.fromEntries(new FormData(event.target)),name:$('name').value,round,category:slot.category};if(!await confirmSong(data)){field(slot,'song').focus();return;}
-   const mine=(await api('/api/requests',{method:'POST',data,token:tokenFor(round,slot.category)})).entry;safeSet('emupi-request-name',mine.name);field(slot,'song').value='';slot.draftRound=null;await refresh();
-  }catch(error){feedback(slot,error.message);if(error.status===409){slot.draftRound=null;await refresh().catch(()=>{});}}finally{lock(false);}
+ part(slot, '.slot-form').onsubmit = async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const editing = slot.editing;
+  if (!editing && !$('name').reportValidity()) return;
+  lock(true);
+  feedback(slot, '');
+  message('');
+  const round = slot.draftRound ?? slot.round;
+  const data = Object.fromEntries(new FormData(event.target));
+  try {
+   if (!await confirmSong(data)) { field(slot, 'song').focus(); return; }
+   if (editing) {
+    await api('/api/mine', {method: 'PATCH', data: {...data, action: 'editSong'}, token: editing.token});
+    stopEditing(slot);
+    await refresh();
+    message('曲を修正しました。');
+   } else {
+    const {entry} = await api('/api/requests', {
+     method: 'POST', data: {...data, name: $('name').value, round, category: slot.category},
+     token: tokenFor(round, slot.category)
+    });
+    safeSet('emupi-request-name', entry.name);
+    field(slot, 'song').value = '';
+    slot.draftRound = null;
+    await refresh();
+   }
+  } catch (error) {
+   feedback(slot, error.message);
+   if (error.status === 409) { slot.draftRound = null; await refresh().catch(() => {}); }
+  } finally {
+   lock(false);
+  }
  };
- part(slot,'.slot-rename').onclick=()=>{const form=part(slot,'.slot-rename-form');form.hidden=!form.hidden;slot.renameToken=slot.token;field(slot,'new-name').value=slot.entry.name;if(!form.hidden)field(slot,'new-name').focus();};
- part(slot,'.slot-rename-form').onsubmit=async event=>{event.preventDefault();if(busy)return;lock(true);feedback(slot,'');try{const mine=(await api('/api/mine',{method:'PATCH',data:{name:field(slot,'new-name').value},token:slot.renameToken})).entry;safeSet('emupi-request-name',mine.name);$('name').value=mine.name;event.target.hidden=true;await refresh();}catch(error){feedback(slot,error.message);}finally{lock(false);}};
+ part(slot, '.slot-edit').onclick = () => {
+  const entry = slot.entry;
+  if (busy || !entry?.songEditable) return;
+  slot.editing = {id: entry.id, token: slot.token};
+  const artist = field(slot, 'artist');
+  artist.value = entry.artist;
+  if (artist.tagName === 'SELECT' && !artist.value) {
+   const known = items.find(item => normalize(item.artist) === normalize(entry.artist))
+    || items.find(item => (item.artistAliases || []).some(alias => normalize(alias) === normalize(entry.artist))
+     && [item.song, ...(item.aliases || [])].some(song => normalize(song) === normalize(entry.song)));
+   artist.value = known?.artist || '';
+   if (!artist.value) artist.selectedIndex = 0;
+  }
+  field(slot, 'song').value = entry.song;
+  const form = part(slot, '.slot-form');
+  form.hidden = false;
+  part(slot, '.slot-receipt').hidden = true;
+  part(slot, '.slot-submit').textContent = '曲を保存';
+  part(slot, '.slot-cancel').hidden = false;
+  feedback(slot, '');
+  field(slot, 'song').focus();
+ };
+ part(slot, '.slot-cancel').onclick = () => {
+  stopEditing(slot);
+  feedback(slot, '');
+  part(slot, '.slot-edit').focus();
+ };
  for(const kind of ['artist','song']){const input=field(slot,kind);
   if (input.tagName === 'SELECT') {
    input.addEventListener('focus', () => hideSuggestions());

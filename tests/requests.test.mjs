@@ -163,3 +163,42 @@ test('サーバーAPIでも同名の2枠を許可し、同じ枠の並行リク�
  for(let i=0;i<2;i++)assert.equal((await worker.fetch(req('/api/requests',bodies[i],String(i).repeat(40)),e)).status,201);
  const results=await Promise.all(Array.from({length:4},(_,i)=>worker.fetch(req('/api/requests',{...input('B'),category:'yamapi'},String(i+3).repeat(40)),e)));assert.equal(results.filter(r=>r.status===201).length,1);
 });
+
+test('上部からの名前修正は本人の修正可能な枠だけを一括更新する', async () => {
+  const e = env(), tokens = ['a', 'b', 'c'].map(value => value.repeat(40));
+  for (const [i, data] of [input('A'), input('A', '曲', '別歌手'), input('別の人')].entries()) {
+    assert.equal((await worker.fetch(req('/api/requests', data, tokens[i]), e)).status, 201);
+  }
+  const renameOwned = name => worker.fetch(new Request('https://requests.example/api/mine', {
+    method:'PATCH', headers:{Origin:e.PUBLIC_ORIGIN, 'Content-Type':'application/json'},
+    body:JSON.stringify({action:'renameAll', tokens:tokens.slice(0, 2), name})
+  }), e);
+  const names = () => Promise.all(tokens.map(async token => (await (await worker.fetch(req('/api/mine', undefined, token), e)).json()).entry.name));
+  assert.equal((await renameOwned('別の人')).status, 409);
+  assert.deepEqual(await names(), ['A', 'A', '別の人']);
+  assert.equal((await renameOwned('訂正後')).status, 200);
+  assert.deepEqual(await names(), ['訂正後', '訂正後', '別の人']);
+});
+
+test('本人は抽選前に同じ枠の曲を変更でき、選択後に届いた変更は拒否する', async () => {
+  const e = env(), token = 'a'.repeat(40);
+  const submitted = await (await worker.fetch(req('/api/requests', input('A'), token), e)).json();
+  const edit = (artist, song, owner = token) => worker.fetch(new Request('https://requests.example/api/mine', {
+    method:'PATCH', headers:{Origin:e.PUBLIC_ORIGIN, 'Content-Type':'application/json','X-Request-Token':owner},
+    body:JSON.stringify({action:'editSong', artist, song})
+  }), e);
+  assert.equal((await edit('別歌手', '曲')).status, 400);
+  assert.equal((await edit('山下智久', '指輪', 'b'.repeat(40))).status, 404);
+  const result = await edit('山下智久','指輪');
+  assert.equal(result.status, 200);
+  const {entry} = await result.json();
+  assert.equal(entry.id, submitted.entry.id);
+  assert.equal(entry.song, '指輪');
+  assert.equal(entry.name, 'A');
+  const {mutate} = await import('../worker/index.mjs');
+  await mutate(e, s => adminAction(s,{action:'advance'}));
+  assert.equal((await edit('山下智久','別の曲')).status, 409);
+  const after = await (await worker.fetch(req('/api/mine', undefined, token), e)).json();
+  assert.equal(after.entry.song, '指輪');
+  assert.equal(after.entry.songEditable, false);
+});

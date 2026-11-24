@@ -54,9 +54,15 @@ export function ownRequests(state, hashes) {
   const allowed = new Set(hashes);
   return state.entries.filter(e => allowed.has(e.tokenHash)).map(e => ({ id: e.id, artist: e.artist, song: e.song, category: categoryOf(e), round: e.round, status: e.status, createdAt: e.createdAt, playedThisSession: state.sung.includes(e.songKey) }));
 }
+export function canRename(state, entry) {
+  return [state.round, state.round + 1].includes(entry.round) && ['pending', 'deferred'].includes(entry.status);
+}
+function canEditSong(state, entry) {
+  return canRename(state, entry) && !entry.drawnAt;
+}
 export function receipt(state, tokenHash) {
   const entry = state.entries.findLast(e => e.tokenHash === tokenHash);
-  return entry ? { id: entry.id, name: entry.name, artist: entry.artist, song: entry.song, category: categoryOf(entry), round: entry.round, status: entry.status, deferReason: entry.deferReason, editable: [state.round,state.round+1].includes(entry.round) && ['pending','deferred'].includes(entry.status) } : null;
+  return entry ? { id: entry.id, name: entry.name, artist: entry.artist, song: entry.song, category: categoryOf(entry), round: entry.round, status: entry.status, deferReason: entry.deferReason, editable: canRename(state, entry), songEditable: canEditSong(state, entry) } : null;
 }
 export function submit(state, input, tokenHash, now = Date.now()) {
   const round = input.round === undefined ? state.round : input.round;
@@ -72,15 +78,30 @@ export function submit(state, input, tokenHash, now = Date.now()) {
   const deferReason = state.sung.includes(songKey) ? 'sung' : (state.held || []).includes(songKey) ? 'unknown' : null;
   const entry = { id: crypto.randomUUID(), name, usedNames: [key], artist, song, songKey, category, tokenHash, round, status: deferReason ? 'deferred' : 'pending', deferReason, createdAt: now };
   state.entries.push(entry);
-  if (![...catalog, ...state.suggestions].some(c => normalize(c.artist) === normalize(artist) && normalize(c.song) === normalize(song))) state.suggestions.push({ id: crypto.randomUUID(), artist, song, count: 1 });
+  rememberSong(state, artist, song);
   return entry;
 }
 export function rename(state, entry, value) {
-  if (![state.round,state.round+1].includes(entry.round) || !['pending','deferred'].includes(entry.status)) throw new Problem('名前の修正受付は終了しました。配信者にお知らせください。', 409);
+  if (!canRename(state, entry)) throw new Problem('名前の修正受付は終了しました。配信者にお知らせください。', 409);
   const name = text(value, 'Pocochaの名前', 50), key = nameKey(name);
   if (state.entries.some(e => e.id !== entry.id && e.round === entry.round && categoryOf(e) === categoryOf(entry) && e.usedNames.includes(key))) throw new Problem('その名前は今回すでに応募されています。', 409);
   entry.name = name;
   if (!entry.usedNames.includes(key)) entry.usedNames.push(key);
+}
+function rememberSong(state, artist, song) {
+  if (![...catalog, ...state.suggestions].some(c => normalize(c.artist) === normalize(artist) && normalize(c.song) === normalize(song))) state.suggestions.push({ id: crypto.randomUUID(), artist, song, count: 1 });
+}
+export function editSong(state, entry, input) {
+  if (!canEditSong(state, entry)) throw new Problem('このリクエストの曲は変更できません。', 409);
+  const artist = text(input.artist, '歌手名'), song = text(input.song, '曲名');
+  if (classifyArtist(artist) !== categoryOf(entry)) throw new Problem('同じ歌まね枠の曲を選んでください。');
+  const songKey = songIdentity(artist, song, state.suggestions);
+  const unknownAt = state.unknown?.[songKey]?.at;
+  if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してください。', 409);
+  const deferReason = state.sung.includes(songKey) ? 'sung' : state.held?.includes(songKey) ? 'unknown' : entry.deferReason === 'manual' ? 'manual' : null;
+  Object.assign(entry, {artist, song, songKey, deferReason, status: deferReason ? 'deferred' : 'pending'});
+  rememberSong(state, artist, song);
+  finishRounds(state, false);
 }
 function pick(length) {
   const ceiling = Math.floor(4294967296 / length) * length;
@@ -160,7 +181,7 @@ export function adminAction(state, input) {
         if (u.previous) state.unknown[u.key] = u.previous; else delete state.unknown[u.key];
         if (!u.hadHold) state.held = state.held.filter(key => key !== u.key);
         for (const entry of state.entries) {
-          const before = u.affected.find(a => a.id === entry.id);
+          const before = entry.songKey === u.key && u.affected.find(a => a.id === entry.id);
           if (before) { entry.status = before.status; entry.deferReason = before.deferReason; }
           else if (!u.hadHold && entry.songKey === u.key && entry.status === 'deferred' && entry.deferReason === 'unknown') { entry.status = 'pending'; entry.deferReason = null; }
         }
