@@ -208,7 +208,7 @@ async function handle(req, env) {
     const input = await body(req);
     const { state } = await read(env);
     prune(state);
-    return json({ entries: requestsByName(state, input?.name) });
+    return json(requestsByName(state, input?.name));
   }
   if (path === '/api/requests' && req.method === 'POST') {
     await limit(req, env);

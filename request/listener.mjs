@@ -11,7 +11,7 @@ try {
  const saved = JSON.parse(safeGet(duplicateStorageKey) || '[]');
  if (Array.isArray(saved)) confirmedDuplicates = saved;
 } catch {}
-const duplicateKey = (round, category, name) => JSON.stringify([round, category, name.normalize('NFKC').trim().replace(/s+/g, ' ').toLowerCase()]);
+const duplicateKey = (round, category, name) => JSON.stringify([round, category, name.normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase()]);
 function renderDuplicateSlots() {
  if (!state) return;
  for (const slot of slots) {
@@ -488,10 +488,21 @@ async function refreshNameRequests(reportError = false) {
  const version = ++lookupVersion;
  if (!name) return;
  try {
-  const {entries} = await api('/api/requests-by-name', {method:'POST', data:{name}});
+  const {entries, occupiedSlots, round} = await api('/api/requests-by-name', {method:'POST', data:{name}});
   if (version !== lookupVersion || name !== lookupName()) return;
   loadedName = name;
   namedRequests = entries;
+  if (occupiedSlots && state?.round === round) {
+   const occupied = new Set(occupiedSlots.map(({round, category}) => duplicateKey(round, category, name)));
+   const available = new Set(slots.map(slot => duplicateKey(state.round + Number(slot.reserved), slot.category, name))
+    .filter(key => !occupied.has(key)));
+   for (const slot of slots) if (available.has(slot.rejectedSubmission?.key)) slot.rejectedSubmission = null;
+   const remaining = confirmedDuplicates.filter(key => !available.has(key));
+   if (remaining.length !== confirmedDuplicates.length) {
+    confirmedDuplicates = remaining;
+    safeSet(duplicateStorageKey, JSON.stringify(confirmedDuplicates));
+   }
+  }
   if (entries.length) safeSet('emupi-request-name', name);
   if (state) renderRequests();
  } catch (error) {

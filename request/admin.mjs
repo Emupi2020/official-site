@@ -61,7 +61,7 @@ function correctReason(entry, previous) {
   }, {once:true});
   dialog.showModal();
 }
-function rowChoices(entry) {
+function queueChoices(entry) {
   const command = (label, operation, confirmation) => ({ label, handler:() => {
     if (!confirmation || confirm(confirmation)) action(operation, {id:entry.id});
   } });
@@ -91,6 +91,17 @@ function rowChoices(entry) {
     if ($('correct-reason-dialog') && previous && reasons.includes(previous) && (!entry.unavailableAt || entry.unavailableAt === record.reasons?.[previous])) choices.push({label:'歌えない理由を訂正', handler:() => correctReason(entry, previous)});
   }
   return choices;
+}
+function rowChoices(entry) {
+  return [...queueChoices(entry), {
+    label:'リクエストを初期化',
+    className:'danger',
+    handler:() => {
+      if (!confirm(`${entry.name}さんの「${entry.song}」のリクエストを初期化しますか？\n今の募集・予約の枠なら、リスナーは送り直せます。歌唱済みの記録は残ります。`)) return;
+      const {name, artist, song, status} = entry;
+      action('resetRequest', {id:entry.id, expected:{name, artist, song, status}});
+    }
+  }];
 }
 function requestActionsButton(entry, choices) {
   const trigger = node('button', '…', 'request-row-menu-trigger');
@@ -152,6 +163,7 @@ async function action(action, extra = {}) {
     if (!await postAdminAction({action, ...extra, ...(drawing ? {category:drawCategory} : {})})) return;
     await refresh(drawing, action === 'selectSong');
     if (action === 'undo' && state) undoFeedback('直前の操作を取り消しました。');
+    if (action === 'resetRequest') message('リクエストを初期化しました。');
   } catch (error) {
     if (action === 'undo') undoFeedback(error.message, true);
     else { message(error.message, true); stageMessage(error.message); }

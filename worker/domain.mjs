@@ -143,7 +143,12 @@ function listenerRequest(state, entry) {
 }
 export function requestsByName(state, name) {
   const key = nameKey(text(name, 'Pocochaの名前', 50));
-  return state.entries.filter(entry => !entry.encoreOf && nameKey(entry.name) === key).map(entry => listenerRequest(state, entry));
+  const entries = state.entries.filter(entry => !entry.encoreOf && nameKey(entry.name) === key)
+    .map(entry => listenerRequest(state, entry));
+  const occupiedSlots = state.entries.filter(entry => [state.round, state.round + 1].includes(entry.round)
+    && entry.usedNames.includes(key))
+    .map(entry => ({round:entry.round, category:categoryOf(entry)}));
+  return {entries, occupiedSlots, round:state.round};
 }
 export function canRename(state, entry) {
   return [state.round, state.round + 1].includes(entry.round) && ['pending', 'deferred'].includes(entry.status);
@@ -617,6 +622,30 @@ export function adminAction(state, input, now = Date.now()) {
       rememberQueueChange(state, [e]);
       e.status = 'removed'; if (state.current === e.id) state.current = null; break;
     }
+    case 'resetRequest': {
+      const entry = byId(state, input.id);
+      const expected = input.expected;
+      if (!expected || entry.name !== expected.name || entry.artist !== expected.artist || entry.song !== expected.song || entry.status !== expected.status) {
+        throw new Problem('リクエストが更新されました。最新の内容を確認してください。', 409);
+      }
+      if (entry.status === 'done') {
+        const performance = performanceFor(state, entry);
+        if (performance) {
+          performance.requestId = entry.id;
+          performance.round ??= entry.round;
+        } else {
+          // Old records can store a sung request without a separate performance.
+          const {round, songKey, song, artist, createdAt} = entry;
+          state.history.push({requestId:entry.id, round, songKey, song, artist, createdAt,
+            session:state.sung.includes(songKey) ? state.session : null, performedAt:entry.revealedAt ?? null});
+        }
+      }
+      state.entries.splice(state.entries.indexOf(entry), 1);
+      if (state.current === entry.id) state.current = null;
+      state.undo = null;
+      // Keep the same round open so the listener can fill the vacated slot.
+      return;
+    }
     case 'removeSuggestion': state.suggestions = state.suggestions.filter(s => s.id !== input.id); break;
     default: throw new Problem('操作を確認してください。');
   }
@@ -626,9 +655,9 @@ export function prune(state, now = Date.now()) {
   const cutoff = now - state.retentionDays * 86400000;
   state.entries = state.entries.filter(e => e.createdAt >= cutoff);
   if (state.history) {
-    const expired = state.history.filter(entry => entry.performedAt < cutoff);
+    const expired = state.history.filter(entry => (entry.performedAt ?? entry.createdAt) < cutoff);
     if (expired.length) state.repertoire = collectedSongs(state, expired);
-    state.history = state.history.filter(entry => entry.performedAt >= cutoff);
+    state.history = state.history.filter(entry => (entry.performedAt ?? entry.createdAt) >= cutoff);
   }
   if (!state.entries.some(e => e.id === state.current)) state.current = null;
 }

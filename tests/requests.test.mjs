@@ -1,11 +1,41 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState, submit, rename, adminAction, eligible, publicState, playableSongs, ownRequests, songIdentity, songStatus, prune, rolloverSession } from '../worker/domain.mjs';
+import { initialState, submit, rename, adminAction, eligible, publicState, playableSongs, ownRequests, requestsByName, songIdentity, songStatus, prune, rolloverSession } from '../worker/domain.mjs';
 import worker, { read } from '../worker/index.mjs';
 import { database } from '../scripts/local-db.mjs';
 import { sign,verify,isAdmin,passwordRecord,hash } from '../worker/auth.mjs';
 const input=(name='リスナーA',song='らぶれす',artist='やまぴー')=>({name,song,artist});
 function state(){const s=initialState();s.open=true;return s;}
+test('リクエストの初期化は選んだ1件だけ再応募できるようにする', () => {
+  const s = state();
+  const current = input('リスナーA');
+  const target = submit(s, current, 'a');
+  const otherListener = submit(s, input('リスナーB'), 'b');
+  const reservation = submit(s, {...current, round:s.round + 1}, 'next');
+  const otherCategory = submit(s, input(current.name, '恋', '星野源'), 'other');
+  const expected = {...current, status:target.status};
+  const reset = {action:'resetRequest', id:target.id, expected};
+  assert.throws(() => adminAction(s, {...reset, expected:{...expected, song:'違う曲'}}), {status:409});
+  adminAction(s, reset);
+  assert.equal(s.round, 1);
+  assert.deepEqual(s.entries.map(e => e.id), [otherListener.id, reservation.id, otherCategory.id]);
+  assert.deepEqual(ownRequests(s, ['a']), []);
+  assert.equal(requestsByName(s, current.name).occupiedSlots.some(slot => slot.round === 1 && slot.category === 'yamapi'), false);
+  assert.equal(submit(s, {...current, song:'抱いてセニョリータ'}, 'a').status, 'pending');
+});
+test('歌唱済みのリクエストを初期化しても曲の歌唱記録は残る', () => {
+  const s = state();
+  const current = input();
+  const target = submit(s, current, 'a');
+  adminAction(s, {action:'selectSong', id:target.id});
+  adminAction(s, {action:'done', id:target.id});
+  const played = publicState(s).played;
+  adminAction(s, {action:'resetRequest', id:target.id, expected:{...current, status:'done'}});
+  assert.deepEqual(ownRequests(s, ['a']), []);
+  assert.deepEqual(publicState(s).played, played);
+  assert.equal(playableSongs(s).length, 1);
+  assert.equal(s.current, null);
+});
 test('歌唱済み一覧には実際に消化した曲だけを匿名で公開、戻すも反映',()=>{
   const s=state();submit(s,input('非公開名A'),'secret-a');submit(s,input('非公開名B'),'secret-b');adminAction(s,{action:'advance'});assert.equal(publicState(s).played.length,0);adminAction(s,{action:'advance'});const p=publicState(s).played;assert.equal(p.length,1);assert(p[0].performedAt>0);assert(!JSON.stringify(p).includes('非公開'));assert(!JSON.stringify(p).includes('secret'));adminAction(s,{action:'undo'});assert.equal(publicState(s).played.length,0);
 });
