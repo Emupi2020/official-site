@@ -35,6 +35,15 @@ const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 $('name').value=safeGet('emupi-request-name')||'';
+const viewport = window.visualViewport;
+if (viewport) {
+ const fitLoginViewport = () => {
+  const height = viewport.scale === 1 && viewport.height < window.innerHeight ? viewport.height + 'px' : '';
+  document.body.style.setProperty('--login-viewport-height', height);
+ };
+ viewport.addEventListener('resize', fitLoginViewport);
+ fitLoginViewport();
+}
 const entryForm = $('entry-form');
 const entryName = $('entry-name');
 const entryPasscode = $('entry-passcode');

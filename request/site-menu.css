@@ -76,3 +76,26 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
 .request-menu #played-empty { margin: 8px 0 20px; }
 .request-menu .note { margin: 0 0 12px; }
 .listener-layout:has(#request-screen[hidden]) #my-history { display: none; }
+
+html:has(.listener-layout #request-screen[hidden]),
+.listener-layout:has(#request-screen[hidden]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.listener-layout:has(#request-screen[hidden]) {
+  height: var(--login-viewport-height, 100dvh);
+  min-height: 0;
+}
+.listener-layout:has(#request-screen[hidden]) .request-page {
+  flex: 1;
+  min-height: 0;
+  margin: 0 auto;
+  padding-block: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.listener-layout:has(#request-screen[hidden]) #entry-screen { margin: 0 auto; }
+.listener-layout:has(#request-screen[hidden]) > .site-footer { flex-shrink: 0; }
+@media (max-height: 760px) {
+  .listener-layout:has(#request-screen[hidden]) > .site-footer { padding-block: 16px; }
+}
