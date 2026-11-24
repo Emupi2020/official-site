@@ -202,7 +202,7 @@ async function readPublicState() {
  const next = await api('/api/state');
  if (version > playedVersion) {
   playedVersion = version;
-  renderPlayed(next.played || []);
+  renderPlayed(next.roundPlayed ?? next.played ?? []);
  }
  return next;
 }

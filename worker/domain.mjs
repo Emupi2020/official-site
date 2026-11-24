@@ -77,6 +77,36 @@ export function songStatus(state, artist, song) {
   const record = state.unknown?.[key];
   return { unknownAt: record?.at || null, reasons: unavailableReasons(record) };
 }
+function playedForRound(state, current) {
+  const completed = state.entries.filter(entry => entry.status === 'done');
+  const byId = new Map(completed.map(entry => [entry.id, entry]));
+  const recorded = new Set();
+  const played = [];
+  for (const item of state.history || []) {
+    let entry = byId.get(item.requestId);
+    if (!item.requestId) {
+      // Before request IDs were stored, match the last draw before this performance.
+      for (const candidate of completed) {
+        if (candidate.song !== item.song || candidate.artist !== item.artist || recorded.has(candidate.id)
+          || !candidate.drawnAt || candidate.drawnAt > item.performedAt) continue;
+        if (!entry || candidate.drawnAt > entry.drawnAt) entry = candidate;
+      }
+    }
+    if (entry) recorded.add(entry.id);
+    if ((item.round ?? entry?.round) === state.round) {
+      played.push({ song:item.song, artist:item.artist, performedAt:item.performedAt });
+    }
+  }
+  for (const entry of completed) {
+    if (entry.round === state.round && !recorded.has(entry.id)) {
+      played.push({ song:entry.song, artist:entry.artist, performedAt:entry.revealedAt ?? null });
+    }
+  }
+  if (current?.status === 'selected' && current.round === state.round && current.revealedAt) {
+    played.push({ song:current.song, artist:current.artist, performedAt:current.revealedAt });
+  }
+  return played.sort((a, b) => (a.performedAt ?? 0) - (b.performedAt ?? 0));
+}
 export function publicState(state) {
   const current = state.entries.find(e => e.id === state.current);
   const played = (state.history || []).filter(e => e.session === state.session).map(e => ({ song: e.song, artist: e.artist, performedAt: e.performedAt }));
@@ -88,7 +118,7 @@ export function publicState(state) {
   if (current?.status === 'selected' && current.revealedAt) {
     played.push({ song: current.song, artist: current.artist, performedAt: current.revealedAt });
   }
-  return { round: state.round, session: state.session, open: true, nextRound: state.round + 1, reserved: state.entries.filter(e => e.round === state.round + 1 && !['done','removed','skipped'].includes(e.status)).length, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
+  return { round: state.round, session: state.session, open: true, nextRound: state.round + 1, reserved: state.entries.filter(e => e.round === state.round + 1 && !['done','removed','skipped'].includes(e.status)).length, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, roundPlayed:playedForRound(state, current), result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
 }
 export function ownRequests(state, hashes) {
   const allowed = new Set(hashes);
@@ -310,7 +340,7 @@ export function adminAction(state, input, now = Date.now()) {
       const historyId = crypto.randomUUID();
       state.undo = { type: 'done', id: current.id, key, historyId, newlySung: !state.sung.includes(key), unknownBefore: state.unknown[key] || null };
       current.status = 'done';
-      state.history.push({ id: historyId, requestId:current.id, songKey:key, unknownBefore:state.undo.unknownBefore, session: state.session, song: current.song, artist: current.artist, performedAt: current.revealedAt ?? Date.now() });
+      state.history.push({ id: historyId, requestId:current.id, round:current.round, songKey:key, unknownBefore:state.undo.unknownBefore, session: state.session, song: current.song, artist: current.artist, performedAt: current.revealedAt ?? Date.now() });
       delete state.unknown[key];
       if (!state.sung.includes(key)) state.sung.push(key);
       for (const e of state.entries) if (e.status === 'pending' && e.songKey === key && !e.allowRepeat) { e.status = 'deferred'; e.deferReason = 'sung'; }

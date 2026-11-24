@@ -524,3 +524,37 @@ test('15時をまたいで確定した当選曲は結果表示の猶予中に消
  assert.equal(s.current,null);
  assert.equal(s.history.length,1);
 });
+
+test('今回の募集の歌唱済みは15時をまたいでも同じ募集なら残り、募集が進むと切り替わる', () => {
+ const cutoff=Date.parse('2026-11-25T15:00:00+09:00');
+ const s=initialState(cutoff-1000);
+ const old=submit(s,input('A','最初の曲'),'a',cutoff-1000);
+ const waiting=submit(s,input('B','残りの曲'),'b',cutoff-1000);
+ const next=submit(s,{...input('C','予約の曲'),round:2},'c',cutoff-1000);
+ adminAction(s,{action:'selectSong',id:old.id});
+ adminAction(s,{action:'done',id:old.id});
+ assert.deepEqual(publicState(s).roundPlayed.map(entry=>entry.song),['最初の曲']);
+ assert.equal(rolloverSession(s,cutoff+60_000),true);
+ assert.equal(s.round,1);
+ assert.deepEqual(publicState(s).played,[]);
+ assert.deepEqual(publicState(s).roundPlayed.map(entry=>entry.song),['最初の曲']);
+ adminAction(s,{action:'selectSong',id:waiting.id});
+ adminAction(s,{action:'done',id:waiting.id});
+ assert.equal(s.round,next.round);
+ assert.deepEqual(publicState(s).roundPlayed,[]);
+ assert.deepEqual(s.history.map(entry=>entry.round),[1,1]);
+});
+
+test('旧履歴にも募集回を適用し、名前などは公開せず歌唱済み訂正を反映する', () => {
+ const s=state();
+ const old=submit(s,input('秘密のPococha名','曲A'),'hidden');
+ submit(s,input('B','曲B'),'b');
+ adminAction(s,{action:'selectSong',id:old.id});
+ adminAction(s,{action:'done',id:old.id});
+ const time=s.history[0].performedAt;
+ delete s.history[0].requestId;
+ delete s.history[0].round;
+ assert.deepEqual(publicState(s).roundPlayed,[{song:'曲A',artist:old.artist,performedAt:time}]);
+ adminAction(s,{action:'cancelPerformance',id:old.id});
+ assert.deepEqual(publicState(s).roundPlayed,[]);
+});
