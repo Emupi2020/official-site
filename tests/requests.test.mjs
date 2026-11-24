@@ -100,3 +100,5 @@ test('未設定・入力不正・古いGoogle認証経路はログイン不可',
  e.ADMIN_PASSWORD_HASH=await passwordRecord('correct-password');assert.equal((await worker.fetch(req('/auth/login',{password:[]},undefined,'https://requests.example'),e)).status,400);
  assert.equal((await worker.fetch(req('/auth/callback'),e)).status,404);
 });
+
+test('旧デモURLは端末内データを使わずサーバー版へ誘導する',async()=>{const e=env();for(const path of ['/demo','/demo/','/demo.html']){for(const view of ['admin','request']){const r=await worker.fetch(req(path+'?view='+view),e);assert.equal(r.status,302);assert.equal(r.headers.get('Location'),view==='request'?'/':'/admin/');assert.equal(r.headers.get('Cache-Control'),'no-store');}}});

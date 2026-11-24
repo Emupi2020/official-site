@@ -38,6 +38,7 @@ async function handle(req, env) {
     if (path.startsWith('/api/') && !(req.headers.get('Content-Type') || '').startsWith('application/json')) throw new Problem('送信形式を確認してください。', 415);
     if (Number(req.headers.get('Content-Length')) > 12000) throw new Problem('入力が長すぎます。', 413);
   }
+  if (['/demo','/demo/','/demo.html'].includes(path) && req.method === 'GET') return new Response(null,{status:302,headers:{Location:url.searchParams.get('view')==='request'?'/':'/admin/','Cache-Control':'no-store'}});
   if (path.startsWith('/auth/')) return auth(req, env);
   if (path === '/config.js') return new Response('window.EMUPI_API = location.origin;', { headers: { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' } });
   if (!path.startsWith('/api/')) {
