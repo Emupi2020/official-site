@@ -184,10 +184,8 @@ body:has(.request-page) { background: #f2f2f7; }
   margin-top: 8px;
   text-align: center;
 }
-.request-page .entry-signin button,
-.request-page #cancel-passcode { min-height: 44px; font-size: 14px; }
+.request-page .entry-signin button { min-height: 44px; font-size: 14px; }
 .request-page .entry-login-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; }
-.request-page #cancel-passcode { width: 100%; }
 .request-page .passcode-field { margin-top: 16px; }
 .request-page #passcode-feedback { margin: 8px 0 0; color: var(--danger); }
 .request-page .request-name .input-group {

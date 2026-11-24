@@ -88,10 +88,10 @@ function setEntryMode(mode, focus = false) {
  if (guest) $('enter-request').setAttribute('aria-describedby', 'guest-entry-note');
  else $('enter-request').removeAttribute('aria-describedby');
  $('passcode-field').hidden = !usesPasscode(mode);
- $('entry-signin').hidden = !guest;
+ $('entry-signin').hidden = !guest && mode !== 'register';
  $('entry-login-links').hidden = !login;
  $('choose-name-login').textContent = mode === 'name-login' ? 'パスコードでログイン' : '名前だけでログイン';
- $('cancel-passcode').hidden = mode !== 'register';
+ $('guest-options').hidden = mode !== 'register';
  entryPasscode.required = usesPasscode(mode);
  entryPasscode.value = '';
  entryPasscode.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
@@ -127,7 +127,8 @@ function promptForPasscode(name) {
 async function requiresPasscode(name) {
  return (await api('/api/passcode/entry', {method:'POST', data:{name}})).requiresPasscode;
 }
-$('welcome-register').onclick = () => navigateEntry('guest');
+const registrationMode = () => account.passcodeEnabled === false ? 'guest' : 'register';
+$('welcome-register').onclick = () => navigateEntry(registrationMode());
 $('welcome-login').onclick = () => navigateEntry('login');
 $('entry-back').onclick = () => {
  if (entryBusy) return;
@@ -136,9 +137,9 @@ $('entry-back').onclick = () => {
 };
 $('choose-passcode').onclick = () => navigateEntry('register', true);
 $('choose-passcode-login').onclick = () => navigateEntry('login', true);
-$('cancel-passcode').onclick = () => navigateEntry('guest', true);
+$('choose-guest').onclick = () => navigateEntry('guest', true);
 $('choose-name-login').onclick = () => navigateEntry(entryMode === 'login' ? 'name-login' : 'login', true);
-$('choose-register').onclick = () => navigateEntry('guest', true);
+$('choose-register').onclick = () => navigateEntry(registrationMode(), true);
 $('manage-passcode').onclick = () => openPasscode('register');
 $('manage-passcode-login').onclick = () => openPasscode('login');
 entryName.addEventListener('input', updateEntryButton);
