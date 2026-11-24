@@ -4,10 +4,13 @@ import { setWheel, spin, settle } from './wheel.mjs?spin=duration';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
 const spinDuration = $('spin-duration');
+const rouletteSettings = $('roulette-settings');
+const previewSpin = $('preview-spin');
 const spinDurationKey = 'emupi-request-spin-duration';
 const savedDuration = safeGet(spinDurationKey);
 if (spinDuration && [...spinDuration.options].some(option => option.value === savedDuration)) spinDuration.value = savedDuration;
 spinDuration?.addEventListener('change', () => safeSet(spinDurationKey, spinDuration.value));
+const spinTime = () => Number(spinDuration?.value || 5) * 1000;
 let state, busy = false, dismissedResult = null, drawCategory = defaultCategory;
 let refreshVersion = 0;
 const resultKey = entry => entry ? `${entry.id}:${entry.drawnAt}:${entry.status}` : null;
@@ -44,7 +47,10 @@ async function action(action, extra = {}) {
     if ($('roulette-screen').open && !$('result').hidden) $('dismiss-result').focus();
   }
 }
-function lock(value){for(const b of document.querySelectorAll('#dashboard button, #roulette-screen button'))b.disabled=value;}
+function lock(value) {
+  for (const button of document.querySelectorAll('#dashboard button, #roulette-screen button')) button.disabled = value;
+  if (spinDuration) spinDuration.disabled = value;
+}
 const poolFor = ({ entries, round }) => entries.filter(entry =>
   entry.status === 'pending' && entry.round <= round && (drawCategory === 'all' || categoryOf(entry) === drawCategory)
 );
@@ -123,7 +129,7 @@ async function refresh(animate=false){
     const next = await api('/api/admin');
     if (version !== refreshVersion) return;
     $('login').hidden=true;$('dashboard').hidden=false;
-    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song, poolFor(next).map(entry => entry.song), Number(spinDuration?.value || 5) * 1000);}}
+    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song, poolFor(next).map(entry => entry.song), spinTime());}}
     state=next;render();
   }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
 }
@@ -139,7 +145,28 @@ for (const tab of categoryTabs) {
     renderRoulette();
   };
 }
+previewSpin?.addEventListener('click', async () => {
+  if (busy || !state) return;
+  const songs = poolFor(state).slice(0, 100).map(entry => entry.song);
+  if (!songs.length) songs.push('サンプル曲 A', 'サンプル曲 B', 'サンプル曲 C', 'サンプル曲 D');
+  const sample = songs.pop();
+  busy = true;
+  ++refreshVersion;
+  lock(true);
+  stageMessage('');
+  previewSpin.textContent = 'プレビュー中';
+  try {
+    await spin(sample, songs, spinTime());
+  } finally {
+    busy = false;
+    previewSpin.textContent = 'プレビュー';
+    lock(false);
+    render();
+    if (rouletteSettings.open) previewSpin.focus();
+  }
+});
 $('open-roulette').onclick = () => {
+  if (rouletteSettings) rouletteSettings.open = false;
   drawCategory = defaultCategory;
   dismissedResult = null;
   $('roulette-screen').showModal();
@@ -155,7 +182,10 @@ $('dismiss-result').onclick = () => {
   renderRoulette();
   $('draw').focus();
 };
-$('draw').onclick = () => action('advance');
+$('draw').onclick = () => {
+  if (rouletteSettings) rouletteSettings.open = false;
+  action('advance');
+};
 async function resolveWinner(operation, extra) {
   await action(operation, extra);
   if (!$('roulette-screen').open || !$('result').hidden) return;
