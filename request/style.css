@@ -91,7 +91,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .round-choice{display:flex;gap:8px;margin-top:24px}.round-choice button{flex:1;border-radius:12px;font-size:13px;padding:12px 8px}.round-choice button[aria-pressed=true]{background:var(--accent);color:white;border-color:var(--accent)}
 
 
-.request-page #request-overview { padding-block-start: 24px; }
+.request-page #request-overview { padding-block-start: 12px; }
 .admin-main .request-table-card + .request-table-card { margin-top: 16px; }
 .admin-main .launch-roulette { margin: 0 auto 20px; }
 .admin-main #current-song-details { overflow-wrap: anywhere; }
