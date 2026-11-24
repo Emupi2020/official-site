@@ -118,7 +118,7 @@ entryForm.onsubmit = async event => {
  if (mode === 'guest') {
   await refreshNameRequests(true);
  } else {
-  $('my-history').open = true;
+  $('account-settings').open = true;
   const savedTokens = Object.values(tokens).slice(-100);
   if (mode === 'register' && savedTokens.length) {
    await accountAction('/api/listener-account', {tokens:savedTokens}, result => result.linked ? `${result.linked}件のリクエストを連携しました。` : 'パスコードを設定しました。');
@@ -144,7 +144,7 @@ function canSubmit(slot) {
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name, #line-link, #line-logout')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name, #line-link, #request-logout')) button.disabled = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
 function feedback(slot, text, error = true) {
@@ -230,14 +230,13 @@ function renderRequests() {
 function renderAccount() {
  $('entry-line').hidden = !account.enabled || account.signedIn;
  $('passcode-options').hidden = !account.passcodeEnabled || entryMode !== 'guest' || account.signedIn;
- $('listener-account').hidden = !account.enabled && !account.passcodeEnabled;
- if (!$('listener-account').hidden) $('my-history').hidden = false;
  $('manage-passcode').hidden = !account.passcodeEnabled || account.signedIn;
  $('manage-passcode-login').hidden = !account.passcodeEnabled || account.signedIn;
  $('line-start').hidden = !account.enabled || account.signedIn;
- $('line-logout').hidden = !account.signedIn;
  const linked = new Set(account.entries.map(entry => entry.id));
  $('line-link').hidden = !account.signedIn || !myRequests.some(entry => !linked.has(entry.id));
+ $('account-settings').hidden = ['manage-passcode', 'manage-passcode-login', 'line-start', 'line-link'].every(id => $(id).hidden) &&
+  !$('line-feedback').textContent;
 }
 async function confirmSong(data){
  const status=await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);if(!status.unknownAt)return true;
@@ -476,11 +475,12 @@ async function accountAction(path, data, notice) {
   status.textContent = error.message;
  } finally {
   lock(false);
+  renderAccount();
  }
 }
 $('line-link').onclick = () => accountAction('/api/listener-account', {tokens: Object.values(tokens).slice(-100)},
  result => result.linked ? `${result.linked}件のリクエストを連携しました。` : '新しく連携できるリクエストはありません。');
-$('line-logout').onclick = async () => {
+$('request-logout').onclick = async () => {
  if (busy) return;
  lock(true);
  try {
@@ -497,6 +497,7 @@ $('line-logout').onclick = async () => {
    feedback(slot, '');
   }
   $('my-history').open = false;
+  $('account-settings').open = false;
   $('line-feedback').textContent = '';
   $('entry-line-feedback').textContent = 'ログアウトしました。';
   $('entry-line-feedback').hidden = false;
@@ -511,7 +512,7 @@ $('line-logout').onclick = async () => {
 };
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has('line')) {
- $('my-history').open = true;
+ $('account-settings').open = true;
  const notice = pageUrl.searchParams.get('line') === 'connected' ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
  $('line-feedback').textContent = notice;
  $('entry-line-feedback').textContent = notice;
