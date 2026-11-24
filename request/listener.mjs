@@ -24,7 +24,7 @@ function renderDuplicateSlots() {
   part(slot, '.duplicate-error').hidden = !showError;
   part(slot, '.slot-form').hidden = duplicate || (!!slot.entry && !slot.editing);
  }
- reservation.hidden = !currentSlots.every(slot => slot.entry || !part(slot, '.slot-duplicate').hidden);
+ reservation.hidden = !currentSlots.every(hasSlotRequest);
  if (reservation.hidden) {
   reservation.open = false;
   if (activeSlot?.reserved) {
@@ -32,6 +32,10 @@ function renderDuplicateSlots() {
    showSlot(null, true);
   }
  }
+ $('after-draw-note').hidden = !currentSlots.some(slot => slot.entry && slot.entry.status !== 'pending');
+ const hasReservationSpace = reservationSlots.some(slot => !hasSlotRequest(slot));
+ $('after-draw-reservation').hidden = !hasReservationSpace || reservation.hidden;
+ $('after-draw-reservation-locked').hidden = !hasReservationSpace || !reservation.hidden;
  for (const slot of slots) renderSlotOverview(slot);
 }
 window.addEventListener('pageshow', renderDuplicateSlots);
@@ -44,14 +48,19 @@ const slots = [...document.querySelectorAll('.request-slot')].map(root => {
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 const currentSlots = slots.filter(slot => !slot.reserved);
+const reservationSlots = slots.filter(slot => slot.reserved);
 const reservation = $('next-reservation');
 let activeSlot = null;
 const overviewStatus = {pending:'抽選待ち', selected:'当選', done:'歌唱済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
 
+function hasSlotRequest(slot) {
+ return Boolean(slot.entry || !part(slot, '.slot-duplicate').hidden);
+}
+
 function renderSlotOverview(slot) {
  const song = slot.overview.querySelector('.slot-overview-song');
  const status = slot.overview.querySelector('.slot-overview-status');
- const empty = !slot.entry && part(slot, '.slot-duplicate').hidden;
+ const empty = !hasSlotRequest(slot);
  song.textContent = slot.entry?.song || '';
  song.hidden = !song.textContent;
  const submitted = slot.reserved ? '予約済み' : 'リクエスト済み';
