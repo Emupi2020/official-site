@@ -38,6 +38,8 @@ $('name').value=safeGet('emupi-request-name')||'';
 const entryForm = $('entry-form');
 const entryName = $('entry-name');
 const entryPasscode = $('entry-passcode');
+const rememberedNameKey = 'emupi-request-last-name';
+entryName.value = $('name').value || safeGet(rememberedNameKey) || '';
 let entryMode = 'guest', entryBusy = false;
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
@@ -131,7 +133,7 @@ window.addEventListener('popstate', event => {
  if (typeof event.state?.requestScreen !== 'boolean') return;
  const open = event.state.requestScreen && Boolean(lookupName());
  if (!open) {
-  entryName.value = lookupName();
+  entryName.value = lookupName() || safeGet(rememberedNameKey) || '';
   updateEntryButton();
  }
  showRequestScreen(open, true);
@@ -485,11 +487,13 @@ $('request-logout').onclick = async () => {
  lock(true);
  try {
   await api('/auth/line/logout', {method:'POST', data:{}});
+  const lastName = lookupName();
   ++lookupVersion;
   clearTimeout(lookupTimer);
   nameEditing = false;
   $('name').value = '';
-  entryName.value = '';
+  entryName.value = lastName;
+  safeSet(rememberedNameKey, lastName);
   safeSet('emupi-request-name', '');
   setEntryMode('guest');
   for (const slot of slots) {
