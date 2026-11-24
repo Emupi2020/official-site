@@ -1,4 +1,4 @@
-import { categoryOf, classifyArtist } from '../request/categories.mjs';
+import { categoryOf, classifyArtist, categoryLabel } from '../request/categories.mjs';
 import { catalog } from '../request/catalog.mjs';
 
 export class Problem extends Error {
@@ -70,7 +70,13 @@ export function submit(state, input, tokenHash, now = Date.now()) {
   const name = text(input.name, 'Pocochaの名前', 50), artist = text(input.artist, '歌手名'), song = text(input.song, '曲名');
   const key = nameKey(name), category = classifyArtist(artist);
   if (input.category !== undefined && input.category !== category) throw new Problem('歌手名に合う歌まね枠を選んでください。');
-  if (state.entries.some(e => categoryOf(e) === category && e.round === round && (e.usedNames.includes(key) || e.tokenHash === tokenHash))) throw new Problem('この歌まね枠はリクエスト済みです。別の枠か次の回を選んでください。', 409);
+  const roundLabel = round === state.round ? '今回' : '次回の予約';
+  if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.tokenHash === tokenHash)) {
+    throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409);
+  }
+  if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.usedNames.includes(key))) {
+    throw new Problem(`この名前では、${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。送信したときのブラウザーで控えを確認できます。`, 409);
+  }
   if (state.entries.length >= 3000) throw new Problem('応募が上限に達しました。配信者にお知らせください。', 409);
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
