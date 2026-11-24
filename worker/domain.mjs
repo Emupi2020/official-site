@@ -18,9 +18,18 @@ export function songIdentity(artist, song, custom = []) {
   return item ? `${normalize(item.artist)}:${normalize(item.song)}` : `${a}:${s}`;
 }
 export function initialState() {
-  return { round: 1, session: 1, open: false, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
+  return { round: 1, session: 1, open: true, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
 }
-export function eligible(state) { return state.entries.filter(e => e.status === 'pending' && !state.sung.includes(e.songKey) && !(state.held || []).includes(e.songKey)); }
+export function eligible(state) { return state.entries.filter(e => e.status === 'pending' && e.round <= state.round && !state.sung.includes(e.songKey) && !(state.held || []).includes(e.songKey)); }
+// Complete a round only after every active request has been handled.
+function finishRounds(state, undoable = true) {
+  const from = state.round;
+  while (!eligible(state).length && !state.entries.some(e => e.round <= state.round && e.status === 'selected') && state.entries.some(e => e.round === state.round)) state.round++;
+  if (state.round !== from) {
+    if (undoable && state.undo) state.undo = { type:'roundAdvance', from, action:state.undo };
+    else state.undo = null;
+  }
+}
 export function unavailableReasons(record) {
   if (!record) return [];
   return Object.entries(record.reasons || { unknown: record.at }).map(([reason, at]) => ({ reason, at }));
@@ -38,7 +47,7 @@ export function publicState(state) {
     const entry = state.entries.findLast(e => e.songKey === key && e.status === 'done');
     if (entry) played.push({ song: entry.song, artist: entry.artist, performedAt: null });
   }
-  return { round: state.round, session: state.session, open: state.open, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
+  return { round: state.round, session: state.session, open: true, nextRound: state.round + 1, reserved: state.entries.filter(e => e.round === state.round + 1 && !['done','removed','skipped'].includes(e.status)).length, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
 }
 export function ownRequests(state, hashes) {
   const allowed = new Set(hashes);
@@ -46,25 +55,26 @@ export function ownRequests(state, hashes) {
 }
 export function receipt(state, tokenHash) {
   const entry = state.entries.findLast(e => e.tokenHash === tokenHash);
-  return entry ? { id: entry.id, name: entry.name, artist: entry.artist, song: entry.song, round: entry.round, status: entry.status, deferReason: entry.deferReason, editable: state.open && state.round === entry.round } : null;
+  return entry ? { id: entry.id, name: entry.name, artist: entry.artist, song: entry.song, round: entry.round, status: entry.status, deferReason: entry.deferReason, editable: [state.round,state.round+1].includes(entry.round) && ['pending','deferred'].includes(entry.status) } : null;
 }
 export function submit(state, input, tokenHash, now = Date.now()) {
-  if (!state.open) throw new Problem('今は受付していません。次の受付をお待ちください。', 409);
+  const round = input.round === undefined ? state.round : input.round;
+  if (!Number.isInteger(round) || ![state.round, state.round+1].includes(round)) throw new Problem('受付回が切り替わりました。画面を更新して選び直してください。',409);
   const name = text(input.name, 'Pocochaの名前', 50), artist = text(input.artist, '歌手名'), song = text(input.song, '曲名');
   const key = nameKey(name);
-  if (state.entries.some(e => e.round === state.round && (e.usedNames.includes(key) || e.tokenHash === tokenHash))) throw new Problem('今回のリクエストは応募済みです。次の受付をお待ちください。', 409);
+  if (state.entries.some(e => e.round === round && (e.usedNames.includes(key) || e.tokenHash === tokenHash))) throw new Problem('今回のリクエストは応募済みです。次の受付をお待ちください。', 409);
   if (state.entries.length >= 3000) throw new Problem('応募が上限に達しました。配信者にお知らせください。', 409);
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
   if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してから、もう一度リクエストしてください。', 409);
   const deferReason = state.sung.includes(songKey) ? 'sung' : (state.held || []).includes(songKey) ? 'unknown' : null;
-  const entry = { id: crypto.randomUUID(), name, usedNames: [key], artist, song, songKey, tokenHash, round: state.round, status: deferReason ? 'deferred' : 'pending', deferReason, createdAt: now };
+  const entry = { id: crypto.randomUUID(), name, usedNames: [key], artist, song, songKey, tokenHash, round, status: deferReason ? 'deferred' : 'pending', deferReason, createdAt: now };
   state.entries.push(entry);
   if (![...catalog, ...state.suggestions].some(c => normalize(c.artist) === normalize(artist) && normalize(c.song) === normalize(song))) state.suggestions.push({ id: crypto.randomUUID(), artist, song, count: 1 });
   return entry;
 }
 export function rename(state, entry, value) {
-  if (!state.open || state.round !== entry.round) throw new Problem('名前の修正受付は終了しました。配信者にお知らせください。', 409);
+  if (![state.round,state.round+1].includes(entry.round) || !['pending','deferred'].includes(entry.status)) throw new Problem('名前の修正受付は終了しました。配信者にお知らせください。', 409);
   const name = text(value, 'Pocochaの名前', 50), key = nameKey(name);
   if (state.entries.some(e => e.id !== entry.id && e.round === entry.round && e.usedNames.includes(key))) throw new Problem('その名前は今回すでに応募されています。', 409);
   entry.name = name;
@@ -80,7 +90,7 @@ export function adminAction(state, input) {
   const current = state.entries.find(e => e.id === state.current);
   switch (input.action) {
     case 'open': state.open = true; break;
-    case 'close': state.open = false; break;
+    case 'close': throw new Problem('リクエストは常時受け付けています。');
     case 'advance': {
       let completed = null;
       if (current?.status === 'selected') { adminAction(state, { action: 'done' }); completed = state.undo; }
@@ -134,6 +144,9 @@ export function adminAction(state, input) {
     case 'undo': {
       const u = state.undo;
       if (!u) throw new Problem('戻せる操作がありません。', 409);
+      if (u.type === 'roundAdvance') {
+        state.round = u.from; state.undo = u.action; adminAction(state,{action:'undo'}); break;
+      }
       if (u.type === 'advance') {
         if (u.drawn) { state.undo = u.drawn; adminAction(state, { action: 'undo' }); }
         if (u.completed) { state.undo = u.completed; adminAction(state, { action: 'undo' }); }
@@ -160,9 +173,7 @@ export function adminAction(state, input) {
       }
       state.undo = null; break;
     }
-    case 'round':
-      if (current?.status === 'selected') throw new Problem('今の曲を処理してから切り替えてください。', 409);
-      state.round++; state.open = true; state.undo = null; break;
+    case 'round': throw new Problem('その回のリクエストを処理すると自動で切り替わります。',409);
     case 'session':
       if (current?.status === 'selected') throw new Problem('今の曲を処理してから配信を切り替えてください。', 409);
       state.session++; state.sung = []; state.held = []; state.current = null; state.undo = null;
@@ -193,6 +204,7 @@ export function adminAction(state, input) {
     case 'removeSuggestion': state.suggestions = state.suggestions.filter(s => s.id !== input.id); break;
     default: throw new Problem('操作を確認してください。');
   }
+  if (!['undo','open'].includes(input.action)) finishRounds(state);
 }
 export function prune(state, now = Date.now()) {
   const cutoff = now - state.retentionDays * 86400000;

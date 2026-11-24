@@ -6,7 +6,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), { status
 export async function read(env) {
   await env.DB.prepare('INSERT OR IGNORE INTO app_state (id, revision, body) VALUES (1, 0, ?)').bind(JSON.stringify(initialState())).run();
   const row = await env.DB.prepare('SELECT revision, body FROM app_state WHERE id = 1').first();
-  return { revision: row.revision, state: JSON.parse(row.body) };
+  return { revision: row.revision, state: { ...JSON.parse(row.body), open: true } };
 }
 export async function mutate(env, action) {
   for (let n = 0; n < 12; n++) {

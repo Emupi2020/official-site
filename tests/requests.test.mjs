@@ -18,7 +18,7 @@ test('知らない・次回保留は歌唱済みに入れず、配信を切り�
 test('知らないは当選分と同曲全件を保留し次回は全件復帰、記録は残る',()=>{
   const s=state();submit(s,input('A'),'a');submit(s,input('B','Loveless','山下智久'),'b');adminAction(s,{action:'advance'});adminAction(s,{action:'unknown'});
   assert.equal(s.entries.filter(e=>e.status==='deferred').length,2);assert.equal(eligible(s).length,0);const at=songStatus(s,'やまぴー','らぶれす').unknownAt;assert(at>0);
-  adminAction(s,{action:'round'});assert.equal(eligible(s).length,0);adminAction(s,{action:'session'});assert.equal(eligible(s).length,2);assert.equal(songStatus(s,'山下智久','Loveless').unknownAt,at);
+  assert(s.round>=2);assert.equal(eligible(s).length,0);adminAction(s,{action:'session'});assert.equal(eligible(s).length,2);assert.equal(songStatus(s,'山下智久','Loveless').unknownAt,at);
 });
 test('知らない曲は確認必須、同名別歌手は警告なし、同意後も当日は保留',()=>{
   const s=state();submit(s,input('A'),'a');adminAction(s,{action:'advance'});adminAction(s,{action:'unknown'});const at=songStatus(s,'山下智久','Loveless').unknownAt;
@@ -40,14 +40,14 @@ test('後日もう一度知らないなら記録日時が更新され古い確�
 test('以前の保存データに新項目がなくても知らない機能を使える',()=>{
   const s=state();delete s.unknown;delete s.held;submit(s,input(),'a');adminAction(s,{action:'advance'});adminAction(s,{action:'unknown'});assert.equal(s.entries[0].status,'deferred');assert(songStatus(s,'山下智久','Loveless').unknownAt);
 });
-test('同名再送・歌唱済み再応募を拒否、次の回は応募可能',()=>{const s=state();submit(s,input(),'one');assert.throws(()=>submit(s,input(' リスナーA '),'two'),/応募済み/);adminAction(s,{action:'draw'});adminAction(s,{action:'done'});assert.throws(()=>submit(s,input(),'three'),/応募済み/);adminAction(s,{action:'round'});submit(s,input(),'four');assert.equal(s.entries.length,2);assert.equal(s.entries[1].status,'deferred');});
+test('同名再送・歌唱済み再応募を拒否、次の回は応募可能',()=>{const s=state();submit(s,input(),'one');assert.throws(()=>submit(s,input(' リスナーA '),'two'),/応募済み/);adminAction(s,{action:'draw'});adminAction(s,{action:'done'});assert.equal(s.round,2);submit(s,input(),'four');assert.equal(s.entries.length,2);assert.equal(s.entries[1].status,'deferred');});
 test('同じ端末で名前を変えても追加応募できない',()=>{const s=state();submit(s,input(),'one');assert.throws(()=>submit(s,input('別名'),'one'),/応募済み/);});
-test('名前修正は1件を更新、旧名枠と変更先の重複制限も保持',()=>{const s=state(),e=submit(s,input(),'one');submit(s,input('リスナーB'),'two');assert.throws(()=>rename(s,e,'リスナーB'),/応募/);rename(s,e,'訂正A');assert.equal(s.entries.length,2);assert.throws(()=>submit(s,input(),'three'),/応募済み/);s.open=false;assert.throws(()=>rename(s,e,'変更'),/終了/);});
-test('同曲別口、選ばれた1件のみ消化、後着も保留、次回復帰',()=>{const s=state();submit(s,input('A'),'a');submit(s,input('B','Loveless','山下智久'),'b');assert.equal(eligible(s).length,2);adminAction(s,{action:'draw'});adminAction(s,{action:'done'});assert.equal(s.entries.filter(e=>e.status==='done').length,1);assert.equal(s.entries.filter(e=>e.status==='deferred').length,1);submit(s,input('C'),'c');assert.equal(s.entries[2].status,'deferred');adminAction(s,{action:'round'});assert.equal(eligible(s).length,0);adminAction(s,{action:'session'});assert.equal(eligible(s).length,2);});
+test('名前修正は1件を更新、旧名枠と変更先の重複制限も保持',()=>{const s=state(),e=submit(s,input(),'one');submit(s,input('リスナーB'),'two');assert.throws(()=>rename(s,e,'リスナーB'),/応募/);rename(s,e,'訂正A');assert.equal(s.entries.length,2);assert.throws(()=>submit(s,input(),'three'),/応募済み/);s.open=false;rename(s,e,'変更');assert.equal(e.name,'変更');});
+test('同曲別口、選ばれた1件のみ消化、後着も保留、次回復帰',()=>{const s=state();submit(s,input('A'),'a');submit(s,input('B','Loveless','山下智久'),'b');assert.equal(eligible(s).length,2);adminAction(s,{action:'draw'});adminAction(s,{action:'done'});assert.equal(s.entries.filter(e=>e.status==='done').length,1);assert.equal(s.entries.filter(e=>e.status==='deferred').length,1);submit(s,input('C'),'c');assert.equal(s.entries[2].status,'deferred');assert(s.round>=2);assert.equal(eligible(s).length,0);adminAction(s,{action:'session'});assert.equal(eligible(s).length,2);});
 test('抽選後の途中応募は選択済みに割り込まず次回抽選へ',()=>{const s=state();const a=submit(s,input('A'),'a');adminAction(s,{action:'draw'});const b=submit(s,input('B','別の曲'),'b');assert.equal(s.current,a.id);assert.deepEqual(eligible(s).map(e=>e.id),[b.id]);assert.throws(()=>adminAction(s,{action:'draw'}),/歌唱済み/);});
 test('歌唱済み取り消しで後着の同曲保留も戻る',()=>{const s=state();submit(s,input('A'),'a');adminAction(s,{action:'draw'});adminAction(s,{action:'done'});submit(s,input('B'),'b');adminAction(s,{action:'undo'});assert.equal(s.entries[0].status,'selected');assert.equal(s.entries[1].status,'pending');assert.equal(s.sung.length,0);});
 test('公開API用データから名前・トークン・歌手名つき候補を排除',()=>{const s=state();submit(s,input('非公開の名前'),'PRIVATE_TOKEN');adminAction(s,{action:'draw'});const value=JSON.stringify(publicState(s));assert(!value.includes('非公開'));assert(!value.includes('PRIVATE_TOKEN'));assert(!value.includes('usedNames'));assert(publicState(s).result.artist);});
-test('閉鎖中応募・明白なURLスパム・長すぎる入力を拒否、自由表記は受理',()=>{const s=state();assert(submit(s,input(),'a'));assert.throws(()=>submit(s,input('B','https://spam.example'),'b'),/URL/);assert.throws(()=>submit(s,input('C','a'.repeat(101)),'c'),/100/);s.open=false;assert.throws(()=>submit(s,input('D'),'d'),/受付/);});
+test('常時受付し、明白なURLスパム・長すぎる入力は拒否、自由表記は受理',()=>{const s=state();assert(submit(s,input(),'a'));assert.throws(()=>submit(s,input('B','https://spam.example'),'b'),/URL/);assert.throws(()=>submit(s,input('C','a'.repeat(101)),'c'),/100/);s.open=false;assert(submit(s,input('D'),'d'));});
 test('別歌手の同名曲は統合しない、山Pとらぶれすは同曲',()=>{assert.equal(songIdentity('やまぴー','らぶれす'),songIdentity('山下智久','Loveless'));assert.notEqual(songIdentity('別歌手','Loveless'),songIdentity('山下智久','Loveless'));});
 test('30日経過の応募者情報を消し匿名候補は保持',()=>{const s=state();submit(s,input(),'a',Date.now()-31*86400000);prune(s);assert.equal(s.entries.length,0);});
 function env(){return{DB:database(),PUBLIC_ORIGIN:'https://emupi2020.github.io',SESSION_SECRET:'x'.repeat(40),ASSETS:{fetch:()=>new Response('static')}};}
@@ -102,3 +102,28 @@ test('未設定・入力不正・古いGoogle認証経路はログイン不可',
 });
 
 test('旧デモURLは端末内データを使わずサーバー版へ誘導する',async()=>{const e=env();for(const path of ['/demo','/demo/','/demo.html']){for(const view of ['admin','request']){const r=await worker.fetch(req(path+'?view='+view),e);assert.equal(r.status,302);assert.equal(r.headers.get('Location'),view==='request'?'/':'/admin/');assert.equal(r.headers.get('Cache-Control'),'no-store');}}});
+
+test('今と次の回に各1件、予約は今の抽選に入らず全件処理後に昇格',()=>{
+ const s=state();submit(s,{...input('A','曲A','歌手'),round:1},'a1');submit(s,{...input('A','曲B','歌手'),round:2},'a2');
+ assert.equal(eligible(s).length,1);assert.equal(publicState(s).reserved,1);assert.throws(()=>submit(s,{...input('A','曲C','歌手'),round:2},'a3'),/応募済み/);
+ assert.throws(()=>submit(s,{...input('B'),round:3},'b'),/切り替わり/);adminAction(s,{action:'advance'});assert.equal(s.entries.find(e=>e.id===s.current).song,'曲A');assert.equal(s.round,1);
+ adminAction(s,{action:'advance'});assert.equal(s.round,2);assert.equal(s.entries.find(e=>e.id===s.current).song,'曲B');assert.equal(s.entries[0].status,'done');
+ adminAction(s,{action:'undo'});assert.equal(s.round,1);assert.equal(s.entries[0].status,'selected');assert.equal(s.entries[1].status,'pending');assert.equal(eligible(s).length,0);
+});
+test('最後の曲を歌えない扱いにすると自動切替、途中到着と新たな予約を保存して戻す',()=>{
+ const s=state();submit(s,{...input('A','曲A','歌手'),round:1},'a');submit(s,{...input('B','曲B','歌手'),round:2},'b');adminAction(s,{action:'advance'});adminAction(s,{action:'cantSing',reason:'no_audio'});assert.equal(s.round,2);assert.equal(eligible(s).length,1);
+ submit(s,{...input('C','曲C','歌手'),round:2},'c');submit(s,{...input('D','曲D','歌手'),round:3},'d');adminAction(s,{action:'undo'});
+ assert.equal(s.round,1);assert.equal(s.entries.length,4);assert.equal(s.entries[0].status,'selected');assert.equal(songStatus(s,'歌手','曲A').unknownAt,null);assert.equal(eligible(s).length,0);
+});
+test('初期空回は飛ばさず、全件消化後は予約がなくても次の回で待つ',()=>{
+ const s=initialState();assert.equal(publicState(s).open,true);submit(s,{...input('A','曲A','歌手'),round:2},'a');assert.equal(s.round,1);assert.equal(eligible(s).length,0);
+ submit(s,{...input('B','曲B','歌手'),round:1},'b');adminAction(s,{action:'advance'});adminAction(s,{action:'advance'});assert.equal(s.round,2);adminAction(s,{action:'advance'});assert.equal(s.round,3);assert.equal(eligible(s).length,0);
+ assert.throws(()=>submit(s,{...input('C'),round:1},'c'),/切り替わり/);assert.throws(()=>adminAction(s,{action:'round'}),/自動/);
+});
+test('歌唱済みと同曲の予約は当日歌わず、配信を変えると残りだけ復帰',()=>{
+ const s=state();submit(s,{...input('A'),round:1},'a');submit(s,{...input('B'),round:2},'b');adminAction(s,{action:'advance'});adminAction(s,{action:'advance'});assert.equal(s.entries[1].status,'deferred');assert.equal(eligible(s).length,0);
+ adminAction(s,{action:'session'});assert.equal(eligible(s).length,1);assert.equal(s.entries[0].status,'done');assert.equal(s.entries[1].status,'pending');
+});
+test('予約の名前修正も同じ回の重複を防ぐ',()=>{
+ const s=state();const a=submit(s,{...input('A'),round:2},'a');submit(s,{...input('B'),round:2},'b');rename(s,a,'変更後');assert.throws(()=>rename(s,a,'B'),/応募/);assert.throws(()=>submit(s,{...input('A'),round:2},'c'),/応募済み/);assert.equal(eligible(s).length,0);
+});

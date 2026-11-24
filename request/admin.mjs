@@ -12,9 +12,10 @@ async function action(action, extra={}) {
 function lock(value){for(const b of document.querySelectorAll('#dashboard button, #roulette-screen button'))b.disabled=value;}
 function render() {
   if(!state)return;
-  $('round').textContent=`第${state.round}回`;$('status').textContent=state.open?'受付中':'受付終了';$('toggle').textContent=state.open?'受付を締める':'受付を開く';
-  const pending=state.entries.filter(e=>e.status==='pending').length, deferred=state.entries.filter(e=>e.status==='deferred').length;
-  $('counts').textContent=`残り ${pending}件 · 次回 ${deferred}件`;
+  $('round').textContent=`第${state.round}回`;$('status').textContent='受付中';
+  const pending=state.entries.filter(e=>e.status==='pending'&&e.round<=state.round).length, deferred=state.entries.filter(e=>e.status==='deferred').length;
+  const reserved=state.entries.filter(e=>e.round===state.round+1&&!['done','removed','skipped'].includes(e.status)).length;
+  $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件`;
   const current=state.entries.find(e=>e.id===state.current);
   $('draw').textContent=current?'次を回す':'回す';
   $('draw').disabled=busy || (!pending && current?.status!=='selected');$('undo').disabled=busy||!state.undo;
@@ -28,12 +29,13 @@ function render() {
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
-  if(!busy){const songs=state.entries.filter(e=>e.status==='pending').map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
+  if(!busy){const songs=state.entries.filter(e=>e.status==='pending'&&e.round<=state.round).map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
   const entries=$('entries');entries.replaceChildren();
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
     songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'));
     statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
+    if(e.round>state.round)statusCell.prepend(node('div','予約','entry-status'));
     row.append(songCell,nameCell,statusCell,actionCell);
     const record=state.unknown?.[e.songKey];
     if(record){const reasons=record.reasons||{unknown:record.at};songCell.append(node('p',Object.entries(reasons).map(([reason,at])=>`${reason==='no_audio'?'音源なし':'知らない'} · ${new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(at)}`).join(' ／ '),'small muted'));}
@@ -54,7 +56,7 @@ function render() {
 async function refresh(animate=false){
   try{
     const next=await api('/api/admin');$('login').hidden=true;$('dashboard').hidden=false;
-    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,next.entries.filter(e=>e.status==='pending'||e.id===current.id).map(e=>e.song));}}
+    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,next.entries.filter(e=>(e.status==='pending'&&e.round<=next.round)||e.id===current.id).map(e=>e.song));}}
     state=next;render();
   }catch(error){if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
 }
@@ -68,12 +70,11 @@ $('close-roulette').onclick=()=>{if(!busy)$('roulette-screen').close();};
 $('roulette-screen').addEventListener('close',()=>{document.body.classList.remove('roulette-open');$('open-roulette').focus();});
 $('roulette-screen').addEventListener('cancel',event=>{if(busy)event.preventDefault();});
 $('dismiss-result').onclick=()=>{dismissedResult=resultKey(state.entries.find(e=>e.id===state.current));$('result').hidden=true;document.querySelector('.broadcast-wheel').inert=false;$('close-roulette').hidden=false;$('draw').focus();};
-$('toggle').onclick=()=>action(state.open?'close':'open');$('draw').onclick=()=>action('advance');$('cant-sing').onclick=async()=>{
+$('draw').onclick=()=>action('advance');$('cant-sing').onclick=async()=>{
   const dialog=$('cant-sing-dialog');dialog.returnValue='';
   const reason=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true});dialog.showModal();});
   if(['unknown','no_audio'].includes(reason))await action('cantSing',{reason});
 };$('undo').onclick=()=>action('undo');
-$('next-round').onclick=()=>{if(confirm('次の受付回に切り替えますか？全員が再応募できるようになります。未消化・保留の応募は残ります。'))action('round');};
 $('next-session').onclick=()=>{if(confirm('次回配信を開始しますか？歌唱履歴を区切り、保留していた応募を抽選に戻します。'))action('session');};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};
 try{await refresh();}catch(error){message(error.message,true);}
