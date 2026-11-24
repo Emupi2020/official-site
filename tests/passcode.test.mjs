@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import worker from '../worker/index.mjs';
+import worker, { mutate } from '../worker/index.mjs';
+import { adminAction } from '../worker/domain.mjs';
 import { database } from '../scripts/local-db.mjs';
 
 const origin = 'https://requests.example';
@@ -45,7 +46,12 @@ test('パスコードのログインで別端末から編集でき、ログア�
   });
   assert.equal(login.status, 200);
   const cookie = login.headers.get('Set-Cookie').split(';')[0];
+  await mutate(env, state => adminAction(state, {action:'draw'}));
+  const selected = await (await send(env, '/api/listener-account', {cookie})).json();
+  assert.equal(selected.receipts[0].songEditable, false);
+  await mutate(env, state => adminAction(state, {action:'undo'}));
   const account = await (await send(env, '/api/listener-account', {cookie})).json();
+  assert.equal(account.receipts[0].status, 'pending');
   assert.equal(account.receipts[0].songEditable, true);
   assert.equal((await send(env, '/api/mine', {method:'PATCH', cookie, data:{...edit, requestId:id}})).status, 200);
   const details = await (await send(env, '/api/requests-by-name', {method:'POST', data:{name:'Listener'}})).json();

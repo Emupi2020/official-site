@@ -155,8 +155,10 @@ entryForm.onsubmit = async event => {
  } else {
   $('account-settings').open = true;
   const savedTokens = Object.values(tokens).slice(-100);
-  if (mode === 'register' && savedTokens.length) {
-   await accountAction('/api/listener-account', {tokens:savedTokens}, result => result.linked ? `${result.linked}件のリクエストを連携しました。` : 'パスコードを設定しました。');
+  if (savedTokens.length) {
+   await accountAction('/api/listener-account', {tokens:savedTokens}, result => result.linked
+    ? `${result.linked}件のリクエストを連携しました。`
+    : mode === 'register' ? 'パスコードを設定しました。' : 'ログインしました。');
   } else {
    try { await refresh(); } catch (error) { message(error.message, true); }
   }

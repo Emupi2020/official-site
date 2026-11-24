@@ -66,7 +66,7 @@ export function canRename(state, entry) {
   return [state.round, state.round + 1].includes(entry.round) && ['pending', 'deferred'].includes(entry.status);
 }
 function canEditSong(state, entry) {
-  return canRename(state, entry) && !entry.drawnAt;
+  return canRename(state, entry) && (entry.status === 'pending' || !entry.drawnAt);
 }
 export function receipt(state, tokenHash) {
   const entry = state.entries.findLast(e => e.tokenHash === tokenHash);
