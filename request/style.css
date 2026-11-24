@@ -185,7 +185,19 @@ body:has(.request-page) { background: #f2f2f7; }
   text-align: center;
 }
 .request-page .entry-signin button { min-height: 44px; font-size: 14px; }
-.request-page .entry-login-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; }
+.request-page .entry-login-links {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) 1px minmax(0, max-content);
+  justify-content: center;
+  align-items: center;
+  column-gap: 12px;
+}
+.request-page .entry-login-links::before {
+  content: '';
+  grid-area: 1 / 2;
+  height: 14px;
+  background: var(--border);
+}
 .request-page .passcode-field { margin-top: 16px; }
 .request-page #passcode-feedback { margin: 8px 0 0; color: var(--danger); }
 .request-page .request-name .input-group {
