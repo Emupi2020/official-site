@@ -152,6 +152,11 @@ body:has(.request-page) { background: #f2f2f7; }
   text-align: center;
 }
 .request-page #entry-title { margin: 0 0 26px; text-align: center; }
+.request-page #entry-title:focus { outline: none; }
+.request-page .entry-welcome-actions { display: grid; gap: 10px; }
+.request-page .entry-welcome-actions button { width: 100%; min-height: 48px; margin: 0; font-size: 16px; }
+.request-page .entry-welcome-actions .secondary { background: transparent; border: 1px solid var(--border); }
+.request-page .entry-back { min-height: 44px; margin: -10px 0 6px; font-size: 14px; }
 .request-page #entry-form input { min-height: 50px; }
 .request-page #entry-form label[for="entry-name"] { margin-bottom: 3px; }
 .request-page #entry-name-help { margin: 0 0 8px; line-height: 1.5; }
@@ -194,6 +199,7 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .entry-signin button,
 .request-page #cancel-passcode { min-height: 44px; font-size: 14px; }
+.request-page .entry-login-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; }
 .request-page #cancel-passcode { width: 100%; }
 .request-page .passcode-field { margin-top: 16px; }
 .request-page #passcode-feedback { margin: 8px 0 0; color: var(--danger); }

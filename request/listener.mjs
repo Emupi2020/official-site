@@ -49,51 +49,69 @@ const entryName = $('entry-name');
 const entryPasscode = $('entry-passcode');
 const rememberedNameKey = 'emupi-request-last-name';
 entryName.value = $('name').value || safeGet(rememberedNameKey) || '';
-let entryMode = 'guest', entryBusy = false;
+let entryMode = 'welcome', entryBusy = false;
+const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMode:mode, fromWelcome});
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
- if (focus) (open ? $('request-title') : entryName).focus();
+ if (focus) (open ? $('request-title') : $('entry-title')).focus();
 }
 const hasSavedName = Boolean($('name').value.trim());
 entryBusy = hasSavedName;
 showRequestScreen(false);
-window.history.replaceState({requestScreen:false}, '');
+window.history.replaceState(entryView('welcome'), '');
+const usesPasscode = mode => mode === 'register' || mode === 'login';
 function updateEntryButton() {
  entryName.readOnly = entryBusy;
  entryPasscode.readOnly = entryBusy;
- $('enter-request').disabled = entryBusy || !entryName.value.trim() || (entryMode !== 'guest' && !/^\d{4}$/.test(entryPasscode.value));
+ $('enter-request').disabled = entryBusy || !entryName.value.trim() || (usesPasscode(entryMode) && !/^\d{4}$/.test(entryPasscode.value));
 }
 function passcodeFeedback(text) {
  $('passcode-feedback').textContent = text;
  $('passcode-feedback').hidden = !text;
 }
-function setEntryMode(mode) {
- if (entryBusy) return;
+function setEntryMode(mode, focus = false) {
  entryMode = mode;
+ const welcome = mode === 'welcome';
  const guest = mode === 'guest';
- $('entry-name-help').textContent = mode === 'login'
-  ? '登録したときの名前を入力してください。'
-  : 'えむぴーが見て誰か分かる名前なら、略称やニックネームでもOKです。';
+ const login = mode === 'login' || mode === 'name-login';
+ $('entry-brand').hidden = welcome;
+ $('entry-title').textContent = welcome ? $('entry-brand').textContent : login ? 'ログイン' : 'はじめての方';
+ $('entry-welcome-actions').hidden = !welcome;
+ entryForm.hidden = welcome;
+ $('entry-back').hidden = welcome;
+ $('entry-name-help').hidden = login;
+ if (login) entryName.removeAttribute('aria-describedby');
+ else entryName.setAttribute('aria-describedby', 'entry-name-help');
  $('guest-entry-note').hidden = !guest;
  if (guest) $('enter-request').setAttribute('aria-describedby', 'guest-entry-note');
  else $('enter-request').removeAttribute('aria-describedby');
- $('passcode-field').hidden = guest;
- $('passcode-options').hidden = !guest || !account.passcodeEnabled;
- $('cancel-passcode').hidden = guest;
- entryPasscode.required = !guest;
+ $('passcode-field').hidden = !usesPasscode(mode);
+ $('entry-signin').hidden = !guest;
+ $('entry-login-links').hidden = !login;
+ $('choose-name-login').textContent = mode === 'name-login' ? 'パスコードでログイン' : '名前だけでログイン';
+ $('cancel-passcode').hidden = mode !== 'register';
+ entryPasscode.required = usesPasscode(mode);
  entryPasscode.value = '';
  entryPasscode.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
- $('enter-request').textContent = { guest:'名前だけで始める', register:'パスコードを設定して始める', login:'パスコードでログイン' }[mode];
+ $('enter-request').textContent = guest ? '名前だけで始める' : mode === 'register' ? 'パスコードを設定して始める' : 'ログイン';
  passcodeFeedback('');
+ renderEntryOptions();
  updateEntryButton();
- if (!guest) (entryName.value.trim() ? entryPasscode : entryName).focus();
+ if (focus) $('entry-title').focus();
+}
+function navigateEntry(mode, replace = false) {
+ if (entryBusy) return;
+ const current = window.history.state;
+ const fromWelcome = replace ? current?.fromWelcome : current?.entryMode === 'welcome';
+ window.history[replace ? 'replaceState' : 'pushState'](entryView(mode, fromWelcome), '');
+ showRequestScreen(false);
+ message('');
+ setEntryMode(mode, true);
 }
 function openPasscode(mode) {
  entryName.value = lookupName();
- window.history.pushState({requestScreen:false}, '');
- showRequestScreen(false);
- setEntryMode(mode);
+ navigateEntry(mode);
 }
 function promptForPasscode(name) {
  ++lookupVersion;
@@ -101,17 +119,25 @@ function promptForPasscode(name) {
  safeSet('emupi-request-name', '');
  safeSet(rememberedNameKey, name);
  entryName.value = name;
- window.history.replaceState({requestScreen:false}, '');
- showRequestScreen(false);
- setEntryMode('login');
+ navigateEntry('login', true);
  passcodeFeedback('この名前にはパスコードが設定されています。');
+ entryPasscode.focus();
 }
 async function requiresPasscode(name) {
  return (await api('/api/passcode/entry', {method:'POST', data:{name}})).requiresPasscode;
 }
-$('choose-passcode').onclick = () => setEntryMode('register');
-$('choose-passcode-login').onclick = () => setEntryMode('login');
-$('cancel-passcode').onclick = () => { setEntryMode('guest'); entryName.focus(); };
+$('welcome-register').onclick = () => navigateEntry('guest');
+$('welcome-login').onclick = () => navigateEntry('login');
+$('entry-back').onclick = () => {
+ if (entryBusy) return;
+ if (window.history.state?.fromWelcome) window.history.back();
+ else navigateEntry('welcome', true);
+};
+$('choose-passcode').onclick = () => navigateEntry('register', true);
+$('choose-passcode-login').onclick = () => navigateEntry('login', true);
+$('cancel-passcode').onclick = () => navigateEntry('guest', true);
+$('choose-name-login').onclick = () => navigateEntry(entryMode === 'login' ? 'name-login' : 'login', true);
+$('choose-register').onclick = () => navigateEntry('guest', true);
 $('manage-passcode').onclick = () => openPasscode('register');
 $('manage-passcode-login').onclick = () => openPasscode('login');
 entryName.addEventListener('input', updateEntryButton);
@@ -122,8 +148,9 @@ updateEntryButton();
 entryForm.onsubmit = async event => {
  event.preventDefault();
  const name = entryName.value.normalize('NFKC').trim();
- if (!name || entryBusy) return;
+ if (!name || entryBusy || entryMode === 'welcome') return;
  const mode = entryMode;
+ const nameOnly = !usesPasscode(mode);
  let displayName = name;
  entryBusy = true;
  updateEntryButton();
@@ -131,7 +158,7 @@ entryForm.onsubmit = async event => {
  message('');
  let needsPasscode = false;
  try {
-  if (mode === 'guest') {
+  if (nameOnly) {
    needsPasscode = await requiresPasscode(name);
   } else {
    const tokensToLink = mode === 'register' ? {tokens:Object.values(tokens).slice(-100)} : {};
@@ -141,7 +168,7 @@ entryForm.onsubmit = async event => {
  } catch (error) {
   needsPasscode = error.code === 'passcode_required';
   if (!needsPasscode) {
-   if (mode === 'guest') message(error.message, true);
+   if (nameOnly) message(error.message, true);
    else passcodeFeedback(error.message);
    return;
   }
@@ -155,11 +182,11 @@ entryForm.onsubmit = async event => {
  }
  $('name').value = displayName;
  safeSet('emupi-request-name', displayName);
- setEntryMode('guest');
  window.history.pushState({requestScreen:true}, '');
  showRequestScreen(true, true);
+ setEntryMode('welcome');
  if (state) renderRequests();
- if (mode === 'guest') {
+ if (nameOnly) {
   await refreshNameRequests(true);
  } else {
   try { await refresh(); } catch (error) { message(error.message, true); }
@@ -168,10 +195,7 @@ entryForm.onsubmit = async event => {
 window.addEventListener('popstate', event => {
  if (typeof event.state?.requestScreen !== 'boolean') return;
  const open = event.state.requestScreen && Boolean(lookupName());
- if (!open) {
-  entryName.value = lookupName() || safeGet(rememberedNameKey) || '';
-  updateEntryButton();
- }
+ if (!open) setEntryMode(event.state.entryMode || 'welcome');
  showRequestScreen(open, true);
 });
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
@@ -288,9 +312,12 @@ function renderRequests() {
  renderHistory([...history.values()].sort((a, b) => a.createdAt - b.createdAt));
  renderAccount();
 }
+function renderEntryOptions() {
+ $('entry-line').hidden = entryMode !== 'login' || !account.enabled || account.signedIn;
+ $('passcode-options').hidden = entryMode !== 'guest' || !account.passcodeEnabled || account.signedIn;
+}
 function renderAccount() {
- $('entry-line').hidden = !account.enabled || account.signedIn;
- $('passcode-options').hidden = !account.passcodeEnabled || entryMode !== 'guest' || account.signedIn;
+ renderEntryOptions();
  $('manage-passcode').hidden = !account.passcodeEnabled || account.signedIn;
  $('manage-passcode-login').hidden = !account.passcodeEnabled || account.signedIn;
  $('line-start').hidden = !account.enabled || account.signedIn;
@@ -557,7 +584,7 @@ $('request-logout').onclick = async () => {
   entryName.value = lastName;
   safeSet(rememberedNameKey, lastName);
   safeSet('emupi-request-name', '');
-  setEntryMode('guest');
+  setEntryMode('welcome');
   for (const slot of slots) {
    stopEditing(slot);
    feedback(slot, '');
@@ -567,7 +594,7 @@ $('request-logout').onclick = async () => {
   $('line-feedback').textContent = '';
   $('entry-line-feedback').textContent = 'ログアウトしました。';
   $('entry-line-feedback').hidden = false;
-  window.history.replaceState({requestScreen:false}, '');
+  window.history.replaceState(entryView('welcome'), '');
   showRequestScreen(false, true);
   await refresh();
  } catch (error) {
