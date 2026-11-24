@@ -115,3 +115,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
 .request-page .edit-feedback.error { color: var(--danger, #a72b2b); }
 .request-page .slot-actions:not(.edit-actions) > .primary { margin-top: 16px; }
+
+.request-page .slot-duplicate .duplicate-error { margin: 0 0 10px; }
+.request-page .slot-duplicate .duplicate-label { margin: 0; }
+.request-page .slot-submit:disabled { opacity: .45; cursor: default; }

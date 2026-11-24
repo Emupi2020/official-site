@@ -27,11 +27,15 @@ const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 $('name').value=safeGet('emupi-request-name')||'';
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
+function canSubmit(slot) {
+ const fields = [field(slot, 'artist'), field(slot, 'song')];
+ if (!slot.editing) fields.push($('name'));
+ return !!state && !busy && !nameEditing && fields.every(input => input.value.trim() && input.validity.valid);
+}
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-submit, .slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name')) {
-  button.disabled = busy || (nameEditing && button.matches('.slot-submit'));
- }
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name')) button.disabled = busy;
+ for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
 function feedback(slot, text, error = true) {
  const box = part(slot, '.slot-feedback');
@@ -85,7 +89,7 @@ function suggest(slot,kind){
   const artists = artistField.tagName === 'SELECT'
     ? new Set([artist])
     : new Set(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&[i.song,...(i.aliases||[])].some(v=>normalize(v).includes(value))).map(i=>({label:`${i.song} · ${i.artist}`,item:i}));}
- for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';button.textContent=candidate.label;button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');input.focus();};box.append(button);}
+ for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';button.textContent=candidate.label;button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');lock(busy);input.focus();};box.append(button);}
  box.hidden=!box.children.length;input.setAttribute('aria-expanded',String(!box.hidden));
 }
 function stopEditing(slot) {
@@ -177,12 +181,18 @@ for(const slot of slots){
  duplicate.className = 'slot-receipt slot-duplicate';
  duplicate.hidden = true;
  duplicate.setAttribute('role', 'status');
- duplicate.textContent = slot.reserved ? '予約済みです。' : 'リクエスト済みです。';
+ const rejected = document.createElement('p');
+ rejected.className = 'edit-feedback error duplicate-error';
+ rejected.textContent = slot.reserved ? 'すでに予約があるため、今入力した曲は予約されませんでした。' : 'すでにリクエストがあるため、今入力した曲は送信されませんでした。';
+ const status = document.createElement('p');
+ status.className = 'duplicate-label';
+ status.textContent = slot.reserved ? 'この枠は予約済みです。' : 'この枠はリクエスト済みです。';
+ duplicate.append(rejected, status);
  slot.root.append(duplicate);
  const box=document.createElement('div');box.className='slot-feedback edit-feedback';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
  part(slot, '.slot-form').onsubmit = async event => {
   event.preventDefault();
-  if (busy || nameEditing || !state) return;
+  if (!canSubmit(slot)) return;
   const editing = slot.editing;
   if (!editing && !$('name').reportValidity()) return;
   lock(true);
@@ -248,11 +258,13 @@ for(const slot of slots){
   part(slot, '.slot-submit').textContent = '曲を保存';
   part(slot, '.slot-cancel').hidden = false;
   feedback(slot, '');
+  lock(busy);
   field(slot, 'song').focus();
  };
  part(slot, '.slot-cancel').onclick = () => {
   stopEditing(slot);
   feedback(slot, '');
+  lock(busy);
   part(slot, '.slot-edit').focus();
  };
  for(const kind of ['artist','song']){const input=field(slot,kind);
@@ -263,12 +275,14 @@ for(const slot of slots){
     field(slot, 'song').value = '';
     hideSuggestions();
     feedback(slot, '');
+    lock(busy);
    });
    continue;
   }
-  input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
+  input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);lock(busy);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
 }
-$('name').addEventListener('input', renderDuplicateSlots);
+$('name').addEventListener('input', () => { renderDuplicateSlots(); lock(busy); });
+lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try{await refresh();items=(await api('/api/suggestions')).items;message('');}catch(error){message(error.message,true);}
 setInterval(()=>{if(!document.hidden&&!busy)refresh().catch(error=>message(error.message,true));},15000);
