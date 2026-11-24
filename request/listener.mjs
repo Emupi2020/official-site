@@ -1,14 +1,27 @@
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
-let state, items=[], tokens, busy=false;
+let state, items=[], tokens, busy=false, nameEditing=false;
 try { tokens=JSON.parse(safeGet('emupi-request-tokens')||'{}'); } catch { tokens={}; }
 const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:root.id,category:root.dataset.category,reserved:root.dataset.reserved==='true',entry:null,token:null,round:null,draftRound:null}));
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 $('name').value=safeGet('emupi-request-name')||'';
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
-function lock(value){busy=value;for(const button of document.querySelectorAll('.slot-submit, .slot-cancel, .slot-edit, #save-name'))button.disabled=value;}
-function feedback(slot,text){const box=part(slot,'.slot-feedback');box.textContent=text;box.hidden=!text;}
+function lock(value) {
+ busy = value;
+ for (const button of document.querySelectorAll('.slot-submit, .slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name')) {
+  button.disabled = busy || (nameEditing && button.matches('.slot-submit'));
+ }
+}
+function feedback(slot, text, error = true) {
+ const box = part(slot, '.slot-feedback');
+ const container = slot.editing || !slot.entry ? part(slot, '.input-group') : part(slot, '.slot-receipt');
+ const actions = container.querySelector('.edit-actions');
+ container.insertBefore(box, actions);
+ box.textContent = text;
+ box.hidden = !text;
+ box.classList.toggle('error', error);
+}
 function historyRow(list,song,artist,status){const row=document.createElement('li'),title=document.createElement('div'),subtitle=document.createElement('div'),label=document.createElement('span');title.textContent=song;title.className='history-song';subtitle.textContent=artist;subtitle.className='history-artist';label.textContent=status;label.className='history-status';row.append(title,subtitle,label);list.append(row);}
 function renderHistory(myRequests){
  $('my-history').hidden=!myRequests.length;$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
@@ -30,10 +43,10 @@ async function refresh(){
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-name').textContent=`${mine.name} さん`;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'次回の抽選に入ります。':statusText[mine.status];part(slot,'.slot-edit').hidden=!mine.songEditable;}
+  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-name').textContent=`${mine.name} さん`;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'次回の抽選に入ります。':statusText[mine.status];part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  for(const category of ['yamapi','other']){const current=slots.find(s=>s.category===category&&!s.reserved),nextSlot=slots.find(s=>s.category===category&&s.reserved);$(`reserve-${category}`).hidden=!current.entry&&!nextSlot.entry;}
- $('save-name').hidden = !slots.some(slot => slot.entry?.editable);
+ renderNameControls();
  renderHistory(myRequests);
 }
 async function confirmSong(data){
@@ -62,34 +75,87 @@ function stopEditing(slot) {
  form.reset();
  form.hidden = !!slot.entry;
  part(slot, '.slot-receipt').hidden = !slot.entry;
+ setSongActions(slot, false);
  part(slot, '.slot-submit').textContent = slot.reserved ? '予約する' : 'リクエスト';
  part(slot, '.slot-cancel').hidden = true;
  hideSuggestions();
 }
+function setSongActions(slot, editing) {
+ const form = part(slot, '.slot-form');
+ const actions = part(slot, '.slot-actions');
+ const save = part(slot, '.slot-submit');
+ if (editing) {
+  part(slot, '.input-group').append(actions);
+  actions.prepend(part(slot, '.slot-cancel'));
+ } else {
+  form.append(actions);
+ }
+ actions.classList.toggle('edit-actions', editing);
+ save.classList.toggle('primary', !editing);
+ save.classList.toggle('text-button', editing);
+ save.classList.toggle('edit-save', editing);
+}
+function renderNameControls() {
+ const hasEditable = slots.some(slot => slot.entry?.editable);
+ if (!hasEditable && nameEditing) {
+  $('name').value = nameBeforeEdit;
+  nameEditing = false;
+ }
+ $('name').readOnly = hasEditable && !nameEditing;
+ $('name-actions').hidden = !hasEditable;
+ $('edit-name').hidden = nameEditing;
+ $('cancel-name').hidden = !nameEditing;
+ $('save-name').hidden = !nameEditing;
+ lock(busy);
+}
+let nameBeforeEdit;
+function nameFeedback(text, error = false) {
+ const node = $('name-feedback');
+ node.hidden = !text;
+ node.textContent = text;
+ node.classList.toggle('error', error);
+}
+$('edit-name').onclick = () => {
+ nameBeforeEdit = $('name').value;
+ nameEditing = true;
+ nameFeedback('');
+ renderNameControls();
+ $('name').focus();
+ $('name').select();
+};
+$('cancel-name').onclick = () => {
+ $('name').value = nameBeforeEdit;
+ nameEditing = false;
+ renderNameControls();
+ $('edit-name').focus();
+};
 $('name-form').onsubmit = async event => {
  event.preventDefault();
  const ownedTokens = slots.filter(slot => slot.entry?.editable).map(slot => slot.token);
- if (busy || !ownedTokens.length) return;
+ if (busy || !nameEditing || !ownedTokens.length) return;
  lock(true);
- message('');
+ nameFeedback('');
  try {
   const name = $('name').value;
   await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, name}});
   $('name').value = name.normalize('NFKC').trim();
   safeSet('emupi-request-name', $('name').value);
+  nameEditing = false;
+  renderNameControls();
   await refresh();
-  message('名前を修正しました。');
+  nameFeedback('名前を修正しました。');
  } catch (error) {
-  message(error.message, true);
+  nameFeedback(error.message, true);
  } finally {
   lock(false);
+  if (!nameEditing) $('edit-name').focus();
  }
 };
 for(const slot of slots){
- const box=document.createElement('div');box.className='slot-feedback message error';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
+ const box=document.createElement('div');box.className='slot-feedback edit-feedback';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
  part(slot, '.slot-form').onsubmit = async event => {
   event.preventDefault();
-  if (busy || !state) return;
+  if (busy || nameEditing || !state) return;
   const editing = slot.editing;
   if (!editing && !$('name').reportValidity()) return;
   lock(true);
@@ -97,13 +163,15 @@ for(const slot of slots){
   message('');
   const round = slot.draftRound ?? slot.round;
   const data = Object.fromEntries(new FormData(event.target));
+  let savedEdit = false;
   try {
    if (!await confirmSong(data)) { field(slot, 'song').focus(); return; }
    if (editing) {
     await api('/api/mine', {method: 'PATCH', data: {...data, action: 'editSong'}, token: editing.token});
     stopEditing(slot);
     await refresh();
-    message('曲を修正しました。');
+    feedback(slot, '曲を修正しました。', false);
+    savedEdit = true;
    } else {
     const {entry} = await api('/api/requests', {
      method: 'POST', data: {...data, name: $('name').value, round, category: slot.category},
@@ -119,6 +187,7 @@ for(const slot of slots){
    if (error.status === 409) { slot.draftRound = null; await refresh().catch(() => {}); }
   } finally {
    lock(false);
+   if (savedEdit) part(slot, '.slot-edit').focus();
   }
  };
  part(slot, '.slot-edit').onclick = () => {
@@ -138,6 +207,7 @@ for(const slot of slots){
   const form = part(slot, '.slot-form');
   form.hidden = false;
   part(slot, '.slot-receipt').hidden = true;
+  setSongActions(slot, true);
   part(slot, '.slot-submit').textContent = '曲を保存';
   part(slot, '.slot-cancel').hidden = false;
   feedback(slot, '');
