@@ -577,6 +577,10 @@ try {
    showRequestScreen(true);
   }
  }
+ if (account.method === 'passcode' && myRequests.some(entry => !account.entries.some(linked => linked.id === entry.id))) {
+  const {linked} = await api('/api/listener-account', {method:'POST', data:{tokens:Object.values(tokens).slice(-100)}});
+  if (linked) await refresh();
+ }
  items = (await api('/api/suggestions')).items;
 } catch (error) {
  message(error.message, true);

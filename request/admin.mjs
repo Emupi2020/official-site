@@ -1,4 +1,4 @@
-import { categoryOf, categoryLabel } from './categories.mjs';
+import { categoryOf } from './categories.mjs';
 import { api, $, message } from './common.mjs';
 import { setWheel, spin, settle } from './wheel.mjs';
 let state, busy = false, dismissedResult = null, drawCategory = 'all';
@@ -33,10 +33,11 @@ function render() {
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
   if(!busy){const songs=state.entries.filter(inPool).map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
-  const entries=$('entries');entries.replaceChildren();
+  const tables = { yamapi: $('entries-yamapi'), other: $('entries-other') };
+  for (const table of Object.values(tables)) table.replaceChildren();
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
-    songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'),node('div',categoryLabel(categoryOf(e)),'small muted'));
+    songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'));
     statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
     if(e.round>state.round)statusCell.prepend(node('div','予約','entry-status'));
     row.append(songCell,nameCell,statusCell,actionCell);
@@ -49,9 +50,15 @@ function render() {
       const song=prompt('曲名',e.song);if(song===null)return;action('edit',{id:e.id,name,artist,song});
     };buttons.append(edit);
     if(e.status==='pending'){const defer=node('button','次回へ','secondary');defer.disabled=busy;defer.onclick=()=>action('defer',{id:e.id});buttons.append(defer);}
-    if(e.status!=='removed'){const remove=node('button','削除','secondary danger');remove.disabled=busy;remove.onclick=()=>{if(confirm('この応募を抽選対象から削除しますか？'))action('remove',{id:e.id});};buttons.append(remove);}actionCell.append(buttons);entries.append(row);
+    if(e.status!=='removed'){const remove=node('button','削除','secondary danger');remove.disabled=busy;remove.onclick=()=>{if(confirm('この応募を抽選対象から削除しますか？'))action('remove',{id:e.id});};buttons.append(remove);}actionCell.append(buttons);tables[categoryOf(e)].append(row);
   }
-  if(!state.entries.length){const row=node('tr'),cell=node('td','まだリクエストはありません。','empty-requests');cell.colSpan=4;row.append(cell);entries.append(row);}
+  for (const table of Object.values(tables)) {
+    if (table.rows.length) continue;
+    const row = node('tr'), cell = node('td', 'まだリクエストはありません。', 'empty-requests');
+    cell.colSpan = 4;
+    row.append(cell);
+    table.append(row);
+  }
   const suggestions=$('suggestions');suggestions.replaceChildren();
   for(const item of state.suggestions){const row=node('div','','entry row');row.append(node('span',`${item.song} ／ ${item.artist}`,'small'));const remove=node('button','削除','text-button');remove.disabled=busy;remove.onclick=()=>action('removeSuggestion',{id:item.id});row.append(remove);suggestions.append(row);}
   if(!state.suggestions.length)suggestions.append(node('p','新しい入力候補はまだありません。','small muted'));

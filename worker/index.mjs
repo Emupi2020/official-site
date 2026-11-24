@@ -86,7 +86,8 @@ async function handle(req, env) {
       const { state } = await read(env);
       prune(state);
       const account = accountRequests(state, accountId);
-      return json({ ...account, name: account.name || session.name || '', enabled, passcodeEnabled, signedIn: true });
+      const method = session.kind === 'pin-listener' ? 'passcode' : 'line';
+      return json({ ...account, name: account.name || session.name || '', enabled, passcodeEnabled, signedIn: true, method });
     }
     if (!accountId) throw new Problem('ログインしてください。', 401);
     await limit(req, env);
