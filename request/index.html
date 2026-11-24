@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=welcome"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=login-footer"><link rel="stylesheet" href="./bug-reports.css"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=welcome"></script><script type="module" src="./site-menu.mjs"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=welcome"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=welcome-center"><link rel="stylesheet" href="./bug-reports.css"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=welcome"></script><script type="module" src="./site-menu.mjs"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
 <header class="global-nav listener-nav">
   <div class="nav-content">
     <a href="https://emupi2020.github.io/official-site/" class="nav-icon-container" aria-label="公式サイトのホーム"><svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text></svg></a>
@@ -27,7 +27,13 @@
 <main class="request-page"><div id="message" class="message" role="status" hidden></div><section id="entry-screen" aria-labelledby="entry-title">
   <button id="entry-back" class="text-button entry-back" type="button" hidden>最初に戻る</button>
   <p id="entry-brand" class="entry-brand" hidden>歌まねリクエスト（β版）</p>
-  <h1 id="entry-title" tabindex="-1">歌まねリクエスト（β版）</h1>
+  <div class="entry-welcome-heading">
+    <svg class="entry-welcome-mark" viewBox="0 0 64 64" width="52" height="52" aria-hidden="true">
+      <rect width="64" height="64" rx="16" fill="currentColor"/>
+      <text x="32" y="47" text-anchor="middle" fill="var(--bg)" font-size="43" font-weight="700">P</text>
+    </svg>
+    <h1 id="entry-title" tabindex="-1">歌まねリクエスト（β版）</h1>
+  </div>
   <div id="entry-welcome-actions" class="entry-welcome-actions">
     <button id="welcome-register" class="primary" type="button">はじめての方</button>
     <button id="welcome-login" class="secondary" type="button">ログイン</button>

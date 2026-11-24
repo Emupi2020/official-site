@@ -105,3 +105,47 @@ html:has(.listener-layout #request-screen[hidden]),
 @media (max-height: 760px) {
   .listener-layout:has(#request-screen[hidden]) .site-footer { padding-block: 16px; }
 }
+
+.entry-welcome-mark { display: none; }
+.listener-layout:has(#entry-screen:not([hidden]) #entry-welcome-actions:not([hidden])) {
+  .listener-content { overflow: clip; }
+  .request-page {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-block: 12px 20px;
+  }
+  #entry-screen {
+    flex: 1;
+    width: 100%;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .entry-welcome-heading { place-self: center; padding-block: 8px; }
+  .entry-welcome-mark { display: block; margin: 0 auto 14px; }
+  #entry-title { margin: 0; font-size: clamp(20px, 6vw, 32px); }
+  .entry-welcome-actions { align-self: end; }
+  .entry-welcome-actions button { border-radius: 999px; }
+}
+
+@media (min-height: 520px) {
+  .listener-layout:has(#entry-screen:not([hidden]) #entry-welcome-actions:not([hidden])) {
+    #entry-screen { grid-template-rows: minmax(0, 1fr) auto; }
+    .entry-welcome-heading, .entry-welcome-actions { grid-area: 1 / 1; }
+  }
+}
+
+@media (max-height: 360px) {
+  .listener-layout:has(#entry-screen:not([hidden]) #entry-welcome-actions:not([hidden])) {
+    .site-footer { padding-block: 4px; }
+    .entry-welcome-heading { padding-block: 0; }
+    .entry-welcome-mark { width: 24px; height: 24px; margin-bottom: 4px; }
+    .entry-welcome-actions { gap: 6px; }
+    .entry-welcome-actions button { min-height: 44px; padding-block: 8px; }
+    .request-page { padding-block: 4px 10px; }
+  }
+}
