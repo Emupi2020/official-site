@@ -309,7 +309,9 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-row-menu {
   position: fixed;
   inset: auto;
-  width: min(144px, calc(100vw - 16px));
+  width: min(216px, calc(100vw - 16px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
   margin: 0;
   padding: 4px;
   border: 1px solid var(--border);
@@ -321,6 +323,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-row-menu button {
   display: flex;
   justify-content: flex-start;
+  text-align: left;
   width: 100%;
   min-height: 44px;
   padding: 6px 12px;

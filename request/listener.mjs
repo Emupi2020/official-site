@@ -189,7 +189,7 @@ function historyRow(list,song,artist,status){const row=document.createElement('l
 function renderHistory(myRequests){
  $('my-history').hidden=!myRequests.length;$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
  const labels={pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ保留',skipped:'見送り',removed:'取り下げ'};
- for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`);
+ for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${entry.deferReason==='temporary'?'一時保留':labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`);
 }
 function renderPlayed(played) {
  $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
@@ -271,7 +271,7 @@ function renderRequests() {
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'予約済み':mine.status==='pending'?'抽選待ち':mine.status==='done'?'歌唱済み':statusText[mine.status];part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
+  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'予約済み':mine.status==='pending'?'抽選待ち':mine.status==='done'?'歌唱済み':(mine.deferReason==='temporary'?'一時保留中です。':statusText[mine.status]);part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
  renderNameControls();

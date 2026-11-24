@@ -14,7 +14,7 @@ export async function api(path, { method = 'GET', data, token } = {}) {
   try { response = await fetch(`${apiBase}${path}`, { method, headers, body: data ? JSON.stringify(data) : undefined, credentials: crossOrigin ? 'omit' : 'same-origin' }); }
   catch { throw new Error('接続できませんでした。通信を確認してお試しください。'); }
   const result = await response.json();
-  if (!response.ok) { const error = new Error(result.error || '処理できませんでした。'); error.status = response.status; error.code = result.code; throw error; }
+  if (!response.ok) { const error = new Error(result.error || '処理できませんでした。'); error.status = response.status; error.code = result.code; error.details = result.details; throw error; }
   if (crossOrigin && method === 'POST') {
     if (path === '/api/passcode/login' || path === '/api/passcode/register') {
       listenerSession = result.sessionToken || null;

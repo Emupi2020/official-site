@@ -280,3 +280,132 @@ test('停止時に当選曲を公開し、歌えない・次回歌うで消し�
  assert.deepEqual(publicState(s).played, [shown]);
  assert.equal(s.history.length, 1);
 });
+
+test('予約を繰り上げるときは同じ枠の曲を確認し、入れ替えと取り消しができる', () => {
+ const s = state();
+ const active = submit(s, input('A','現在の曲'), 'a');
+ const next = submit(s, {...input('A','予約の曲'),round:2}, 'b');
+ const action = {action:'bringForward',id:next.id};
+ assert.throws(() => adminAction(s, action), error => error.code === 'request_slot_conflict' && error.details.id === active.id);
+ assert.equal(active.status, 'pending');
+ assert.equal(next.round, 2);
+ adminAction(s, {...action,replaceId:active.id});
+ assert.equal(active.status, 'removed');
+ assert.deepEqual(eligible(s), [next]);
+ adminAction(s, {action:'undo'});
+ assert.equal(active.status, 'pending');
+ assert.equal(next.round, 2);
+});
+
+test('一時保留は今日戻せて、手動選択して次の抽選なしで歌唱済みにできる', () => {
+ const s = state();
+ const first = submit(s, input('A'), 'a');
+ const waiting = submit(s, input('B','別の曲'), 'b');
+ adminAction(s, {action:'hold',id:first.id});
+ assert.equal(first.deferReason, 'temporary');
+ assert.equal(ownRequests(s,['a'])[0].deferReason, 'temporary');
+ assert.deepEqual(eligible(s), [waiting]);
+ adminAction(s, {action:'restoreRequest',id:first.id});
+ adminAction(s, {action:'selectSong',id:first.id});
+ assert.equal(s.current, first.id);
+ assert.equal(first.manualPick, true);
+ assert.throws(() => adminAction(s, {action:'selectSong',id:waiting.id}), /先に処理/);
+ adminAction(s, {action:'done',id:first.id});
+ assert.equal(first.status, 'done');
+ assert.equal(waiting.status, 'pending');
+ assert.deepEqual(eligible(s), [waiting]);
+ assert.equal(publicState(s).played.length, 1);
+});
+
+test('歌えない理由の訂正と一件だけの復活を行い、歌えた時点で記録を解除する', () => {
+ const s = state();
+ const entry = submit(s, input('A'), 'a');
+ const duplicate = submit(s, input('B'), 'b');
+ adminAction(s, {action:'selectSong',id:entry.id});
+ adminAction(s, {action:'cantSing',id:entry.id,reason:'no_audio'});
+ const old = songStatus(s,entry.artist,entry.song);
+ adminAction(s, {action:'correctReason',id:entry.id,reason:'unknown'});
+ assert.equal(entry.status, 'deferred');
+ assert.deepEqual(songStatus(s,entry.artist,entry.song).reasons, [{reason:'unknown',at:old.unknownAt}]);
+ adminAction(s, {action:'undo'});
+ assert.deepEqual(songStatus(s,entry.artist,entry.song), old);
+ adminAction(s, {action:'restoreRequest',id:entry.id});
+ assert.deepEqual(eligible(s), [entry]);
+ assert.equal(duplicate.status, 'deferred');
+ assert.deepEqual(songStatus(s,entry.artist,entry.song), old);
+ adminAction(s, {action:'selectSong',id:entry.id});
+ adminAction(s, {action:'done',id:entry.id});
+ assert.equal(songStatus(s,entry.artist,entry.song).unknownAt, null);
+});
+
+test('再演を追加しても元の歌唱記録を保持し、誤登録だけを取り消せる', () => {
+ const s = state();
+ const original = submit(s, input('A'), 'a');
+ adminAction(s, {action:'selectSong',id:original.id});
+ adminAction(s, {action:'done',id:original.id});
+ adminAction(s, {action:'encore',id:original.id});
+ const [encore] = eligible(s);
+ assert.equal(encore.encoreOf, original.id);
+ assert.equal(publicState(s).played.length, 1);
+ assert.equal(ownRequests(s,['a']).length, 1);
+ adminAction(s, {action:'selectSong',id:encore.id});
+ adminAction(s, {action:'done',id:encore.id});
+ assert.equal(publicState(s).played.length, 2);
+ adminAction(s, {action:'cancelPerformance',id:encore.id});
+ assert.equal(publicState(s).played.length, 1);
+ assert.equal(s.history[0].requestId, original.id);
+ assert.deepEqual(eligible(s), [encore]);
+ adminAction(s, {action:'undo'});
+ assert.equal(publicState(s).played.length, 2);
+});
+
+test('旧形式の歌唱済みを取り消すと重複リクエストと元の曲が抽選に戻る', () => {
+ const s = state();
+ const a = submit(s, input('A'), 'a');
+ const b = submit(s, input('B'), 'b');
+ adminAction(s, {action:'selectSong',id:a.id});
+ adminAction(s, {action:'done',id:a.id});
+ delete s.history[0].requestId;
+ delete s.history[0].songKey;
+ adminAction(s, {action:'cancelPerformance',id:a.id});
+ assert.deepEqual(publicState(s).played, []);
+ assert.deepEqual(eligible(s), [a,b]);
+ adminAction(s, {action:'undo'});
+ assert.equal(publicState(s).played.length, 1);
+ assert.deepEqual(eligible(s), []);
+});
+
+test('見送りと取り下げは個別に復活し、次回への持ち越しは一時保留と区別する', () => {
+ const s = state();
+ const a = submit(s, input('A','曲A'), 'a');
+ const b = submit(s, input('B','曲B'), 'b');
+ const c = submit(s, input('C','曲C'), 'c');
+ adminAction(s, {action:'selectSong',id:a.id});
+ adminAction(s, {action:'skip'});
+ adminAction(s, {action:'remove',id:b.id});
+ adminAction(s, {action:'defer',id:c.id});
+ assert.equal(c.deferReason, 'manual');
+ adminAction(s, {action:'restoreRequest',id:a.id});
+ adminAction(s, {action:'restoreRequest',id:b.id});
+ assert.deepEqual(eligible(s), [a,b]);
+ assert.equal(c.status, 'deferred');
+});
+
+test('誤った歌唱済みを取り消すと歌えない記録が復元される', () => {
+ const s = state();
+ const entry = submit(s, input('A'), 'a');
+ adminAction(s, {action:'selectSong',id:entry.id});
+ adminAction(s, {action:'cantSing',id:entry.id,reason:'no_audio'});
+ const unavailable = songStatus(s,entry.artist,entry.song);
+ adminAction(s, {action:'restoreRequest',id:entry.id});
+ adminAction(s, {action:'selectSong',id:entry.id});
+ adminAction(s, {action:'done',id:entry.id});
+ assert.equal(songStatus(s,entry.artist,entry.song).unknownAt, null);
+ adminAction(s, {action:'cancelPerformance',id:entry.id});
+ assert.deepEqual(songStatus(s,entry.artist,entry.song), unavailable);
+ assert.equal(publicState(s).played.length, 0);
+ assert.deepEqual(eligible(s), [entry]);
+ adminAction(s, {action:'undo'});
+ assert.equal(songStatus(s,entry.artist,entry.song).unknownAt, null);
+ assert.equal(publicState(s).played.length, 1);
+});

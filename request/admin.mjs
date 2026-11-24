@@ -1,5 +1,5 @@
 import { categoryOf } from './categories.mjs';
-import { api, $, message, safeGet, safeSet } from './common.mjs';
+import { api, $, message, safeGet, safeSet } from './common.mjs?admin=request-exceptions';
 import { setWheel, spin, settle } from './wheel.mjs?spin=natural-stop';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
@@ -43,7 +43,55 @@ rowActions.setAttribute('role', 'group');
 document.body.append(rowActions);
 let rowActionsTrigger;
 
-function requestActionsButton(entry) {
+function editRequest(entry) {
+  const name = prompt('Pocochaの名前', entry.name);
+  if (name === null) return;
+  const artist = prompt('歌手名', entry.artist);
+  if (artist === null) return;
+  const song = prompt('曲名', entry.song);
+  if (song !== null) action('edit', {id:entry.id, name, artist, song});
+}
+function correctReason(entry, previous) {
+  const dialog = $('correct-reason-dialog');
+  dialog.returnValue = '';
+  for (const choice of dialog.querySelectorAll('button')) choice.disabled = choice.value === previous;
+  dialog.addEventListener('close', () => {
+    if (['unknown','no_audio'].includes(dialog.returnValue)) action('correctReason', {id:entry.id, reason:dialog.returnValue});
+  }, {once:true});
+  dialog.showModal();
+}
+function rowChoices(entry) {
+  const command = (label, operation, confirmation) => ({ label, handler:() => {
+    if (!confirmation || confirm(confirmation)) action(operation, {id:entry.id});
+  } });
+  if (entry.status === 'pending') {
+    const choices = [{label:'リクエストを修正', handler:() => editRequest(entry)}];
+    if (entry.round > state.round) choices.push(command('今回の抽選に入れる', 'bringForward'));
+    else choices.push(command('今回だけ一時保留', 'hold'));
+    choices.push(command('次回配信へ持ち越す', 'defer'));
+    if (entry.round <= state.round && !state.entries.some(item => item.id === state.current && item.status === 'selected')) {
+      choices.push(command('この曲を手動で選ぶ', 'selectSong', 'ルーレットを回さず、この曲を選びますか？'));
+    }
+    choices.push({...command('取り下げる', 'remove', 'このリクエストを取り下げますか？'), className:'danger'});
+    return choices;
+  }
+  if (entry.status === 'done') return [
+    command('歌唱済みを取り消す', 'cancelPerformance', '歌唱済み一覧からこの記録を外し、今回の抽選に戻しますか？'),
+    command('再演用に抽選へ追加', 'encore', '歌唱済みの記録を残して、もう一度抽選に入れますか？'),
+  ];
+  if (['skipped','removed'].includes(entry.status)) return [command('リクエストを復活', 'restoreRequest')];
+  if (entry.status !== 'deferred') return [];
+  const repeat = entry.deferReason === 'sung';
+  const choices = [command('今回の抽選に戻す', 'restoreRequest', repeat ? '今回すでに歌った曲です。もう一度抽選に入れますか？' : undefined)];
+  const record = state.unknown?.[entry.songKey];
+  if (entry.deferReason === 'unknown' && record) {
+    const reasons = Object.keys(record.reasons || {unknown:record.at});
+    const previous = entry.unavailableReason || (reasons.length === 1 ? reasons[0] : null);
+    if ($('correct-reason-dialog') && previous && reasons.includes(previous) && (!entry.unavailableAt || entry.unavailableAt === record.reasons?.[previous])) choices.push({label:'歌えない理由を訂正', handler:() => correctReason(entry, previous)});
+  }
+  return choices;
+}
+function requestActionsButton(entry, choices) {
   const trigger = node('button', '…', 'request-row-menu-trigger');
   trigger.type = 'button';
   trigger.disabled = busy;
@@ -58,7 +106,7 @@ function requestActionsButton(entry) {
     ++refreshVersion;
     rowActions.setAttribute('aria-label', entry.song + 'の操作');
     rowActions.replaceChildren();
-    function addChoice(label, handler, className) {
+    for (const {label, handler, className} of choices) {
       const button = node('button', label, className);
       button.type = 'button';
       button.onclick = () => {
@@ -67,21 +115,10 @@ function requestActionsButton(entry) {
       };
       rowActions.append(button);
     }
-    addChoice('修正', () => {
-      const name = prompt('Pocochaの名前', entry.name);
-      if (name === null) return;
-      const artist = prompt('歌手名', entry.artist);
-      if (artist === null) return;
-      const song = prompt('曲名', entry.song);
-      if (song !== null) action('edit', {id:entry.id, name, artist, song});
-    });
-    if (entry.status === 'pending') addChoice('次回へ', () => action('defer', {id:entry.id}));
-    if (entry.status !== 'removed') addChoice('削除', () => {
-      if (confirm('この応募を抽選対象から削除しますか？')) action('remove', {id:entry.id});
-    }, 'danger');
     const bounds = trigger.getBoundingClientRect();
     const roomBelow = window.innerHeight - bounds.bottom;
     const openAbove = roomBelow < 44 * rowActions.children.length + 16 && bounds.top > roomBelow;
+    rowActions.style.maxHeight = Math.max(44, (openAbove ? bounds.top : roomBelow) - 12) + 'px';
     rowActions.style.right = Math.max(8, window.innerWidth - bounds.right) + 'px';
     rowActions.style.top = openAbove ? 'auto' : bounds.bottom + 4 + 'px';
     rowActions.style.bottom = openAbove ? window.innerHeight - bounds.top + 4 + 'px' : 'auto';
@@ -89,6 +126,17 @@ function requestActionsButton(entry) {
   return trigger;
 }
 
+async function postAdminAction(data) {
+  const post = input => api('/api/admin', {method:'POST', data:input});
+  try {
+    await post(data);
+  } catch (error) {
+    if (error.code !== 'request_slot_conflict' || !error.details) throw error;
+    if (!confirm('今回の同じ枠に「' + error.details.song + '」があります。この曲を取り下げて、選んだ曲と入れ替えますか？')) return false;
+    await post({ ...data, replaceId:error.details.id });
+  }
+  return true;
+}
 async function action(action, extra = {}) {
   if (busy) return;
   busy = true;
@@ -100,7 +148,7 @@ async function action(action, extra = {}) {
   $('roulette-screen').classList.add('spinning');
   const drawing = ['draw', 'advance'].includes(action);
   try {
-    await api('/api/admin', {method:'POST', data:{action, ...extra, ...(drawing ? {category:drawCategory} : {})}});
+    if (!await postAdminAction({action, ...extra, ...(drawing ? {category:drawCategory} : {})})) return;
     await refresh(drawing);
     if (action === 'undo' && state) undoFeedback('直前の操作を取り消しました。');
   } catch (error) {
@@ -118,15 +166,18 @@ function lock(value) {
   for (const button of document.querySelectorAll('#dashboard button, #roulette-screen button, #admin-menu button')) button.disabled = value;
   if (spinDuration) spinDuration.disabled = value;
 }
-const poolFor = ({ entries, round }) => entries.filter(entry =>
+const poolFor = ({ entries, round, sung = [], held = [] }) => entries.filter(entry =>
   entry.status === 'pending' && entry.round <= round && (drawCategory === 'all' || categoryOf(entry) === drawCategory)
+    && (!sung.includes(entry.songKey) || entry.allowRepeat) && (!held.includes(entry.songKey) || entry.retryHeld)
 );
 function render() {
   if(!state)return;
   $('round').textContent=`第${state.round}回`;$('status').textContent='受付中';
-  const pending=state.entries.filter(e=>e.status==='pending'&&e.round<=state.round).length, deferred=state.entries.filter(e=>e.status==='deferred').length;
+  const pending=state.entries.filter(e=>e.status==='pending'&&e.round<=state.round).length;
+  const deferred=state.entries.filter(e=>e.status==='deferred'&&e.deferReason!=='temporary').length;
+  const held=state.entries.filter(e=>e.status==='deferred'&&e.deferReason==='temporary').length;
   const reserved=state.entries.filter(e=>e.round===state.round+1&&!['done','removed','skipped'].includes(e.status)).length;
-  $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件`;
+  $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件${held ? ' · 一時保留 '+held+'件' : ''}`;
   const current=state.entries.find(e=>e.id===state.current);
   renderRoulette(current);
   const selected = current?.status === 'selected';
@@ -136,6 +187,13 @@ function render() {
   $('undo').disabled = busy || !state.undo;
   $('cant-sing').hidden = !selected;
   $('cant-sing').disabled = busy || !selected;
+  const markSungButton = $('mark-sung');
+  if (markSungButton) {
+    markSungButton.hidden = !selected;
+    markSungButton.disabled = busy || !selected;
+  }
+  const currentLabel = $('current-song-label');
+  if (currentLabel) currentLabel.textContent = current?.manualPick ? '手動選択中の曲' : '当選中の曲';
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
@@ -146,12 +204,14 @@ function render() {
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
     songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'));
-    statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
+    statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:e.deferReason==='temporary'?'一時保留':'次回へ',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
     if(e.round>state.round)statusCell.prepend(node('div','予約','entry-status'));
+    if(e.encoreOf)statusCell.prepend(node('div','再演用','entry-status'));
     row.append(songCell,nameCell,statusCell,actionCell);
     const record=state.unknown?.[e.songKey];
     if(record){const reasons=record.reasons||{unknown:record.at};songCell.append(node('p',Object.entries(reasons).map(([reason,at])=>`${reason==='no_audio'?'音源なし':'知らない'} · ${new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(at)}`).join(' ／ '),'small muted'));}
-    actionCell.append(requestActionsButton(e));
+    const choices = rowChoices(e);
+    if (choices.length) actionCell.append(requestActionsButton(e, choices));
     const active = e.status === 'pending' || e.status === 'selected';
     const table = !active && processed ? processed : tables[categoryOf(e)];
     table.append(row);
@@ -276,6 +336,8 @@ async function cantSing() {
   });
   if (['unknown', 'no_audio'].includes(reason)) await resolveWinner('cantSing', { id, reason });
 }
+const markSung = () => resolveWinner('done', {id:state.current});
+for (const id of ['mark-sung', 'result-done']) $(id)?.addEventListener('click', markSung);
 $('cant-sing').onclick = cantSing;
 $('result-cant-sing').onclick = cantSing;
 $('result-defer').onclick = () => resolveWinner('defer', { id:state.current, selected:true });

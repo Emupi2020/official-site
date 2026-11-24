@@ -21,7 +21,15 @@ export function songIdentity(artist, song, custom = []) {
 export function initialState() {
   return { round: 1, session: 1, open: true, entries: [], sung: [], held: [], unknown: {}, history: [], current: null, undo: null, suggestions: [], retentionDays: 30 };
 }
-export function eligible(state, category = 'all') { return state.entries.filter(e => e.status === 'pending' && (category === 'all' || categoryOf(e) === category) && e.round <= state.round && !state.sung.includes(e.songKey) && !(state.held || []).includes(e.songKey)); }
+function drawBlock(state, entry) {
+  if (state.sung.includes(entry.songKey) && !entry.allowRepeat) return 'sung';
+  if (state.held?.includes(entry.songKey) && !entry.retryHeld) return 'unknown';
+  return null;
+}
+export function eligible(state, category = 'all') {
+  return state.entries.filter(entry => entry.status === 'pending' && entry.round <= state.round
+    && (category === 'all' || categoryOf(entry) === category) && !drawBlock(state, entry));
+}
 // Complete a round only after every active request has been handled.
 function finishRounds(state, undoable = true) {
   const from = state.round;
@@ -58,12 +66,12 @@ export function ownRequests(state, hashes) {
   return state.entries.filter(e => allowed.has(e.tokenHash)).map(e => listenerRequest(state, e));
 }
 function listenerRequest(state, entry) {
-  const { id, artist, song, round, status, createdAt } = entry;
-  return { id, artist, song, category: categoryOf(entry), round, status, createdAt, playedThisSession: state.sung.includes(entry.songKey) };
+  const { id, artist, song, round, status, deferReason, createdAt } = entry;
+  return { id, artist, song, category: categoryOf(entry), round, status, deferReason, createdAt, playedThisSession: state.sung.includes(entry.songKey) };
 }
 export function requestsByName(state, name) {
   const key = nameKey(text(name, 'Pocochaの名前', 50));
-  return state.entries.filter(entry => nameKey(entry.name) === key).map(entry => listenerRequest(state, entry));
+  return state.entries.filter(entry => !entry.encoreOf && nameKey(entry.name) === key).map(entry => listenerRequest(state, entry));
 }
 export function canRename(state, entry) {
   return [state.round, state.round + 1].includes(entry.round) && ['pending', 'deferred'].includes(entry.status);
@@ -130,7 +138,9 @@ export function editSong(state, entry, input) {
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
   if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してください。', 409);
-  const deferReason = state.sung.includes(songKey) ? 'sung' : state.held?.includes(songKey) ? 'unknown' : entry.deferReason === 'manual' ? 'manual' : null;
+  const sameSong = entry.songKey === songKey;
+  if (!sameSong) { delete entry.allowRepeat; delete entry.retryHeld; }
+  const deferReason = ['manual', 'temporary'].includes(entry.deferReason) ? entry.deferReason : drawBlock(state, { ...entry, songKey });
   Object.assign(entry, {artist, song, songKey, deferReason, status: deferReason ? 'deferred' : 'pending'});
   rememberSong(state, artist, song);
   finishRounds(state, false);
@@ -139,6 +149,60 @@ function pick(length) {
   const ceiling = Math.floor(4294967296 / length) * length;
   let n; do { n = crypto.getRandomValues(new Uint32Array(1))[0]; } while (n >= ceiling);
   return n % length;
+}
+function byId(state, id) {
+  const entry = state.entries.find(item => item.id === id);
+  if (!entry) throw new Problem('リクエストが見つかりません。', 404);
+  return entry;
+}
+const queueFields = ['round', 'status', 'deferReason', 'retryHeld', 'allowRepeat', 'drawnAt', 'revealedAt', 'manualPick', 'unavailableReason', 'unavailableAt'];
+function rememberQueueChange(state, entries) {
+  const undo = { type:'queue', current:state.current, entries:entries.map(entry => ({
+    id:entry.id, fields:Object.fromEntries(queueFields.filter(key => key in entry).map(key => [key, entry[key]]))
+  })) };
+  state.undo = undo;
+  return undo;
+}
+function sameListener(left, right) {
+  return (left.accountId && left.accountId === right.accountId)
+    || (left.tokenHash && left.tokenHash === right.tokenHash)
+    || left.usedNames.some(name => right.usedNames.includes(name));
+}
+function destinationConflict(state, entry, input) {
+  const conflicts = state.entries.filter(item => item !== entry && !item.encoreOf && item.round === state.round
+    && categoryOf(item) === categoryOf(entry) && ['pending','selected','deferred'].includes(item.status) && sameListener(entry, item));
+  if (!conflicts.length) return null;
+  const [conflict] = conflicts;
+  if (conflicts.length > 1 || conflict.status === 'selected') throw new Problem('同じ枠に処理中のリクエストがあります。先にその曲を処理してください。', 409);
+  if (input.replaceId === conflict.id) return conflict;
+  const error = new Problem('同じ人が今回の同じ枠に別の曲をリクエストしています。', 409, 'request_slot_conflict');
+  error.details = { id:conflict.id, song:conflict.song };
+  throw error;
+}
+function queueForThisDraw(state, entry, replaced) {
+  if (replaced) replaced.status = 'removed';
+  entry.round = state.round;
+  entry.status = 'pending';
+  entry.deferReason = null;
+  delete entry.revealedAt;
+  delete entry.drawnAt;
+  delete entry.manualPick;
+  if (state.current === entry.id || (replaced && state.current === replaced.id)) state.current = null;
+}
+function chooseEntry(state, entry, manual = false) {
+  state.undo = { type:'draw', id:entry.id, previous:state.current };
+  delete entry.revealedAt;
+  entry.status = 'selected';
+  entry.drawnAt = Date.now();
+  entry.manualPick = manual;
+  if (manual) entry.revealedAt = entry.drawnAt;
+  state.current = entry.id;
+}
+function performanceFor(state, entry) {
+  const linked = state.history.find(item => item.requestId === entry.id);
+  if (linked || !entry.drawnAt) return linked;
+  return state.history.filter(item => !item.requestId && item.song === entry.song && item.artist === entry.artist
+    && item.performedAt >= entry.drawnAt).sort((a, b) => a.performedAt - b.performedAt)[0];
 }
 export function adminAction(state, input) {
   state.held ||= []; state.unknown ||= {}; state.history ||= [];
@@ -163,9 +227,14 @@ export function adminAction(state, input) {
       const pool = eligible(state,category);
       if (!pool.length) throw new Problem('抽選できるリクエストがありません。', 409);
       const entry = pool[pick(pool.length)];
-      state.undo = { type: 'draw', id: entry.id, previous: state.current };
-      delete entry.revealedAt;
-      entry.status = 'selected'; entry.drawnAt = Date.now(); state.current = entry.id;
+      chooseEntry(state, entry);
+      break;
+    }
+    case 'selectSong': {
+      if (current?.status === 'selected') throw new Problem('今の当選曲を先に処理してください。', 409);
+      const entry = eligible(state).find(item => item.id === input.id);
+      if (!entry) throw new Problem('今回の抽選待ちの曲を選んでください。', 409);
+      chooseEntry(state, entry, true);
       break;
     }
     case 'reveal':
@@ -176,14 +245,15 @@ export function adminAction(state, input) {
       return;
     case 'done': {
       if (current?.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
+      if (input.id && current.id !== input.id) throw new Problem('当選曲が変わりました。', 409);
       const key = current.songKey;
       const historyId = crypto.randomUUID();
       state.undo = { type: 'done', id: current.id, key, historyId, newlySung: !state.sung.includes(key), unknownBefore: state.unknown[key] || null };
       current.status = 'done';
-      state.history.push({ id: historyId, session: state.session, song: current.song, artist: current.artist, performedAt: current.revealedAt ?? Date.now() });
+      state.history.push({ id: historyId, requestId:current.id, songKey:key, unknownBefore:state.undo.unknownBefore, session: state.session, song: current.song, artist: current.artist, performedAt: current.revealedAt ?? Date.now() });
       delete state.unknown[key];
       if (!state.sung.includes(key)) state.sung.push(key);
-      for (const e of state.entries) if (e.status === 'pending' && e.songKey === key) { e.status = 'deferred'; e.deferReason = 'sung'; }
+      for (const e of state.entries) if (e.status === 'pending' && e.songKey === key && !e.allowRepeat) { e.status = 'deferred'; e.deferReason = 'sung'; }
       break;
     }
     case 'cantSing':
@@ -198,6 +268,10 @@ export function adminAction(state, input) {
       const at = Math.max(Date.now(), (previous?.at || 0) + 1);
       const reasons = Object.fromEntries(unavailableReasons(previous).map(item => [item.reason, item.at]));
       reasons[reason] = at;
+      state.undo.previousReason = current.unavailableReason;
+      state.undo.previousAt = current.unavailableAt;
+      current.unavailableReason = reason;
+      current.unavailableAt = at;
       state.unknown[key] = { at, reasons, artist: current.artist, song: current.song };
       if (!state.held.includes(key)) state.held.push(key);
       for (const e of state.entries) if (affected.some(a => a.id === e.id)) { e.status = 'deferred'; e.deferReason = 'unknown'; }
@@ -225,10 +299,47 @@ export function adminAction(state, input) {
           if (before) { entry.status = before.status; entry.deferReason = before.deferReason; }
           else if (!u.hadHold && entry.songKey === u.key && entry.status === 'deferred' && entry.deferReason === 'unknown') { entry.status = 'pending'; entry.deferReason = null; }
         }
+        const original = state.entries.find(entry => entry.id === u.id);
+        if (original) {
+          original.unavailableReason = u.previousReason;
+          original.unavailableAt = u.previousAt;
+        }
         state.current = u.id; state.undo = null; break;
       }
+      if (u.type === 'queue') {
+        if (u.addedId) state.entries = state.entries.filter(entry => entry.id !== u.addedId);
+        for (const saved of u.entries) {
+          const entry = state.entries.find(item => item.id === saved.id);
+          if (!entry) continue;
+          for (const key of queueFields) delete entry[key];
+          Object.assign(entry, saved.fields);
+        }
+        if (u.performance) state.history.splice(u.historyIndex, 0, u.performance);
+        if (u.sungKey && !state.sung.includes(u.sungKey)) {
+          state.sung.push(u.sungKey);
+          for (const entry of state.entries) if (entry.songKey === u.sungKey && entry.status === 'pending' && !entry.allowRepeat) {
+            entry.status = 'deferred';
+            entry.deferReason = 'sung';
+          }
+        }
+        if (u.correctedKey) {
+          if (u.previousRecord) state.unknown[u.correctedKey] = u.previousRecord;
+          else delete state.unknown[u.correctedKey];
+        }
+        state.current = state.entries.some(entry => entry.id === u.current) ? u.current : null;
+        state.undo = null;
+        break;
+      }
       const e = state.entries.find(e => e.id === u.id);
-      if (u.type === 'draw') { if (e) e.status = state.sung.includes(e.songKey) ? 'deferred' : 'pending'; state.current = u.previous; }
+      if (u.type === 'draw') {
+        if (e) {
+          e.deferReason = drawBlock(state, e);
+          e.status = e.deferReason ? 'deferred' : 'pending';
+          delete e.manualPick;
+          delete e.revealedAt;
+        }
+        state.current = u.previous;
+      }
       if (u.type === 'skip' && e) e.status = 'selected';
       if (['defer', 'deferSelected'].includes(u.type) && e) {
         e.status = u.previousStatus ?? 'selected';
@@ -247,19 +358,26 @@ export function adminAction(state, input) {
     case 'session':
       if (current?.status === 'selected') throw new Problem('今の曲を処理してから配信を切り替えてください。', 409);
       state.session++; state.sung = []; state.held = []; state.current = null; state.undo = null;
-      for (const e of state.entries) if (e.status === 'deferred') { e.status = 'pending'; e.deferReason = null; }
+      for (const e of state.entries) {
+        delete e.allowRepeat;
+        delete e.retryHeld;
+        if (e.status === 'deferred') { e.status = 'pending'; e.deferReason = null; }
+      }
       break;
     case 'edit': {
       const e = state.entries.find(e => e.id === input.id);
       if (!e) throw new Problem('応募が見つかりません。', 404);
-      if (e.status === 'selected') throw new Problem('抽選を取り消してから修正してください。', 409);
+      if (e.status !== 'pending') throw new Problem('抽選待ちに戻してから修正してください。', 409);
       const name = text(input.name, '名前', 50), key = nameKey(name);
       const artist = text(input.artist,'歌手名'), category = classifyArtist(artist);
       if (state.entries.some(v => v.id !== e.id && v.round === e.round && categoryOf(v) === category && v.usedNames.includes(key))) throw new Problem('その名前は応募済みです。', 409);
       e.name = name; if (!e.usedNames.includes(key)) e.usedNames.push(key);
       e.artist = artist; e.category = category; e.song = text(input.song, '曲名');
-      e.songKey = songIdentity(e.artist, e.song, state.suggestions);
-      if (['pending', 'deferred'].includes(e.status)) { e.deferReason = state.sung.includes(e.songKey) ? 'sung' : state.held.includes(e.songKey) ? 'unknown' : null; e.status = e.deferReason ? 'deferred' : 'pending'; }
+      const songKey = songIdentity(e.artist, e.song, state.suggestions);
+      if (songKey !== e.songKey) { delete e.allowRepeat; delete e.retryHeld; }
+      e.songKey = songKey;
+      e.deferReason = drawBlock(state, e);
+      e.status = e.deferReason ? 'deferred' : 'pending';
       state.undo = null; break;
     }
     case 'defer': {
@@ -269,10 +387,105 @@ export function adminAction(state, input) {
       state.undo = { type: 'defer', id: e.id, previousStatus: e.status, previousReason: e.deferReason ?? null };
       e.status = 'deferred'; e.deferReason = 'manual'; break;
     }
+    case 'hold': {
+      const entry = byId(state, input.id);
+      if (!eligible(state).includes(entry)) throw new Problem('今回の抽選待ちの曲を選んでください。', 409);
+      rememberQueueChange(state, [entry]);
+      entry.status = 'deferred';
+      entry.deferReason = 'temporary';
+      break;
+    }
+    case 'bringForward':
+    case 'restoreRequest': {
+      const entry = byId(state, input.id);
+      const moving = input.action === 'bringForward';
+      const allowed = moving ? entry.status === 'pending' && entry.round === state.round + 1
+        : ['deferred','skipped','removed'].includes(entry.status);
+      if (!allowed) throw new Problem('リクエストの状態が変わりました。', 409);
+      const replaced = destinationConflict(state, entry, input);
+      rememberQueueChange(state, replaced ? [entry, replaced] : [entry]);
+      if (!moving) {
+        if (state.sung.includes(entry.songKey)) entry.allowRepeat = true;
+        if (state.held.includes(entry.songKey)) entry.retryHeld = true;
+      }
+      queueForThisDraw(state, entry, replaced);
+      break;
+    }
+    case 'correctReason': {
+      const entry = byId(state, input.id);
+      const previous = state.unknown[entry.songKey];
+      const reasons = Object.fromEntries(unavailableReasons(previous).map(item => [item.reason, item.at]));
+      const oldReason = entry.unavailableReason || (Object.keys(reasons).length === 1 ? Object.keys(reasons)[0] : null);
+      if (entry.status !== 'deferred' || entry.deferReason !== 'unknown' || !reasons[oldReason]
+        || !['unknown','no_audio'].includes(input.reason) || input.reason === oldReason) {
+        throw new Problem('訂正できる理由がありません。', 409);
+      }
+      const originalAt = entry.unavailableAt ?? reasons[oldReason];
+      if (reasons[oldReason] !== originalAt) throw new Problem('この曲の理由は別の操作で更新されています。', 409);
+      Object.assign(rememberQueueChange(state, [entry]), { correctedKey:entry.songKey, previousRecord:previous });
+      delete reasons[oldReason];
+      reasons[input.reason] = Math.max(reasons[input.reason] ?? 0, originalAt);
+      entry.unavailableReason = input.reason;
+      entry.unavailableAt = reasons[input.reason];
+      state.unknown[entry.songKey] = { ...previous, at:Math.max(Date.now(), previous.at + 1), reasons };
+      break;
+    }
+    case 'cancelPerformance': {
+      const entry = byId(state, input.id);
+      if (entry.status !== 'done') throw new Problem('歌唱済みの曲を選んでください。', 409);
+      const replaced = destinationConflict(state, entry, input);
+      const performance = performanceFor(state, entry);
+      const otherPerformances = state.history.filter(item => item !== performance
+        && (item.songKey ?? songIdentity(item.artist, item.song, state.suggestions)) === entry.songKey);
+      const remainingPerformance = otherPerformances.some(item => item.session === state.session);
+      const clearSung = state.sung.includes(entry.songKey) && !remainingPerformance
+        && (performance ? performance.session === state.session : !state.entries.some(item => item !== entry && item.status === 'done' && item.songKey === entry.songKey));
+      const related = clearSung ? state.entries.filter(item => item !== replaced && item.songKey === entry.songKey
+        && item.status === 'deferred' && (!item.deferReason || item.deferReason === 'sung')) : [];
+      const undo = rememberQueueChange(state, [entry, ...(replaced ? [replaced] : []), ...related]);
+      if (performance) {
+        undo.performance = performance;
+        undo.historyIndex = state.history.indexOf(performance);
+        state.history.splice(undo.historyIndex, 1);
+        if (performance.unknownBefore && !state.unknown[entry.songKey]
+          && !otherPerformances.some(item => item.performedAt >= performance.performedAt)) {
+          Object.assign(undo, {correctedKey:entry.songKey, previousRecord:null});
+          state.unknown[entry.songKey] = performance.unknownBefore;
+        }
+      }
+      if (clearSung) {
+        undo.sungKey = entry.songKey;
+        state.sung = state.sung.filter(key => key !== entry.songKey);
+        for (const item of related) {
+          item.deferReason = drawBlock(state, item);
+          item.status = item.deferReason ? 'deferred' : 'pending';
+        }
+      }
+      if (state.sung.includes(entry.songKey)) entry.allowRepeat = true;
+      if (state.held.includes(entry.songKey)) entry.retryHeld = true;
+      queueForThisDraw(state, entry, replaced);
+      break;
+    }
+    case 'encore': {
+      const entry = byId(state, input.id);
+      if (entry.status !== 'done') throw new Problem('歌唱済みの曲を選んでください。', 409);
+      if (state.entries.some(item => item.encoreOf && item.songKey === entry.songKey && ['pending','selected'].includes(item.status))) {
+        throw new Problem('この曲はすでに再演用に追加されています。', 409);
+      }
+      if (state.entries.length >= 3000) throw new Problem('リクエストが上限に達しています。', 409);
+      const id = crypto.randomUUID();
+      rememberQueueChange(state, []).addedId = id;
+      state.entries.push({ id, encoreOf:entry.id, name:entry.name, usedNames:[], artist:entry.artist, song:entry.song,
+        songKey:entry.songKey, category:categoryOf(entry), round:state.round, status:'pending', deferReason:null,
+        allowRepeat:true, retryHeld:true, createdAt:Date.now() });
+      break;
+    }
     case 'remove': {
       const e = state.entries.find(e => e.id === input.id);
       if (!e) throw new Problem('応募が見つかりません。', 404);
-      e.status = 'removed'; if (state.current === e.id) state.current = null; state.undo = null; break;
+      if (e.status !== 'pending') throw new Problem('抽選待ちのリクエストを選んでください。', 409);
+      rememberQueueChange(state, [e]);
+      e.status = 'removed'; if (state.current === e.id) state.current = null; break;
     }
     case 'removeSuggestion': state.suggestions = state.suggestions.filter(s => s.id !== input.id); break;
     default: throw new Problem('操作を確認してください。');
