@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState, submit, rename, adminAction, eligible, publicState, ownRequests, songIdentity, songStatus, prune, rolloverSession } from '../worker/domain.mjs';
+import { initialState, submit, rename, adminAction, eligible, publicState, playableSongs, ownRequests, songIdentity, songStatus, prune, rolloverSession } from '../worker/domain.mjs';
 import worker, { read } from '../worker/index.mjs';
 import { database } from '../scripts/local-db.mjs';
 import { sign,verify,isAdmin,passwordRecord,hash } from '../worker/auth.mjs';
@@ -8,6 +8,35 @@ const input=(name='リスナーA',song='らぶれす',artist='やまぴー')=>({
 function state(){const s=initialState();s.open=true;return s;}
 test('歌唱済み一覧には実際に消化した曲だけを匿名で公開、戻すも反映',()=>{
   const s=state();submit(s,input('非公開名A'),'secret-a');submit(s,input('非公開名B'),'secret-b');adminAction(s,{action:'advance'});assert.equal(publicState(s).played.length,0);adminAction(s,{action:'advance'});const p=publicState(s).played;assert.equal(p.length,1);assert(p[0].performedAt>0);assert(!JSON.stringify(p).includes('非公開'));assert(!JSON.stringify(p).includes('secret'));adminAction(s,{action:'undo'});assert.equal(publicState(s).played.length,0);
+});
+test('歌唱可能な曲は枠別に重複をまとめ、履歴の期限後も残り、歌えない曲を除く', () => {
+  const s = state();
+  const loveless = {artist:'山下智久', song:'Loveless', category:'yamapi'};
+  const love = {artist:'星野源', song:'恋', category:'other'};
+  const now = Date.now();
+  const old = now - 31 * 86400000;
+  s.history = [
+    {...loveless, performedAt:old, requestId:'private-request'},
+    {artist:'やまぴー', song:'らぶれす', performedAt:old},
+    {...loveless, performedAt:old},
+    {...love, performedAt:now}
+  ];
+  assert.deepEqual(playableSongs(s), [loveless, love]);
+  prune(s, now);
+  assert.equal(s.history.length, 1);
+  assert.deepEqual(playableSongs(s), [loveless, love]);
+  s.unknown[songIdentity(loveless.artist, loveless.song)] = {at:now, reasons:{no_audio:now}};
+  assert.deepEqual(playableSongs(s), [love]);
+});
+test('歌唱可能な曲は抽選しただけでは追加せず、歌唱記録を戻すと反映する', () => {
+  const s = state();
+  submit(s, input('非公開名', 'Loveless', '山下智久'), 'h');
+  adminAction(s, {action:'draw'});
+  assert.deepEqual(playableSongs(s), []);
+  adminAction(s, {action:'done'});
+  assert.deepEqual(playableSongs(s), [{artist:'山下智久', song:'Loveless', category:'yamapi'}]);
+  adminAction(s, {action:'undo'});
+  assert.deepEqual(playableSongs(s), []);
 });
 test('自分の履歴は自分のトークン分だけ、他人の名前とトークンは返さない',()=>{
   const s=state();submit(s,input('A'),'a');submit(s,input('B'),'b');const list=ownRequests(s,['a']);assert.equal(list.length,1);assert.equal(list[0].status,'pending');assert(!('name'in list[0]));assert(!('tokenHash'in list[0]));assert.equal(ownRequests(s,['unknown']).length,0);adminAction(s,{action:'advance'});adminAction(s,{action:'advance'});assert(ownRequests(s,['a','b']).every(e=>e.playedThisSession));

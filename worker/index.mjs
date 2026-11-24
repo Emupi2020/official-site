@@ -1,4 +1,4 @@
-import { initialState, publicState, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
+import { initialState, publicState, playableSongs, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
 import { passcodeAuth, passcodeAccount, passcodeAccountId, passcodeRequiredMessage, preparePasscodeRename } from './passcode.mjs';
@@ -154,6 +154,7 @@ async function handle(req, env) {
     return authenticated.response;
   }
   if (path === '/api/state' && req.method === 'GET') return json(publicState((await read(env)).state));
+  if (path === '/api/repertoire' && req.method === 'GET') return json({songs:playableSongs((await read(env)).state)});
   if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
   if (path === '/api/suggestions' && req.method === 'GET') {
     const { state } = await read(env);

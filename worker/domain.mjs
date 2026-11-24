@@ -77,6 +77,19 @@ export function songStatus(state, artist, song) {
   const record = state.unknown?.[key];
   return { unknownAt: record?.at || null, reasons: unavailableReasons(record) };
 }
+function collectedSongs(state, performances) {
+  const songs = new Map((state.repertoire || []).map(song => [song.songKey, song]));
+  for (const {artist, song, songKey} of performances) {
+    const key = songKey || songIdentity(artist, song, state.suggestions);
+    songs.set(key, {artist, song, songKey:key});
+  }
+  return [...songs.values()];
+}
+export function playableSongs(state) {
+  return collectedSongs(state, state.history || [])
+    .filter(entry => !state.unknown?.[entry.songKey])
+    .map(({artist, song}) => ({artist, song, category:classifyArtist(artist)}));
+}
 function playedForRound(state, current) {
   const completed = state.entries.filter(entry => entry.status === 'done');
   const byId = new Map(completed.map(entry => [entry.id, entry]));
@@ -612,6 +625,10 @@ export function adminAction(state, input, now = Date.now()) {
 export function prune(state, now = Date.now()) {
   const cutoff = now - state.retentionDays * 86400000;
   state.entries = state.entries.filter(e => e.createdAt >= cutoff);
-  if (state.history) state.history = state.history.filter(e => e.performedAt >= cutoff);
+  if (state.history) {
+    const expired = state.history.filter(entry => entry.performedAt < cutoff);
+    if (expired.length) state.repertoire = collectedSongs(state, expired);
+    state.history = state.history.filter(entry => entry.performedAt >= cutoff);
+  }
   if (!state.entries.some(e => e.id === state.current)) state.current = null;
 }

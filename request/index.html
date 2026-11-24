@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=after-draw-message"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=compact-content"><link rel="stylesheet" href="./bug-reports.css"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=after-draw-note"></script><script type="module" src="./site-menu.mjs"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=repertoire"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=compact-content"><link rel="stylesheet" href="./bug-reports.css"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=repertoire"></script><script type="module" src="./site-menu.mjs"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
 <header class="global-nav listener-nav">
   <div class="nav-content">
     <a href="https://emupi2020.github.io/official-site/" class="nav-icon-container" aria-label="公式サイトのホーム"><svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text></svg></a>
@@ -25,7 +25,16 @@
       <button id="save-name" class="text-button" type="submit">保存</button>
     </div>
   </form>
-</details><section class="listener-history request-links" aria-label="リクエストと歌唱の確認"><details id="my-history" hidden><summary>自分のリクエスト<span id="my-history-count"></span></summary><ul id="my-history-list" class="song-history"></ul></details><details id="played-history"><summary>今回の募集で歌唱済みの曲一覧<span id="played-count"></span></summary><ul id="played-list" class="song-history"></ul><p id="played-empty" class="small muted">まだ歌唱済みの曲はありません。</p></details></section><details class="request-notes"><summary>注意事項</summary><div class="note"><p>同じPococha名を入力すると、その名前の曲と履歴を表示します。同じ名前を知っている人も閲覧できます。未連携のリクエストは、送信に使ったブラウザーで修正できます。パスコードやLINEで管理しているリクエストの修正には、連携した方法でのログインが必要です。</p><p>えむぴーが分かる名前で、山P・それ以外を1曲ずつリクエストできます。途中参加もOK。</p><p>両方の枠をリクエストすると、次回の予約ができます。NEWS・修二と彰・亀と山Pも山P枠です。</p><p>本名・連絡先は入力しないでください。曲名・歌手名は公開され、入力候補にも使われます。</p><p>この配信ですでに歌った曲は次回配信に持ち越します。応募履歴は30日で削除し、入力候補は名前と切り離して保存します。</p></div></details>
+</details><section class="listener-history request-links" aria-label="リクエストと歌唱の確認"><details id="my-history" hidden><summary>自分のリクエスト<span id="my-history-count"></span></summary><ul id="my-history-list" class="song-history"></ul></details><details id="played-history"><summary>今回の募集で歌唱済みの曲一覧<span id="played-count"></span></summary><ul id="played-list" class="song-history"></ul><p id="played-empty" class="small muted">まだ歌唱済みの曲はありません。</p></details></section>
+<details id="playable-songs">
+  <summary>歌唱可能な曲リスト</summary>
+  <p id="playable-feedback" class="note" role="status" hidden></p>
+  <div id="playable-groups" hidden>
+    <section aria-labelledby="playable-yamapi-heading"><h3 id="playable-yamapi-heading">山Pの歌まね</h3><ul id="playable-yamapi" class="song-history"></ul><p id="playable-yamapi-empty" class="note" hidden>まだ曲がありません。</p></section>
+    <section aria-labelledby="playable-other-heading"><h3 id="playable-other-heading">それ以外の歌まね</h3><ul id="playable-other" class="song-history"></ul><p id="playable-other-empty" class="note" hidden>まだ曲がありません。</p></section>
+  </div>
+</details>
+<details class="request-notes"><summary>注意事項</summary><div class="note"><p>同じPococha名を入力すると、その名前の曲と履歴を表示します。同じ名前を知っている人も閲覧できます。未連携のリクエストは、送信に使ったブラウザーで修正できます。パスコードやLINEで管理しているリクエストの修正には、連携した方法でのログインが必要です。</p><p>えむぴーが分かる名前で、山P・それ以外を1曲ずつリクエストできます。途中参加もOK。</p><p>両方の枠をリクエストすると、次回の予約ができます。NEWS・修二と彰・亀と山Pも山P枠です。</p><p>本名・連絡先は入力しないでください。曲名・歌手名は公開され、入力候補にも使われます。</p><p>この配信ですでに歌った曲は次回配信に持ち越します。応募履歴は30日で削除し、入力候補は名前と切り離して保存します。</p></div></details>
 <details>
   <summary>バグ報告</summary>
   <p id="bug-report-login-note" class="note">報告を送るには、Pocochaの名前でログインしてください。</p>

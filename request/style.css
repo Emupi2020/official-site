@@ -71,7 +71,10 @@ body:has(.request-page) { background: #f2f2f7; }
 .song-history li{padding:14px 0;position:relative;overflow-wrap:anywhere;border-top:1px solid var(--border)}
 .history-song{font-size:16px;font-weight:500;line-height:1.5}
 .history-artist{font-size:13px;color:var(--muted);margin-top:3px}
-.history-status{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+.history-status{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:3px 12px;color:var(--muted);font-size:12px;margin-top:6px}
+.history-status time{margin-inline-start:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+#playable-groups h3{margin:8px 0;font-size:14px}
+#playable-groups section + section{margin-top:16px}
 
 .admin-main dialog{max-width:min(360px,calc(100vw - 40px));padding:24px;border:1px solid var(--border);border-radius:22px;background:var(--card);color:var(--text)}
 .admin-main dialog::backdrop{background:#0005;backdrop-filter:blur(3px)}

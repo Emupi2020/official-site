@@ -302,16 +302,74 @@ function feedback(slot, text, error = true) {
  box.hidden = !text;
  box.classList.toggle('error', error);
 }
-function historyRow(list,song,artist,status){const row=document.createElement('li'),title=document.createElement('div'),subtitle=document.createElement('div'),label=document.createElement('span');title.textContent=song;title.className='history-song';subtitle.textContent=artist;subtitle.className='history-artist';label.textContent=status;label.className='history-status';row.append(title,subtitle,label);list.append(row);}
+const japanDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Tokyo', dateStyle:'short'});
+function historyRow(list, song, artist, status, timestamp) {
+ const row = document.createElement('li');
+ const title = document.createElement('div');
+ title.className = 'history-song';
+ title.textContent = song;
+ const subtitle = document.createElement('div');
+ subtitle.className = 'history-artist';
+ subtitle.textContent = artist;
+ row.append(title, subtitle);
+ if (status || Number.isFinite(timestamp)) {
+  const meta = document.createElement('div');
+  meta.className = 'history-status';
+  if (status) {
+   const label = document.createElement('span');
+   label.textContent = status;
+   meta.append(label);
+  }
+  if (Number.isFinite(timestamp)) {
+   const date = document.createElement('time');
+   date.dateTime = japanDate.format(timestamp);
+   date.textContent = date.dateTime.replaceAll('-', '/');
+   meta.append(date);
+  }
+  row.append(meta);
+ }
+ list.append(row);
+}
 function renderHistory(myRequests){
  $('my-history').hidden=!myRequests.length;$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
  const labels={pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ保留',skipped:'見送り',removed:'取り下げ'};
- for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${entry.deferReason==='temporary'?'一時保留':labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`);
+ for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${entry.deferReason==='temporary'?'一時保留':labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt);
 }
 function renderPlayed(played) {
  $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
- for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}).format(entry.performedAt):'歌唱済み');
+ for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : '歌唱済み',entry.performedAt);
 }
+const playable = $('playable-songs');
+const songOrdering = new Intl.Collator('ja');
+let playableLoading = false;
+async function refreshPlayable() {
+ if (!playable.open || $('request-menu').hidden || document.hidden || playableLoading) return;
+ playableLoading = true;
+ const feedback = $('playable-feedback');
+ if ($('playable-groups').hidden) {
+  feedback.textContent = '読み込み中…';
+  feedback.hidden = false;
+ }
+ try {
+  const {songs} = await api('/api/repertoire');
+  songs.sort((a,b) => songOrdering.compare(a.artist,b.artist) || songOrdering.compare(a.song,b.song));
+  for (const category of ['yamapi','other']) {
+   const list = $(`playable-${category}`);
+   list.replaceChildren();
+   for (const song of songs.filter(song => song.category === category)) historyRow(list, song.song, song.artist);
+   $(`playable-${category}-empty`).hidden = Boolean(list.childElementCount);
+  }
+  $('playable-groups').hidden = false;
+  feedback.hidden = true;
+ } catch (error) {
+  feedback.textContent = error.message;
+  feedback.hidden = false;
+ } finally {
+  playableLoading = false;
+ }
+}
+playable.addEventListener('toggle', refreshPlayable);
+setInterval(refreshPlayable, 15000);
 const playedHistory = $('played-history');
 let publicReadVersion = 0, playedVersion = 0, playedLoading = false;
 async function readPublicState() {
