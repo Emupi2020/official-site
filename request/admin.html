@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=song-actions"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=song-actions"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=request-list"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=request-list"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header><a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a><span class="small muted">管理者専用</span></header>
 <main class="admin-main"><div id="message" class="message" role="status" hidden></div>
 <section id="login" class="card" hidden><h2>配信者ログイン</h2><form id="login-form"><label for="password">パスワード</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button id="login-submit" class="primary" type="submit">ログイン</button></form></section>
@@ -17,6 +17,8 @@
   <p id="undo-feedback" class="small muted" role="status" hidden></p>
 </section>
 <button id="open-roulette" class="primary launch-roulette">ルーレット</button>
+<section class="admin-request-list" aria-labelledby="request-list-heading">
+<h2 id="request-list-heading">募集済みリスト</h2>
 <details class="request-table-card" aria-labelledby="admin-yamapi-heading">
   <summary id="admin-yamapi-heading">山Pの歌まね</summary>
   <div class="table-scroll"><table class="request-table" aria-labelledby="admin-yamapi-heading">
@@ -38,6 +40,7 @@
     <tbody id="entries-processed"></tbody>
   </table></div>
 </details>
+</section>
 <details id="admin-bug-reports" class="manage">
   <summary>バグ報告</summary>
   <button id="refresh-bug-reports" type="button" class="text-button">更新</button>

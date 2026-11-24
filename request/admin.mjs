@@ -22,6 +22,59 @@ function undoFeedback(text, error = false) {
   feedback.hidden = !text;
   feedback.classList.toggle('danger', error);
 }
+const rowActions = node('div', '', 'request-row-menu');
+rowActions.id = 'request-row-menu';
+rowActions.setAttribute('popover', 'auto');
+rowActions.setAttribute('role', 'group');
+document.body.append(rowActions);
+let rowActionsTrigger;
+
+function requestActionsButton(entry) {
+  const trigger = node('button', '…', 'request-row-menu-trigger');
+  trigger.type = 'button';
+  trigger.disabled = busy;
+  trigger.setAttribute('aria-label', entry.song + 'の操作');
+  trigger.setAttribute('popovertarget', rowActions.id);
+  trigger.onclick = () => {
+    if (rowActions.matches(':popover-open')) {
+      if (rowActionsTrigger === trigger) return;
+      rowActions.hidePopover();
+    }
+    rowActionsTrigger = trigger;
+    ++refreshVersion;
+    rowActions.setAttribute('aria-label', entry.song + 'の操作');
+    rowActions.replaceChildren();
+    function addChoice(label, handler, className) {
+      const button = node('button', label, className);
+      button.type = 'button';
+      button.onclick = () => {
+        rowActions.hidePopover();
+        handler();
+      };
+      rowActions.append(button);
+    }
+    addChoice('修正', () => {
+      const name = prompt('Pocochaの名前', entry.name);
+      if (name === null) return;
+      const artist = prompt('歌手名', entry.artist);
+      if (artist === null) return;
+      const song = prompt('曲名', entry.song);
+      if (song !== null) action('edit', {id:entry.id, name, artist, song});
+    });
+    if (entry.status === 'pending') addChoice('次回へ', () => action('defer', {id:entry.id}));
+    if (entry.status !== 'removed') addChoice('削除', () => {
+      if (confirm('この応募を抽選対象から削除しますか？')) action('remove', {id:entry.id});
+    }, 'danger');
+    const bounds = trigger.getBoundingClientRect();
+    const roomBelow = window.innerHeight - bounds.bottom;
+    const openAbove = roomBelow < 44 * rowActions.children.length + 16 && bounds.top > roomBelow;
+    rowActions.style.right = Math.max(8, window.innerWidth - bounds.right) + 'px';
+    rowActions.style.top = openAbove ? 'auto' : bounds.bottom + 4 + 'px';
+    rowActions.style.bottom = openAbove ? window.innerHeight - bounds.top + 4 + 'px' : 'auto';
+  };
+  return trigger;
+}
+
 async function action(action, extra = {}) {
   if (busy) return;
   busy = true;
@@ -84,14 +137,7 @@ function render() {
     row.append(songCell,nameCell,statusCell,actionCell);
     const record=state.unknown?.[e.songKey];
     if(record){const reasons=record.reasons||{unknown:record.at};songCell.append(node('p',Object.entries(reasons).map(([reason,at])=>`${reason==='no_audio'?'音源なし':'知らない'} · ${new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(at)}`).join(' ／ '),'small muted'));}
-    const buttons=node('div','','buttons');
-    const edit=node('button','修正','secondary');edit.disabled=busy;edit.onclick=()=>{
-      const name=prompt('Pocochaの名前',e.name);if(name===null)return;
-      const artist=prompt('歌手名',e.artist);if(artist===null)return;
-      const song=prompt('曲名',e.song);if(song===null)return;action('edit',{id:e.id,name,artist,song});
-    };buttons.append(edit);
-    if(e.status==='pending'){const defer=node('button','次回へ','secondary');defer.disabled=busy;defer.onclick=()=>action('defer',{id:e.id});buttons.append(defer);}
-    if(e.status!=='removed'){const remove=node('button','削除','secondary danger');remove.disabled=busy;remove.onclick=()=>{if(confirm('この応募を抽選対象から削除しますか？'))action('remove',{id:e.id});};buttons.append(remove);}actionCell.append(buttons);
+    actionCell.append(requestActionsButton(e));
     const active = e.status === 'pending' || e.status === 'selected';
     const table = !active && processed ? processed : tables[categoryOf(e)];
     table.append(row);
@@ -222,4 +268,4 @@ $('undo').onclick=()=>action('undo');
 $('next-session').onclick=()=>{if(confirm('次回配信を開始しますか？歌唱履歴を区切り、保留していた応募を抽選に戻します。'))action('session');};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};
 try{await refresh();}catch(error){message(error.message,true);}
-setInterval(()=>{if(!document.hidden&&!busy)refresh().catch(error=>message(error.message,true));},10000);
+setInterval(()=>{if(!document.hidden&&!busy&&!rowActions.matches(':popover-open'))refresh().catch(error=>message(error.message,true));},10000);

@@ -293,3 +293,41 @@ body:has(.request-page) { background: #f2f2f7; }
   background: color-mix(in srgb, var(--muted) 15%, var(--bg));
   opacity: 1;
 }
+
+.admin-request-list { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+.admin-request-list > h2 { margin: 0 0 14px; font-size: 20px; }
+.request-table .request-row-menu-trigger {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 20px;
+}
+.request-row-menu {
+  position: fixed;
+  inset: auto;
+  width: min(144px, calc(100vw - 16px));
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 8px 24px #0003;
+}
+.request-row-menu button {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+.request-row-menu button:hover, .request-row-menu button:focus-visible { background: var(--soft); }
+.request-row-menu button.danger { color: var(--danger); }
