@@ -91,7 +91,6 @@ body:has(.request-page) { background: #f2f2f7; }
 .round-choice{display:flex;gap:8px;margin-top:24px}.round-choice button{flex:1;border-radius:12px;font-size:13px;padding:12px 8px}.round-choice button[aria-pressed=true]{background:var(--accent);color:white;border-color:var(--accent)}
 
 
-.request-page #request-overview { padding-block-start: 6px; }
 .admin-main .request-table-card + .request-table-card { margin-top: 16px; }
 .admin-main .launch-roulette { margin: 0 auto 20px; }
 .admin-main #current-song-details { overflow-wrap: anywhere; }
@@ -139,7 +138,7 @@ body:has(.request-page) { background: #f2f2f7; }
   border-radius: 16px;
   background: var(--card);
 }
-.request-page .listener-greeting { margin: 8px 0 10px; color: var(--muted); font-size: 15px; line-height: 1.4; font-weight: 400; overflow-wrap: anywhere; }
+.request-page .listener-greeting { margin: 0 0 10px; color: var(--muted); font-size: 15px; line-height: 1.4; font-weight: 400; overflow-wrap: anywhere; }
 .request-page #request-screen { --request-block-fill: #f5f5f7; }
 .request-overview-rows { display: grid; gap: 8px; margin-top: 10px; }
 .request-page .after-draw-note { margin: 16px 0 0; }
