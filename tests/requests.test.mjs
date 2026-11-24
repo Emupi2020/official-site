@@ -220,3 +220,25 @@ test('本人は抽選前に同じ枠の曲を変更でき、選択後に届い�
   assert.equal(after.entry.song, '指輪');
   assert.equal(after.entry.songEditable, false);
 });
+
+test('当選したリクエストを理由なしで次回配信へ持ち越し、戻せる', () => {
+ const s = state();
+ const winner = submit(s, input('A'), 'a');
+ submit(s, {...input('B','次の曲','歌手'),round:2}, 'b');
+ adminAction(s, {action:'draw'});
+ adminAction(s, {action:'defer', id:winner.id, selected:true});
+ assert.equal(winner.status, 'deferred');
+ assert.equal(winner.deferReason, 'manual');
+ assert.equal(s.round, 2);
+ assert.deepEqual(s.history, []);
+ assert.deepEqual(s.unknown, {});
+ adminAction(s, {action:'undo'});
+ assert.equal(s.current, winner.id);
+ assert.equal(winner.status, 'selected');
+ assert.equal(s.round, 1);
+ adminAction(s, {action:'defer', id:winner.id, selected:true});
+ adminAction(s, {action:'session'});
+ assert.equal(winner.status, 'pending');
+ assert.equal(winner.deferReason, null);
+ assert.ok(eligible(s).includes(winner));
+});

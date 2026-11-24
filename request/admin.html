@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/roulette-tabs.css"><script src="/config.js"></script><script type="module" src="/admin.mjs?roulette=tabs"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/roulette-tabs.css?result=actions"><script src="/config.js"></script><script type="module" src="/admin.mjs?roulette=result-actions"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header><a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a><span class="small muted">管理者専用</span></header>
 <main class="admin-main"><div id="message" class="message" role="status" hidden></div>
 <section id="login" class="card" hidden><h2>配信者ログイン</h2><form id="login-form"><label for="password">パスワード</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button id="login-submit" class="primary" type="submit">ログイン</button></form></section>
@@ -29,6 +29,11 @@
   <button type="button" value="yamapi" aria-pressed="true">山P</button>
   <button type="button" value="other" aria-pressed="false">それ以外</button>
 </div>
-<div class="wheel-wrap"><canvas id="wheel" width="800" height="800" role="img" aria-label="曲名ルーレット"></canvas><button id="draw" class="wheel-center" type="button" aria-label="回す"><span aria-hidden="true">P</span></button></div></div><div id="roulette-message" class="message" role="status" hidden></div><div id="result" class="winner-overlay" hidden aria-live="polite"><section class="winner-card" aria-label="抽選結果"><button id="dismiss-result" class="winner-dismiss" aria-label="抽選結果を閉じる">×</button><div id="result-song" class="result-song"></div><div id="result-artist" class="result-artist"></div></section></div></dialog>
+<div class="wheel-wrap"><canvas id="wheel" width="800" height="800" role="img" aria-label="曲名ルーレット"></canvas><button id="draw" class="wheel-center" type="button" aria-label="回す"><span aria-hidden="true">P</span></button></div></div><div id="roulette-message" class="message" role="status" hidden></div><div id="result" class="winner-overlay" hidden aria-live="polite"><section class="winner-card" aria-label="抽選結果"><button id="dismiss-result" class="winner-dismiss" aria-label="抽選結果を閉じる">×</button><div id="result-song" class="result-song"></div><div id="result-artist" class="result-artist"></div>
+  <div class="winner-actions buttons">
+    <button id="result-cant-sing" class="secondary" type="button">歌えない</button>
+    <button id="result-defer" class="secondary" type="button">次回歌う</button>
+  </div>
+</section></div></dialog>
 <dialog id="cant-sing-dialog" aria-labelledby="cant-sing-title"><form method="dialog"><h2 id="cant-sing-title">歌えない理由</h2><div class="reason-options"><button value="unknown">知らない</button><button value="no_audio">音源なし</button><button value="cancel" class="text-button">キャンセル</button></div></form></dialog>
 </main><footer>Emupi Official</footer></body></html>

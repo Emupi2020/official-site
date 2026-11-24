@@ -114,11 +114,27 @@ $('dismiss-result').onclick = () => {
   renderRoulette();
   $('draw').focus();
 };
-$('draw').onclick=()=>action('advance');$('cant-sing').onclick=async()=>{
-  const dialog=$('cant-sing-dialog');dialog.returnValue='';
-  const reason=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue),{once:true});dialog.showModal();});
-  if(['unknown','no_audio'].includes(reason))await action('cantSing',{reason});
-};$('undo').onclick=()=>action('undo');
+$('draw').onclick = () => action('advance');
+async function resolveWinner(operation, extra) {
+  await action(operation, extra);
+  if (!$('roulette-screen').open || !$('result').hidden) return;
+  const control = $('draw').disabled ? categoryTabs.find(tab => tab.value === drawCategory) : $('draw');
+  control.focus();
+}
+async function cantSing() {
+  const id = state.current;
+  const dialog = $('cant-sing-dialog');
+  dialog.returnValue = '';
+  const reason = await new Promise(resolve => {
+    dialog.addEventListener('close', () => resolve(dialog.returnValue), { once: true });
+    dialog.showModal();
+  });
+  if (['unknown', 'no_audio'].includes(reason)) await resolveWinner('cantSing', { id, reason });
+}
+$('cant-sing').onclick = cantSing;
+$('result-cant-sing').onclick = cantSing;
+$('result-defer').onclick = () => resolveWinner('defer', { id:state.current, selected:true });
+$('undo').onclick=()=>action('undo');
 $('next-session').onclick=()=>{if(confirm('次回配信を開始しますか？歌唱履歴を区切り、保留していた応募を抽選に戻します。'))action('session');};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};
 try{await refresh();}catch(error){message(error.message,true);}

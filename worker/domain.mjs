@@ -181,6 +181,7 @@ export function adminAction(state, input) {
       const reason = input.action === 'unknown' ? 'unknown' : input.reason;
       if (!['unknown', 'no_audio'].includes(reason)) throw new Problem('歌えない理由を選んでください。');
       if (current?.status !== 'selected') throw new Problem('抽選中の曲がありません。', 409);
+      if (input.id && current.id !== input.id) throw new Problem('当選曲が変わりました。確認してから操作してください。', 409);
       const key = current.songKey, previous = state.unknown[key] || null;
       const affected = state.entries.filter(e => e.songKey === key && ['pending', 'selected'].includes(e.status)).map(e => ({ id: e.id, status: e.status, deferReason: e.deferReason }));
       state.undo = { type: 'unknown', id: current.id, key, previous, hadHold: state.held.includes(key), affected };
@@ -219,6 +220,7 @@ export function adminAction(state, input) {
       const e = state.entries.find(e => e.id === u.id);
       if (u.type === 'draw') { if (e) e.status = state.sung.includes(e.songKey) ? 'deferred' : 'pending'; state.current = u.previous; }
       if (u.type === 'skip' && e) e.status = 'selected';
+      if (u.type === 'deferSelected' && e) { e.status = 'selected'; e.deferReason = u.previousReason; state.current = e.id; }
       if (u.type === 'done' && e) {
         e.status = 'selected';
         state.history = state.history.filter(item => item.id !== u.historyId);
@@ -248,8 +250,10 @@ export function adminAction(state, input) {
     }
     case 'defer': {
       const e = state.entries.find(e => e.id === input.id);
-      if (!e || e.status !== 'pending') throw new Problem('待機中の応募を選んでください。', 409);
-      e.status = 'deferred'; e.deferReason = 'manual'; state.undo = null; break;
+      const isSelected = e && e === current && e.status === 'selected';
+      if (input.selected ? !isSelected : e?.status !== 'pending') throw new Problem(input.selected ? '当選曲が変わりました。確認してから操作してください。' : '待機中の応募を選んでください。', 409);
+      state.undo = isSelected ? { type: 'deferSelected', id: e.id, previousReason: e.deferReason ?? null } : null;
+      e.status = 'deferred'; e.deferReason = 'manual'; break;
     }
     case 'remove': {
       const e = state.entries.find(e => e.id === input.id);
