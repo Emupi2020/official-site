@@ -5,6 +5,7 @@
 <div id="dashboard" hidden>
 <div class="row admin-top"><div><h1>リクエスト</h1><span id="round"></span> · <span id="status" class="status"></span><div class="small muted" id="counts"></div></div></div>
 <section class="request-table-card" aria-label="リクエスト一覧"><div class="table-scroll"><table class="request-table"><thead><tr><th scope="col">曲・歌手</th><th scope="col">名前</th><th scope="col">状況</th><th scope="col">操作</th></tr></thead><tbody id="entries"></tbody></table></div></section>
+<label for="draw-category" class="draw-category-label">抽選対象</label><select id="draw-category"><option value="all">両方の曲</option><option value="yamapi">山Pの曲だけ</option><option value="other">それ以外の曲だけ</option></select>
 <button id="open-roulette" class="primary launch-roulette">ルーレット</button>
 <section id="current-info" class="card" hidden><div id="selected-song" class="entry-title"></div><p id="result-name" class="small muted"></p></section>
 <div class="buttons admin-song-actions"><button id="cant-sing" class="secondary">歌えない</button><button id="undo" class="secondary">戻す</button></div>

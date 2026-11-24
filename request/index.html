@@ -3,6 +3,7 @@
 <div id="message" class="message" role="status" hidden></div>
 <section id="waiting" class="card" hidden><p>次のリクエスト受付をお待ちください。</p></section>
 <div class="round-choice" role="group" aria-label="リクエストする回"><button id="choose-current" type="button" class="secondary" aria-pressed="true">今の回</button><button id="choose-next" type="button" class="secondary" aria-pressed="false">次の回を予約</button></div>
+<div class="category-choice" role="group" aria-label="歌まねの種類"><button id="choose-yamapi" type="button" aria-pressed="true">山Pの歌まね</button><button id="choose-other" type="button" aria-pressed="false">それ以外の歌まね</button></div>
 <section id="form-card" class="card" hidden><form id="request-form">
 <div class="input-group">
 <div class="request-field"><label for="name">Pocochaの名前</label><input id="name" name="name" maxlength="50" autocomplete="nickname" required></div>
@@ -10,8 +11,8 @@
 <div class="request-field"><label for="song">曲名</label><div class="sug-wrap"><input id="song" name="song" maxlength="100" autocomplete="off" aria-controls="song-suggestions" aria-expanded="false" required><div id="song-suggestions" class="suggestions" hidden></div></div></div>
 </div>
 <button class="primary" id="submit" type="submit">リクエスト</button>
-<p class="note">各回1人1件。次の回まで予約できます。</p>
-<details><summary>注意事項</summary><div class="note"><p>Pocochaと同じ名前で、その回につき1人1件。途中参加もOK。今の回と次の回の両方にリクエストできます。</p><p>本名・連絡先は入力しないでください。</p><p>曲名・歌手名は公開され、今後の入力候補にも使われます。応募者名は配信者だけが確認できます。</p><p>この配信ですでに歌った曲は、次回配信に持ち越します。</p><p>応募履歴は30日で削除します。入力候補は名前と切り離して保存します。</p></div></details></form></section>
+<p class="note">山P・それ以外を1曲ずつ。次回の予約もできます。</p>
+<details><summary>注意事項</summary><div class="note"><p>Pocochaと同じ名前で、各回、山Pの歌まね・それ以外の歌まねを1人1曲ずつ。途中参加もOK。次回の予約もできます。NEWS・修二と彰・亀と山Pは山P枠です。</p><p>本名・連絡先は入力しないでください。</p><p>曲名・歌手名は公開され、今後の入力候補にも使われます。応募者名は配信者だけが確認できます。</p><p>この配信ですでに歌った曲は、次回配信に持ち越します。</p><p>応募履歴は30日で削除します。入力候補は名前と切り離して保存します。</p></div></details></form></section>
 <section id="receipt" class="card" hidden><div id="receipt-title" class="receipt-title">リクエストしました</div><div class="receipt-song" id="my-song"></div><p class="muted" id="my-artist"></p><p class="small" id="my-name"></p><p class="message" id="my-status"></p><button type="button" class="text-button" id="rename">名前を修正</button><form id="rename-form" hidden><label for="new-name">Pocochaの名前</label><input id="new-name" maxlength="50" required><button type="submit" class="primary">名前を保存</button></form></section>
 <p id="next-note" class="small muted" hidden>新しい回の受付が始まりました。上のフォームから応募できます。</p>
 <section class="listener-history" aria-label="リクエストと歌唱の確認"><details id="my-history" hidden><summary>自分のリクエスト<span id="my-history-count"></span></summary><ul id="my-history-list" class="song-history"></ul></details><details><summary>今回の歌唱済み<span id="played-count"></span></summary><ul id="played-list" class="song-history"></ul><p id="played-empty" class="small muted">まだ歌唱済みの曲はありません。</p></details></section>

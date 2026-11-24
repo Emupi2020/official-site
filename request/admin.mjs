@@ -1,15 +1,17 @@
+import { categoryOf, categoryLabel } from './categories.mjs';
 import { api, $, message } from './common.mjs';
 import { setWheel, spin, settle } from './wheel.mjs';
-let state, busy = false, dismissedResult = null;
+let state, busy = false, dismissedResult = null, drawCategory = 'all';
 const resultKey = entry => entry ? `${entry.id}:${entry.drawnAt}:${entry.status}` : null;
 function stageMessage(value){$('roulette-message').hidden=!value;$('roulette-message').textContent=value;}
 function node(tag, text, className) { const e=document.createElement(tag); e.textContent=text;if(className)e.className=className;return e; }
 async function action(action, extra={}) {
   if(busy)return;busy=true;lock(true);message('');stageMessage('');$('roulette-screen').classList.add('spinning');
-  try { await api('/api/admin',{method:'POST',data:{action,...extra}});await refresh(action==='draw'||action==='advance'); }
+  try { await api('/api/admin',{method:'POST',data:{action,...extra,...(['draw','advance'].includes(action)?{category:drawCategory}:{})}});await refresh(action==='draw'||action==='advance'); }
   catch(error){message(error.message,true);stageMessage(error.message);}finally{busy=false;$('roulette-screen').classList.remove('spinning');lock(false);render();if($('roulette-screen').open&&!$('result').hidden)$('dismiss-result').focus();}
 }
 function lock(value){for(const b of document.querySelectorAll('#dashboard button, #roulette-screen button'))b.disabled=value;}
+const inPool = entry => entry.status==='pending' && entry.round<=state.round && (drawCategory==='all'||categoryOf(entry)===drawCategory);
 function render() {
   if(!state)return;
   $('round').textContent=`第${state.round}回`;$('status').textContent='受付中';
@@ -18,7 +20,8 @@ function render() {
   $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件`;
   const current=state.entries.find(e=>e.id===state.current);
   $('draw').textContent=current?'次を回す':'回す';
-  $('draw').disabled=busy || (!pending && current?.status!=='selected');$('undo').disabled=busy||!state.undo;
+  const filtered=state.entries.filter(inPool).length;
+  $('draw').disabled=busy || (!filtered && current?.status!=='selected');$('undo').disabled=busy||!state.undo;
   $('cant-sing').disabled=busy||current?.status!=='selected';
   const wasResultHidden=$('result').hidden;
   $('result').hidden=!$('roulette-screen').open || current?.status!=='selected' || dismissedResult===resultKey(current);
@@ -29,11 +32,11 @@ function render() {
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
   if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん${current.status==='deferred'?' · 次回へ保留':''}`;}
   if(current?.status!=='selected')$('cant-sing-dialog').close('cancel');
-  if(!busy){const songs=state.entries.filter(e=>e.status==='pending'&&e.round<=state.round).map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
+  if(!busy){const songs=state.entries.filter(inPool).map(e=>e.song);if(current)settle(current.song,songs);else setWheel(songs);}
   const entries=$('entries');entries.replaceChildren();
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
-    songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'));
+    songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'),node('div',categoryLabel(categoryOf(e)),'small muted'));
     statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
     if(e.round>state.round)statusCell.prepend(node('div','予約','entry-status'));
     row.append(songCell,nameCell,statusCell,actionCell);
@@ -56,7 +59,7 @@ function render() {
 async function refresh(animate=false){
   try{
     const next=await api('/api/admin');$('login').hidden=true;$('dashboard').hidden=false;
-    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,next.entries.filter(e=>(e.status==='pending'&&e.round<=next.round)||e.id===current.id).map(e=>e.song));}}
+    if(animate){const current=next.entries.find(e=>e.id===next.current);if(current?.status==='selected'){$('result').hidden=true;await spin(current.song,next.entries.filter(e=>(e.status==='pending'&&e.round<=next.round&&(drawCategory==='all'||categoryOf(e)===drawCategory))||e.id===current.id).map(e=>e.song));}}
     state=next;render();
   }catch(error){if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;$('roulette-screen').close();state=null;}else throw error;}
 }
@@ -65,6 +68,7 @@ $('login-form').onsubmit=async event=>{
   try{await api('/auth/login',{method:'POST',data:{password:$('password').value}});$('password').value='';await refresh();}
   catch(error){message(error.message,true);}finally{$('login-submit').disabled=false;}
 };
+$('draw-category').onchange=event=>{drawCategory=event.target.value;render();};
 $('open-roulette').onclick=()=>{dismissedResult=null;$('roulette-screen').showModal();document.body.classList.add('roulette-open');render();($('result').hidden?$('draw'):$('dismiss-result')).focus();};
 $('close-roulette').onclick=()=>{if(!busy)$('roulette-screen').close();};
 $('roulette-screen').addEventListener('close',()=>{document.body.classList.remove('roulette-open');$('open-roulette').focus();});

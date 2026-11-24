@@ -92,3 +92,5 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-table .buttons button{white-space:nowrap}
 
 .round-choice{display:flex;gap:8px;margin-top:24px}.round-choice button{flex:1;border-radius:12px;font-size:13px;padding:12px 8px}.round-choice button[aria-pressed=true]{background:var(--accent);color:white;border-color:var(--accent)}
+
+.category-choice{display:flex;gap:8px;margin-top:12px}.category-choice button{flex:1;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:12px 8px;font-size:13px}.category-choice button[aria-pressed=true]{background:var(--soft);border-color:var(--accent);color:var(--accent)}.draw-category-label{max-width:360px;margin:24px auto 8px}#draw-category{display:block;width:min(100%,360px);margin:0 auto;min-height:48px;border:1px solid var(--border);border-radius:12px;padding:10px 14px;font:inherit;color:var(--text);background:var(--card)}
