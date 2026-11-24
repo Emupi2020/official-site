@@ -129,14 +129,14 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .request-top h1 { margin: 0; }
 .request-page .request-top h1 { font-size: clamp(20px, 6vw, 32px); }
 .request-page .request-top #request-logout { min-height: 44px; flex-shrink: 0; font-size: 14px; white-space: nowrap; }
-.request-page :is(.request-name, .request-block) {
+.request-page .request-block {
   margin: 12px 0 0;
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--card);
 }
-.request-page .request-name { margin-top: 20px; }
+.request-page .listener-greeting { margin: 20px 0 16px; font-size: 20px; font-weight: 650; overflow-wrap: anywhere; }
 .request-page #entry-screen {
   max-width: 384px;
   width: 100%;
@@ -199,19 +199,6 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .passcode-field { margin-top: 16px; }
 .request-page #passcode-feedback { margin: 8px 0 0; color: var(--danger); }
-.request-page .request-name .input-group {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 10px;
-}
-.request-page .request-name .input-group > .request-field { grid-column: 1 / -1; }
-.request-page .request-name .input-group:has(#edit-name:not([hidden])) > .request-field { grid-column: 1; }
-.request-page #name { min-width: 0; }
-.request-page #name:read-only:not(:focus) { text-overflow: ellipsis; }
-.request-page #name-actions { grid-column: 1 / -1; }
-.request-page #name-actions:has(#edit-name:not([hidden])) { grid-column: 2; grid-row: 1; }
-.request-page #name-feedback { grid-column: 1 / -1; }
 .request-page .request-block h2 {
   margin: 0 0 10px;
   font-size: 18px;

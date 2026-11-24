@@ -1,7 +1,7 @@
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
-let state, items=[], tokens, busy=false, nameEditing=false;
-let receipts = new Map(), myRequests = [], namedRequests = [], loadedName = '', lookupTimer, lookupVersion = 0;
+let state, items=[], tokens, busy=false;
+let receipts = new Map(), myRequests = [], namedRequests = [], loadedName = '', lookupVersion = 0;
 let account = { enabled: false, signedIn: false, entries: [], receipts: [] };
 let refreshVersion = 0;
 try { tokens=JSON.parse(safeGet('emupi-request-tokens')||'{}'); } catch { tokens={}; }
@@ -49,6 +49,10 @@ const entryTitle = $('entry-title');
 const welcomeTitle = entryTitle.textContent;
 const entryName = $('entry-name');
 const entryPasscode = $('entry-passcode');
+const nameSettings = $('listener-name-settings');
+const newName = $('new-name');
+const greeting = $('listener-greeting');
+const japanHour = new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Tokyo', hour:'2-digit', hourCycle:'h23'});
 const rememberedNameKey = 'emupi-request-last-name';
 entryName.value = $('name').value || safeGet(rememberedNameKey) || '';
 let entryMode = 'welcome', entryBusy = false;
@@ -65,6 +69,9 @@ const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMod
 function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
+ nameSettings.hidden = !open;
+ if (!open) nameSettings.open = false;
+ if (open) renderGreeting();
  if (focus) (open ? $('request-title') : entryTitle).focus();
 }
 const hasSavedName = Boolean($('name').value.trim());
@@ -199,7 +206,7 @@ entryForm.onsubmit = async event => {
  if (nameOnly) {
   await refreshNameRequests(true);
  } else {
-  try { await refresh(); } catch (error) { message(error.message, true); }
+  try { await refresh({useAccountName:true}); } catch (error) { message(error.message, true); }
  }
 };
 window.addEventListener('popstate', event => {
@@ -212,12 +219,12 @@ window.addEventListener('popstate', event => {
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
  const fields = [field(slot, 'artist'), field(slot, 'song')];
- if (!slot.editing) fields.push($('name'));
- return !!state && !busy && !nameEditing && fields.every(input => input.value.trim() && input.validity.valid);
+ return !!state && !busy && (slot.editing || lookupName()) && fields.every(input => input.value.trim() && input.validity.valid);
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #edit-name, #cancel-name, #line-link, #request-logout')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout')) button.disabled = busy;
+ newName.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
 function feedback(slot, text, error = true) {
@@ -260,7 +267,7 @@ async function refreshPlayed() {
 playedHistory?.addEventListener('toggle', refreshPlayed);
 document.addEventListener('visibilitychange', refreshPlayed);
 setInterval(refreshPlayed, 3000);
-async function refresh(){
+async function refresh({useAccountName = false} = {}){
  const version = ++refreshVersion;
  const [next, nextAccount] = await Promise.all([readPublicState(), api('/api/listener-account')]);
  const keys=[...new Set(slots.map(slot=>{const round=next.round+Number(slot.reserved);return tokens[`${round}:${slot.category}`]||tokens[round];}).filter(Boolean))];
@@ -272,9 +279,11 @@ async function refresh(){
  if (version !== refreshVersion) return;
  receipts = new Map(owned);
  myRequests = history.entries;
- if (!account.signedIn && nextAccount.signedIn && nextAccount.name && !nameEditing) {
-  $('name').value = nextAccount.name;
-  safeSet('emupi-request-name', nextAccount.name);
+ if (!account.signedIn && nextAccount.signedIn && nextAccount.name) {
+  if (useAccountName || !lookupName()) {
+   $('name').value = nextAccount.name;
+   safeSet('emupi-request-name', nextAccount.name);
+  }
   window.history.replaceState({requestScreen:true}, '');
   showRequestScreen(true);
  }
@@ -284,21 +293,28 @@ async function refresh(){
  await refreshNameRequests();
 }
 function lookupName() {
- return (nameEditing ? nameBeforeEdit : $('name').value).normalize('NFKC').trim();
+ return $('name').value.normalize('NFKC').trim();
+}
+function renderGreeting() {
+ const name = lookupName();
+ const hour = Number(japanHour.format(new Date()));
+ const salutation = hour < 5 || hour >= 18 ? 'こんばんは' : hour < 11 ? 'おはようございます' : 'こんにちは';
+ const text = name ? `${salutation}、${name}さん` : '';
+ if (greeting.textContent !== text) greeting.textContent = text;
 }
 async function refreshNameRequests(reportError = false) {
  const name = lookupName();
  const version = ++lookupVersion;
- if (!name || nameEditing) return;
+ if (!name) return;
  try {
   const {entries} = await api('/api/requests-by-name', {method:'POST', data:{name}});
   if (version !== lookupVersion || name !== lookupName()) return;
   loadedName = name;
   namedRequests = entries;
-  if (entries.length && !nameEditing) safeSet('emupi-request-name', name);
+  if (entries.length) safeSet('emupi-request-name', name);
   if (state) renderRequests();
  } catch (error) {
-  if (reportError && version === lookupVersion && name === lookupName() && !nameEditing) nameFeedback(error.message, true);
+  if (reportError && version === lookupVersion && name === lookupName()) message(error.message, true);
  }
 }
 function renderRequests() {
@@ -318,7 +334,8 @@ function renderRequests() {
   if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'予約済み':mine.status==='pending'?'抽選待ち':mine.status==='done'?'歌唱済み':(mine.deferReason==='temporary'?'一時保留中です。':statusText[mine.status]);part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
- renderNameControls();
+ renderGreeting();
+ lock(busy);
  const history = new Map([...restored, ...myRequests, ...account.entries].map(entry => [entry.id, entry]));
  renderHistory([...history.values()].sort((a, b) => a.createdAt - b.createdAt));
  renderAccount();
@@ -329,6 +346,7 @@ function renderEntryOptions() {
 }
 function renderAccount() {
  renderEntryOptions();
+ $('name-login-help').hidden = account.method !== 'passcode';
  $('manage-passcode').hidden = !account.passcodeEnabled || account.signedIn;
  $('manage-passcode-login').hidden = !account.passcodeEnabled || account.signedIn;
  $('line-start').hidden = !account.enabled || account.signedIn;
@@ -382,62 +400,50 @@ function setSongActions(slot, editing) {
  save.classList.toggle('text-button', editing);
  save.classList.toggle('edit-save', editing);
 }
-function renderNameControls() {
- const hasEditable = slots.some(slot => slot.entry?.editable);
- if (!hasEditable && nameEditing) {
-  $('name').value = nameBeforeEdit;
-  nameEditing = false;
- }
- $('name').readOnly = hasEditable && !nameEditing;
- $('name-actions').hidden = !hasEditable;
- $('edit-name').hidden = nameEditing;
- $('cancel-name').hidden = !nameEditing;
- $('save-name').hidden = !nameEditing;
- lock(busy);
-}
-let nameBeforeEdit;
 function nameFeedback(text, error = false) {
  const node = $('name-feedback');
  node.hidden = !text;
  node.textContent = text;
- node.classList.toggle('error', error);
+ node.classList.toggle('danger', error);
 }
-$('edit-name').onclick = () => {
- nameBeforeEdit = $('name').value;
- nameEditing = true;
+const nameSummary = nameSettings.querySelector('summary');
+nameSummary.addEventListener('click', () => {
+ if (nameSettings.open) return;
+ newName.value = lookupName();
  nameFeedback('');
- renderNameControls();
- $('name').focus();
- $('name').select();
-};
+});
 $('cancel-name').onclick = () => {
- $('name').value = nameBeforeEdit;
- nameEditing = false;
- renderDuplicateSlots();
- renderNameControls();
- $('edit-name').focus();
+ nameSettings.open = false;
+ nameSummary.focus();
 };
+newName.addEventListener('input', () => nameFeedback(''));
 $('name-form').onsubmit = async event => {
  event.preventDefault();
+ const name = newName.value.normalize('NFKC').trim();
+ if (busy || $('request-screen').hidden || !name || name === lookupName()) return;
  const editable = slots.filter(slot => slot.entry?.editable);
  const ownedTokens = editable.map(slot => slot.token).filter(Boolean);
- if (busy || !nameEditing || !editable.length) return;
  lock(true);
  nameFeedback('');
  try {
-  const name = $('name').value;
-  await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, account: editable.some(slot => !slot.token), name}});
-  $('name').value = name.normalize('NFKC').trim();
-  safeSet('emupi-request-name', $('name').value);
-  nameEditing = false;
-  renderNameControls();
-  await refresh();
-  nameFeedback('名前を修正しました。');
+  if (await requiresPasscode(name)) {
+   nameFeedback('この名前にはパスコードが設定されています。別の名前を入力してください。', true);
+   return;
+  }
+  if (editable.length) {
+   await api('/api/mine', {method: 'PATCH', data: {action: 'renameAll', tokens: ownedTokens, account: editable.some(slot => !slot.token), name}});
+  }
+  $('name').value = newName.value = name;
+  safeSet('emupi-request-name', name);
+  safeSet(rememberedNameKey, name);
+  renderGreeting();
+  if (state) renderRequests();
+  nameFeedback('名前を変更しました。');
+  try { await refresh(); } catch (error) { message(error.message, true); }
  } catch (error) {
   nameFeedback(error.message, true);
  } finally {
   lock(false);
-  if (!nameEditing) $('edit-name').focus();
  }
 };
 for(const slot of slots){
@@ -459,7 +465,6 @@ for(const slot of slots){
   event.preventDefault();
   if (!canSubmit(slot)) return;
   const editing = slot.editing;
-  if (!editing && !$('name').reportValidity()) return;
   lock(true);
   feedback(slot, '');
   message('');
@@ -555,15 +560,6 @@ for(const slot of slots){
   }
   input.oninput=()=>{slot.draftRound??=slot.round;suggest(slot,kind);lock(busy);};input.onfocus=()=>hideSuggestions(input);input.onkeydown=event=>{const buttons=[...field(slot,`${kind}-suggestions`).querySelectorAll('button')];if(event.key==='ArrowDown'&&buttons.length){event.preventDefault();buttons[0].focus();}if(event.key==='Escape')hideSuggestions();};}
 }
-$('name').addEventListener('input', () => {
- if (nameEditing) return;
- nameFeedback('');
- clearTimeout(lookupTimer);
- ++lookupVersion;
- if (state) renderRequests();
- lock(busy);
- if (lookupName()) lookupTimer = setTimeout(() => refreshNameRequests(true), 350);
-});
 async function accountAction(path, data, notice) {
  if (busy) return;
  lock(true);
@@ -589,8 +585,6 @@ $('request-logout').onclick = async () => {
   await api('/auth/line/logout', {method:'POST', data:{}});
   const lastName = lookupName();
   ++lookupVersion;
-  clearTimeout(lookupTimer);
-  nameEditing = false;
   $('name').value = '';
   entryName.value = lastName;
   safeSet(rememberedNameKey, lastName);
@@ -616,9 +610,10 @@ $('request-logout').onclick = async () => {
  }
 };
 const pageUrl = new URL(location.href);
+const lineConnected = pageUrl.searchParams.get('line') === 'connected';
 if (pageUrl.searchParams.has('line')) {
  $('account-settings').open = true;
- const notice = pageUrl.searchParams.get('line') === 'connected' ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
+ const notice = lineConnected ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
  $('line-feedback').textContent = notice;
  $('entry-line-feedback').textContent = notice;
  $('entry-line-feedback').hidden = false;
@@ -628,7 +623,7 @@ if (pageUrl.searchParams.has('line')) {
 lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try {
- await refresh();
+ await refresh({useAccountName:lineConnected});
  if (hasSavedName) {
   const name = lookupName();
   const needsPasscode = !account.signedIn && await requiresPasscode(name);
