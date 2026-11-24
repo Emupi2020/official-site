@@ -104,6 +104,17 @@ body:has(.request-page) { background: #f2f2f7; }
   background: var(--card);
 }
 .request-page .request-name { margin-top: 20px; }
+.request-page #entry-form { margin-top: 20px; }
+.request-page .entry-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 14px;
+}
+.request-page #entry-line-feedback { margin-top: 12px; }
 .request-page .request-name .input-group {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

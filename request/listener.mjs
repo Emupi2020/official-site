@@ -35,6 +35,40 @@ const slots=[...document.querySelectorAll('.request-slot')].map(root=>({root,id:
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 $('name').value=safeGet('emupi-request-name')||'';
+const entryForm = $('entry-form');
+const entryName = $('entry-name');
+function showRequestScreen(open, focus = false) {
+ $('entry-screen').hidden = open;
+ $('request-screen').hidden = !open;
+ if (focus) (open ? $('request-title') : entryName).focus();
+}
+const hasSavedName = Boolean($('name').value.trim());
+showRequestScreen(hasSavedName);
+window.history.replaceState({requestScreen:hasSavedName}, '');
+function updateEntryButton() { $('enter-request').disabled = !entryName.value.trim(); }
+entryName.addEventListener('input', updateEntryButton);
+entryName.addEventListener('change', updateEntryButton);
+window.addEventListener('pageshow', updateEntryButton);
+updateEntryButton();
+entryForm.onsubmit = event => {
+ event.preventDefault();
+ const name = entryName.value.normalize('NFKC').trim();
+ if (!name) return;
+ $('name').value = name;
+ safeSet('emupi-request-name', name);
+ window.history.pushState({requestScreen:true}, '');
+ showRequestScreen(true, true);
+ if (state) renderRequests();
+ void refreshNameRequests(true);
+};
+window.addEventListener('popstate', event => {
+ if (typeof event.state?.requestScreen !== 'boolean') return;
+ if (!event.state.requestScreen) {
+  entryName.value = lookupName();
+  updateEntryButton();
+ }
+ showRequestScreen(event.state.requestScreen, true);
+});
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
  const fields = [field(slot, 'artist'), field(slot, 'song')];
@@ -78,6 +112,8 @@ async function refresh(){
  if (!account.signedIn && nextAccount.signedIn && nextAccount.name && !nameEditing) {
   $('name').value = nextAccount.name;
   safeSet('emupi-request-name', nextAccount.name);
+  window.history.replaceState({requestScreen:true}, '');
+  showRequestScreen(true);
  }
  account = nextAccount;
  state=next;
@@ -125,6 +161,7 @@ function renderRequests() {
  renderAccount();
 }
 function renderAccount() {
+ $('entry-line').hidden = !account.enabled || account.signedIn;
  $('listener-account').hidden = !account.enabled;
  if (account.enabled) $('my-history').hidden = false;
  $('line-start').hidden = account.signedIn;
@@ -377,9 +414,12 @@ $('line-logout').onclick = () => accountAction('/auth/line/logout', {}, () => '�
 const pageUrl = new URL(location.href);
 if (pageUrl.searchParams.has('line')) {
  $('my-history').open = true;
- $('line-feedback').textContent = pageUrl.searchParams.get('line') === 'connected' ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
+ const notice = pageUrl.searchParams.get('line') === 'connected' ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
+ $('line-feedback').textContent = notice;
+ $('entry-line-feedback').textContent = notice;
+ $('entry-line-feedback').hidden = false;
  pageUrl.searchParams.delete('line');
- window.history.replaceState(null, '', pageUrl);
+ window.history.replaceState(window.history.state, '', pageUrl);
 }
 lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
