@@ -86,7 +86,7 @@ function renderUserCurrentRequests() {
 }
 const reservation = $('next-reservation');
 let activeSlot = null;
-const requestStatusLabels = {pending:'抽選待ち', selected:'当選', done:'歌唱済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
+const requestStatusLabels = {pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
 function requestStatusLabel(entry, reserved = false) {
  if (reserved && entry.status === 'pending') return '予約済み';
  if (entry.status === 'deferred' && entry.deferReason === 'temporary') return '一時保留';
