@@ -146,11 +146,12 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .after-draw-message { color: var(--text); font-size: 18px; font-weight: 600; line-height: 1.4; text-align: center; }
 .request-page .after-draw-note p:not(.after-draw-message) { margin-top: 4px; }
 .request-page .slot-overview-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 52px;
+  min-height: 60px;
   padding: 10px 0;
   border: 0;
   border-radius: 0;
@@ -160,7 +161,8 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .slot-overview-row + .slot-overview-row { border-top: 1px solid var(--border); }
 .request-page .slot-overview-row:hover { background: color-mix(in srgb, var(--text) 3%, transparent); filter: none; }
-.slot-overview-info { min-width: 0; }
+.slot-overview-art { display: block; width: 48px; height: 48px; object-fit: contain; }
+.slot-overview-info { min-width: 0; overflow-wrap: anywhere; }
 .slot-overview-song { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
 .slot-overview-end { display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: var(--muted); font-size: 13px; }
 .slot-overview-row.is-empty .slot-overview-end { color: var(--accent); }
