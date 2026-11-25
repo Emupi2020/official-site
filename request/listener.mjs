@@ -648,16 +648,9 @@ function stopEditing(slot) {
  form.reset();
  form.hidden = !!slot.entry;
  part(slot, '.slot-receipt').hidden = !slot.entry;
- setSongActions(slot, false);
  part(slot, '.slot-submit').textContent = slot.reserved ? '予約する' : 'リクエスト';
  part(slot, '.slot-cancel').hidden = true;
  hideSuggestions();
-}
-function setSongActions(slot, editing) {
- const actions = part(slot, '.slot-actions');
- const container = part(slot, editing ? '.input-group' : '.slot-form');
- container.append(actions);
- actions.classList.toggle('edit-actions', editing);
 }
 function nameFeedback(text, error = false) {
  const node = $('name-feedback');
@@ -789,7 +782,6 @@ for(const slot of slots){
   const form = part(slot, '.slot-form');
   form.hidden = false;
   part(slot, '.slot-receipt').hidden = true;
-  setSongActions(slot, true);
   part(slot, '.slot-submit').textContent = '変更する';
   part(slot, '.slot-cancel').hidden = false;
   feedback(slot, '');

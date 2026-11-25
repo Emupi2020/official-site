@@ -230,7 +230,6 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page #request-detail .suggestions { position: static; margin-block: 4px 8px; box-shadow: none; }
 .request-page #request-detail .slot-receipt { padding-block: 12px; }
-.request-page #request-detail .slot-actions:not(.edit-actions) > .primary { width: 100%; margin-top: 10px; border-radius: 999px; }
 .request-page #entry-screen {
   max-width: 384px;
   width: 100%;
@@ -338,7 +337,7 @@ body:has(.request-page) { background: #f2f2f7; }
   gap: 4px 16px;
 }
 .request-page .edit-actions .text-button { min-height: 44px; }
-.request-page #request-detail .slot-actions.edit-actions {
+.request-page #request-detail .slot-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   justify-content: stretch;
@@ -346,26 +345,19 @@ body:has(.request-page) { background: #f2f2f7; }
   gap: 4px;
   margin-top: 4px;
 }
-.request-page #request-detail .slot-actions.edit-actions .slot-submit {
+.request-page #request-detail .slot-actions .slot-submit {
   width: 100%;
   min-height: 48px;
+  margin-top: 0;
   border-radius: 10px;
 }
-.request-page #request-detail .slot-actions.edit-actions .slot-cancel {
+.request-page #request-detail .slot-actions .slot-cancel {
+  min-height: 44px;
   font-size: 14px;
   text-decoration: underline;
 }
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
 .request-page .edit-feedback.error { color: var(--danger, #a72b2b); }
-.request-page .slot-actions:not(.edit-actions) { display: flex; justify-content: flex-end; }
-.request-page .slot-actions:not(.edit-actions) > .primary {
-  width: auto;
-  min-height: 44px;
-  margin: 6px 0 0;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-}
 
 .request-page .slot-receipt .slot-artist { margin: 3px 0 0; font-size: 14px; overflow-wrap: anywhere; }
 .request-page .slot-receipt-footer {
@@ -386,7 +378,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .slot-duplicate.has-error .duplicate-label { color: var(--danger); }
 .request-page .slot-duplicate .duplicate-error { margin: 4px 0 0; }
 .request-page .slot-submit:disabled { opacity: .45; cursor: default; }
-.request-page .slot-actions:not(.edit-actions) > .slot-submit:disabled {
+.request-page .slot-actions > .slot-submit:disabled {
   color: var(--muted);
   background: color-mix(in srgb, var(--muted) 15%, var(--bg));
   opacity: 1;
