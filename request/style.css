@@ -362,15 +362,12 @@ body:has(.request-page) { background: #f2f2f7; }
 
 .request-page .slot-receipt .slot-artist { margin: 3px 0 0; font-size: 14px; overflow-wrap: anywhere; }
 .request-page .slot-receipt-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  flex-wrap: wrap;
-  min-height: 40px;
+  display: grid;
+  justify-items: start;
+  gap: var(--form-action-spacing);
   margin-top: 3px;
 }
-.request-page .slot-receipt-footer .edit-actions { margin-left: auto; }
+.request-page .slot-receipt-footer .slot-edit { padding-inline: 0; font-size: 14px; }
 .request-page .slot-receipt .slot-status { margin: 0; color: var(--muted); font-size: 13px; }
 .request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--muted); font-size: 14px; }
 .request-page .slot-duplicate {
