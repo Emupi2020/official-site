@@ -768,7 +768,7 @@ $('request-logout').onclick = async () => {
  lock(true);
  try {
   await api('/auth/line/logout', {method:'POST', data:{}});
-  if (!$('request-menu').hidden) $('request-menu-toggle').click();
+  if (!$('request-menu').inert) $('request-menu-toggle').click();
   const lastName = lookupName();
   ++lookupVersion;
   $('name').value = '';
