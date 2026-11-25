@@ -51,6 +51,39 @@ const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 const currentSlots = slots.filter(slot => !slot.reserved);
 const reservationSlots = slots.filter(slot => slot.reserved);
+const userCurrentList = $('user-current-list');
+const userCurrentRows = currentSlots.map(slot => {
+ const row = slot.overview.cloneNode(true);
+ row.removeAttribute('id');
+ row.classList.remove('is-empty');
+ row.hidden = true;
+ userCurrentList.append(row);
+ row.onclick = () => {
+  if (busy) return;
+  closeMenu();
+  const method = activeSlot || activeMenuPage ? 'replaceState' : 'pushState';
+  window.history[method]({requestScreen:true, currentSlot:slot.id}, '');
+  showMenuPage(null);
+  showSlot(slot.id, true);
+ };
+ return {slot, row};
+});
+function renderUserCurrentRequests() {
+ let count = 0;
+ for (const {slot, row} of userCurrentRows) {
+  const entry = slot.entry;
+  row.hidden = !entry || !['pending', 'selected'].includes(entry.status);
+  if (row.hidden) continue;
+  count++;
+  row.querySelector('strong').textContent = entry.song;
+  const artist = row.querySelector('.slot-overview-song');
+  artist.textContent = entry.artist;
+  artist.hidden = !entry.artist;
+  row.querySelector('.slot-overview-status').textContent = overviewStatus[entry.status];
+ }
+ userCurrentList.hidden = count === 0;
+ $('user-current-empty').hidden = count !== 0;
+}
 const reservation = $('next-reservation');
 let activeSlot = null;
 const overviewStatus = {pending:'抽選待ち', selected:'当選', done:'歌唱済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
@@ -559,6 +592,7 @@ function renderRequests() {
   if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-status').textContent=slot.reserved&&mine.status==='pending'?'予約済み':mine.status==='pending'?'抽選待ち':mine.status==='done'?'歌唱済み':(mine.deferReason==='temporary'?'一時保留中です。':statusText[mine.status]);part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
+ renderUserCurrentRequests();
  renderGreeting();
  lock(busy);
  const archived = archive?.owner === historyOwner() ? archive.entries : [];

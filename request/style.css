@@ -145,7 +145,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .after-draw-note p { margin: 0; }
 .request-page .after-draw-message { color: var(--text); font-size: 18px; font-weight: 600; line-height: 1.4; text-align: center; }
 .request-page .after-draw-note p:not(.after-draw-message) { margin-top: 4px; }
-.request-page .slot-overview-row {
+:is(.request-page, .user-current-requests) .slot-overview-row {
   display: grid;
   position: relative;
   grid-template-columns: 76px minmax(0, 1fr) auto;
@@ -160,13 +160,13 @@ body:has(.request-page) { background: #f2f2f7; }
   color: var(--text);
   text-align: start;
 }
-.request-page .slot-overview-row + .slot-overview-row::before {
+:is(.request-page, .user-current-requests) .slot-overview-row:not([hidden]) ~ .slot-overview-row:not([hidden])::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 83px;
   border-top: 1px solid var(--border);
 }
-.request-page .slot-overview-row:hover { background: color-mix(in srgb, var(--text) 3%, transparent); filter: none; }
+:is(.request-page, .user-current-requests) .slot-overview-row:hover { background: color-mix(in srgb, var(--text) 3%, transparent); filter: none; }
 .slot-overview-art { display: block; width: 76px; height: 76px; object-fit: contain; clip-path: inset(8% 7% round 5px); }
 .slot-overview-info { min-width: 0; overflow-wrap: anywhere; }
 .slot-overview-song { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }

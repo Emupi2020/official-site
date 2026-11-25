@@ -113,13 +113,13 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
   opacity: 1;
   transform: translateY(0);
 }
-.request-menu:not([inert]) .request-menu-link:nth-child(1 of :not([hidden])) { transition-delay: 0.1s; }
-.request-menu:not([inert]) .request-menu-link:nth-child(2 of :not([hidden])) { transition-delay: 0.15s; }
-.request-menu:not([inert]) .request-menu-link:nth-child(3 of :not([hidden])) { transition-delay: 0.2s; }
-.request-menu:not([inert]) .request-menu-link:nth-child(4 of :not([hidden])) { transition-delay: 0.25s; }
-.request-menu:not([inert]) .request-menu-link:nth-child(5 of :not([hidden])) { transition-delay: 0.3s; }
-.request-menu:not([inert]) .request-menu-link:nth-child(6 of :not([hidden])) { transition-delay: 0.35s; }
-.request-menu:not([inert]) .request-menu-link:nth-child(7 of :not([hidden])) { transition-delay: 0.4s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(1 of .request-menu-link:not([hidden])) { transition-delay: 0.1s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(2 of .request-menu-link:not([hidden])) { transition-delay: 0.15s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(3 of .request-menu-link:not([hidden])) { transition-delay: 0.2s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(4 of .request-menu-link:not([hidden])) { transition-delay: 0.25s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(5 of .request-menu-link:not([hidden])) { transition-delay: 0.3s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(6 of .request-menu-link:not([hidden])) { transition-delay: 0.35s; }
+.request-menu:not([inert]) .request-menu-link:nth-child(7 of .request-menu-link:not([hidden])) { transition-delay: 0.4s; }
 @media (prefers-reduced-motion: reduce) {
   .request-menu, .request-menu:not([inert]) .request-menu-link, .request-menu-link { transition: none; }
 }
@@ -203,3 +203,8 @@ html:has(.listener-layout #request-screen[hidden]),
     .request-page { padding-block: 4px 10px; }
   }
 }
+
+.user-current-requests { margin: 12px 0 20px; }
+.user-current-requests h2 { margin: 0; font-size: 22px; }
+.user-current-requests .note { margin: 10px 0 0; }
+.user-current-requests .request-overview-rows { margin-top: 6px; }
