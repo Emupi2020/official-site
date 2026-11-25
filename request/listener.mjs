@@ -1,3 +1,4 @@
+import { closeMenu } from './site-menu.mjs?layout=user-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
 let state, items=[], tokens, busy=false;
@@ -136,6 +137,7 @@ function showRequestScreen(open, focus = false) {
  $('request-screen').hidden = !open;
  for (const {button} of menuPages) if (button.hasAttribute('data-login-required')) button.hidden = !open;
  $('request-logout').hidden = !open;
+ $('user-menu-toggle').hidden = !open;
  if (!open) {
   showMenuPage(null);
   showSlot(null);
@@ -306,7 +308,7 @@ function showMenuPage(id, focus = false) {
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
-  $('request-menu-toggle').click();
+  closeMenu();
   if (activeMenuPage?.panel === panel) { menuPageTitle.focus(); return; }
   const next = {...window.history.state, menuPage:panel.id};
   if (activeMenuPage) window.history.replaceState(next, '');
@@ -315,7 +317,7 @@ for (const {button,panel} of menuPages) {
  };
 }
 $('request-menu-top').onclick = () => {
- $('request-menu-toggle').click();
+ closeMenu();
  const loggedIn = !$('request-screen').hidden;
  const focusTop = () => {
   window.scrollTo(0, 0);
@@ -768,7 +770,7 @@ $('request-logout').onclick = async () => {
  lock(true);
  try {
   await api('/auth/line/logout', {method:'POST', data:{}});
-  if (!$('request-menu').inert) $('request-menu-toggle').click();
+  closeMenu();
   const lastName = lookupName();
   ++lookupVersion;
   $('name').value = '';

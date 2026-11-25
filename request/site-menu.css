@@ -55,8 +55,9 @@ body.listener-layout {
   border-bottom-color: var(--border);
 }
 .listener-nav .nav-icon-container:hover { text-decoration: none; }
-.listener-nav #request-menu-toggle {
-  margin-left: auto;
+.listener-nav #user-menu-toggle,
+.listener-nav #user-menu-toggle[hidden] + #request-menu-toggle { margin-left: auto; }
+.listener-nav .menu-toggle {
   padding: 0;
   min-height: 44px;
   border-radius: 0;
