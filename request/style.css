@@ -181,7 +181,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-overview-chevron { width: 7px; height: 7px; margin-inline: 2px; border-block-start: 1.5px solid currentColor; border-inline-end: 1.5px solid currentColor; transform: rotate(45deg); }
 .slot-overview-end { --row-chevron: #c7c7cc; }
 .slot-overview-end .slot-overview-chevron { color: var(--row-chevron); border-width: 2px; }
-#request-overview .slot-overview-row.is-empty .slot-overview-status { color: var(--muted); font-size: 12px; }
+#request-overview .slot-overview-row.is-empty .slot-overview-status:not([data-status-tag]) { color: var(--muted); font-size: 12px; }
 .request-page:has(#menu-page:not([hidden])) > :is(#entry-screen, #request-screen) { display: none; }
 .request-page #menu-page-title { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
 .request-page #menu-page-title:focus { outline: none; }
@@ -373,7 +373,7 @@ body:has(.request-page) { background: #f2f2f7; }
   margin-top: var(--form-action-spacing);
 }
 .request-page .slot-receipt-footer .slot-edit { padding-inline: 0; font-size: 14px; }
-.request-page .slot-receipt .slot-status { margin: 0; color: var(--muted); font-size: 13px; text-align: end; }
+.request-page .slot-receipt .slot-status { margin: 0; }
 .request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--muted); font-size: 14px; }
 .request-page .slot-duplicate {
   margin-bottom: 8px;
@@ -464,3 +464,23 @@ body:has(.request-page) { background: #f2f2f7; }
 .admin-menu-panel .card h2 { margin: 0 0 8px; font-size: 16px; }
 .admin-menu-panel .entry { overflow-wrap: anywhere; }
 .admin-menu-panel .entry button { flex: 0 0 auto; }
+
+[data-status-tag] {
+  display: inline-block;
+  max-inline-size: 12ch;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f0f0f3;
+  color: #515158;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+[data-status-tag="pending"], [data-status-tag="submitted"] { background: #e9f2ff; color: #174c83; }
+[data-status-tag="reserved"] { background: #f0eafb; color: #62428d; }
+[data-status-tag="selected"], [data-status-tag="done"] { background: #e4f4eb; color: #206744; }
+[data-status-tag="deferred"], [data-status-tag="temporary"] { background: #fff0d5; color: #774613; }
+[data-status-tag="removed"] { background: #fbe8e7; color: #8d3235; }
+.history-tag { margin-block-start: 4px; }

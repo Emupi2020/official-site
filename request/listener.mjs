@@ -97,18 +97,22 @@ function renderUserCurrentRequests() {
   const artist = row.querySelector('.slot-overview-song');
   artist.textContent = entry.artist;
   artist.hidden = !entry.artist;
-  row.querySelector('.slot-overview-status').textContent = requestStatusLabel(entry);
+  renderStatusTag(row.querySelector('.slot-overview-status'), requestStatusKey(entry));
  }
  userCurrentList.hidden = count === 0;
  $('user-current-empty').hidden = count !== 0;
 }
 const reservation = $('next-reservation');
 let activeSlot = null;
-const requestStatusLabels = {pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
-function requestStatusLabel(entry, reserved = false) {
- if (reserved && entry.status === 'pending') return '予約済み';
- if (entry.status === 'deferred' && entry.deferReason === 'temporary') return '一時保留';
- return requestStatusLabels[entry.status] ?? entry.status;
+const requestStatusLabels = {unrequested:'未リクエスト', submitted:'リクエスト済み', reserved:'予約済み', temporary:'一時保留', pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
+function requestStatusKey(entry, reserved = false) {
+ if (reserved && entry.status === 'pending') return 'reserved';
+ if (entry.status === 'deferred' && entry.deferReason === 'temporary') return 'temporary';
+ return entry.status;
+}
+function renderStatusTag(node, key) {
+ node.dataset.statusTag = key;
+ node.textContent = requestStatusLabels[key] ?? key;
 }
 
 function hasSlotRequest(slot) {
@@ -125,12 +129,11 @@ function renderSlotOverview(slot) {
  artist.textContent = slot.entry?.artist || '';
  artist.hidden = !artist.textContent;
  category.hidden = !slot.entry;
- const submitted = slot.reserved ? '予約済み' : 'リクエスト済み';
- if (!slot.entry) {
-  status.textContent = empty ? (slot.reserved ? '予約する' : 'リクエスト') : submitted;
- } else {
-  status.textContent = requestStatusLabel(slot.entry, slot.reserved);
- }
+ if (slot.entry) renderStatusTag(status, requestStatusKey(slot.entry, slot.reserved));
+ else if (empty && slot.reserved) {
+  delete status.dataset.statusTag;
+  status.textContent = '予約する';
+ } else renderStatusTag(status, empty ? 'unrequested' : slot.reserved ? 'reserved' : 'submitted');
  slot.overview.classList.toggle('is-empty', empty);
 }
 function showSlot(id, focus = false) {
@@ -424,7 +427,7 @@ function feedback(slot, text, error = true) {
  box.classList.toggle('error', error);
 }
 const japanDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Tokyo', dateStyle:'short'});
-function historyRow(list, song, artist, status, timestamp, category = classifyArtist(artist)) {
+function historyRow(list, song, artist, status, timestamp, category = classifyArtist(artist), statusKey) {
  const row = document.createElement('li');
  const title = document.createElement('div');
  title.className = 'history-song';
@@ -448,6 +451,12 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
   label.className = 'history-state';
   label.textContent = status;
   identity.append(label);
+ }
+ if (statusKey) {
+  const tag = document.createElement('span');
+  renderStatusTag(tag, statusKey);
+  tag.className = 'history-tag';
+  identity.append(tag);
  }
  row.append(jacket(category, 'history-art', 42), identity);
  list.append(row);
@@ -488,7 +497,7 @@ function renderHistory(myRequests){
  $('my-history-more').disabled = Boolean(current?.loading);
  $('my-history-more').textContent = current?.error ? '再読み込み' : 'もっと見る';
  $('my-history-list').replaceChildren();
- for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${requestStatusLabel(entry, entry.round > state.round)}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt, entry.category);
+ for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回':'過去のリクエスト'}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt, entry.category, requestStatusKey(entry, entry.round > state.round));
 }
 function renderPlayed(played) {
  $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
@@ -621,7 +630,7 @@ function renderRequests() {
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;part(slot,'.slot-status').textContent=requestStatusLabel(mine, slot.reserved);part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
+  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;renderStatusTag(part(slot,'.slot-status'), requestStatusKey(mine, slot.reserved));part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
  renderUserCurrentRequests();
