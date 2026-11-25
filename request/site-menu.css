@@ -198,7 +198,8 @@ html:has(.listener-layout #request-screen[hidden]),
   }
 }
 
-.user-current-requests { margin: 12px 0 20px; }
+#user-menu .request-menu-content { padding-top: calc(var(--header-height) + env(safe-area-inset-top) + 4px); }
+.user-current-requests { margin: 0 0 20px; }
 .user-current-requests h2 { margin: 0; font-size: 22px; }
 .user-current-requests .note { margin: 10px 0 0; }
 .user-current-requests .request-overview-rows { margin-top: 6px; }
