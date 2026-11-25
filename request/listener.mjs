@@ -371,6 +371,7 @@ function goToRequestTop() {
  }
 }
 $('request-menu-top').onclick = goToRequestTop;
+$('review-requests').onclick = goToRequestTop;
 $('request-home').onclick = event => {
  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
  event.preventDefault();

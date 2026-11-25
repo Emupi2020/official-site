@@ -199,3 +199,10 @@ html:has(.listener-layout #request-screen[hidden]),
 
 .user-current-requests .slot-overview-row::before,
 .user-current-requests .slot-overview-chevron { display: none; }
+
+.user-current-requests .review-requests {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  border-radius: 10px;
+}
