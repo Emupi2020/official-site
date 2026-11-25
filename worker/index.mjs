@@ -1,4 +1,4 @@
-import { initialState, publicState, playableSongs, ownRequests, requestsByName, receipt, listenerReceipt, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
+import { initialState, publicState, playableSongs, ownRequests, requestsByName, receipt, listenerReceipt, listenerRequest, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
 import { passcodeAuth, passcodeAccount, passcodeAccountId, passcodeRequiredMessage, preparePasscodeRename } from './passcode.mjs';
@@ -7,9 +7,38 @@ import { categoryOf } from '../request/categories.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 const stateConflict = () => new Problem('アクセスが重なりました。少し待ってもう一度お試しください。', 409);
-function saveState(env, revision, state) {
-  return env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision')
-    .bind(JSON.stringify(state), revision).first();
+async function saveState(env, revision, state) {
+  const cutoff = Date.now() - state.retentionDays * 86400000;
+  // Keep finished requests in the live state during the existing admin correction window.
+  const undo = JSON.stringify(state.undo);
+  const expired = state.entries.filter(entry => entry.createdAt < cutoff && entry.round < state.round
+    && !undo?.includes(JSON.stringify(entry.id))
+    && ['done', 'removed', 'skipped'].includes(entry.status));
+  if (!expired.length) {
+    return env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision')
+      .bind(JSON.stringify(state), revision).first();
+  }
+
+  const archived = expired.map(entry => ({
+    id: entry.id, accountId: entry.accountId ?? null, nameKey: nameKey(entry.name),
+    createdAt: entry.createdAt, entry: {...listenerRequest(state, entry), playedThisSession: false},
+  }));
+  const archivedIds = new Set(archived.map(entry => entry.id));
+  const entries = state.entries.filter(entry => !archivedIds.has(entry.id));
+  const current = archivedIds.has(state.current) ? null : state.current;
+  const [, updated] = await env.DB.batch([
+    env.DB.prepare(`INSERT INTO request_history (id, account_id, name_key, created_at, entry)
+      SELECT json_extract(value, '$.id'), json_extract(value, '$.accountId'),
+        json_extract(value, '$.nameKey'), json_extract(value, '$.createdAt'), json_extract(value, '$.entry')
+      FROM json_each(?) WHERE EXISTS (SELECT 1 FROM app_state WHERE id = 1 AND revision = ?)`)
+      .bind(JSON.stringify(archived), revision),
+    env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ?')
+      .bind(JSON.stringify({...state, entries, current}), revision),
+  ]);
+  if (updated.meta.changes !== 1) return null;
+  state.entries = entries;
+  state.current = current;
+  return {revision: revision + 1};
 }
 export async function read(env, now = Date.now()) {
   await env.DB.prepare('INSERT OR IGNORE INTO app_state (id, revision, body) VALUES (1, 0, ?)').bind(JSON.stringify(initialState(now))).run();
@@ -197,6 +226,35 @@ async function handle(req, env) {
       return entries.filter(entry => entry.accountId === accountId).length;
     });
     return json({ linked });
+  }
+  if (path === '/api/request-history' && req.method === 'POST') {
+    await limit(req, env, ':request-history');
+    const input = await body(req);
+    const session = await listenerSession(req, env);
+    const accountId = session?.accountId ?? null;
+    const pinAccount = session?.kind === 'pin-listener' ? await passcodeAccount(env, accountId) : null;
+    if (session?.kind === 'pin-listener' && !pinAccount) throw new Problem('パスコードでログインしてください。', 401);
+    const name = pinAccount?.name || text(input?.name, 'Pocochaの名前', 50);
+    const protectedId = await passcodeAccountId(env, name);
+    const guestName = !protectedId || protectedId === accountId ? nameKey(name) : null;
+    const before = input?.before;
+    if (before != null && (!Number.isSafeInteger(before.createdAt) || typeof before.id !== 'string' || before.id.length > 100)) {
+      throw new Problem('取得位置を確認してください。');
+    }
+    const createdAt = before?.createdAt ?? Number.MAX_SAFE_INTEGER;
+    const id = before?.id ?? '';
+    const {results} = await env.DB.prepare(`SELECT id, created_at AS createdAt, entry FROM (
+        SELECT id, created_at, entry FROM request_history
+          WHERE account_id = ? AND (created_at, id) < (?, ?)
+        UNION ALL
+        SELECT id, created_at, entry FROM request_history
+          WHERE account_id IS NULL AND name_key = ? AND (created_at, id) < (?, ?)
+      ) ORDER BY createdAt DESC, id DESC LIMIT 21`)
+      .bind(accountId, createdAt, id, guestName, createdAt, id).all();
+    const page = results.slice(0, 20);
+    const last = page.at(-1);
+    return json({entries: page.map(row => JSON.parse(row.entry)),
+      next: results.length > 20 ? {createdAt: last.createdAt, id: last.id} : null});
   }
   if (path === '/api/my-requests' && req.method === 'POST') {
     const input = await body(req);

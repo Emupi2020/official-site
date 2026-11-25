@@ -137,7 +137,7 @@ export function ownRequests(state, hashes) {
   const allowed = new Set(hashes);
   return state.entries.filter(e => allowed.has(e.tokenHash)).map(e => listenerRequest(state, e));
 }
-function listenerRequest(state, entry) {
+export function listenerRequest(state, entry) {
   const { id, artist, song, round, status, deferReason, createdAt } = entry;
   return { id, artist, song, category: categoryOf(entry), round, status, deferReason, createdAt, playedThisSession: state.sung.includes(entry.songKey) };
 }
@@ -653,7 +653,6 @@ export function adminAction(state, input, now = Date.now()) {
 }
 export function prune(state, now = Date.now()) {
   const cutoff = now - state.retentionDays * 86400000;
-  state.entries = state.entries.filter(e => e.createdAt >= cutoff);
   if (state.history) {
     const expired = state.history.filter(entry => (entry.performedAt ?? entry.createdAt) < cutoff);
     if (expired.length) state.repertoire = collectedSongs(state, expired);

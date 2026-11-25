@@ -108,12 +108,12 @@ test('歌唱済み取り消しで後着の同曲保留も戻る',()=>{const s=st
 test('公開API用データから名前・トークン・歌手名つき候補を排除',()=>{const s=state();submit(s,input('非公開の名前'),'PRIVATE_TOKEN');adminAction(s,{action:'draw'});const value=JSON.stringify(publicState(s));assert(!value.includes('非公開'));assert(!value.includes('PRIVATE_TOKEN'));assert(!value.includes('usedNames'));assert(publicState(s).result.artist);});
 test('常時受付し、明白なURLスパム・長すぎる入力は拒否、自由表記は受理',()=>{const s=state();assert(submit(s,input(),'a'));assert.throws(()=>submit(s,input('B','https://spam.example'),'b'),/URL/);assert.throws(()=>submit(s,input('C','a'.repeat(101)),'c'),/100/);s.open=false;assert(submit(s,input('D'),'d'));});
 test('別歌手の同名曲は統合しない、山Pとらぶれすは同曲',()=>{assert.equal(songIdentity('やまぴー','らぶれす'),songIdentity('山下智久','Loveless'));assert.notEqual(songIdentity('別歌手','Loveless'),songIdentity('山下智久','Loveless'));});
-test('30日経過の応募者情報を消し匿名候補は保持',()=>{const s=state();submit(s,input(),'a',Date.now()-31*86400000);prune(s);assert.equal(s.entries.length,0);});
+test('30日経過しても受付中のリクエストを保持する',()=>{const s=state();submit(s,input(),'a',Date.now()-31*86400000);prune(s);assert.equal(s.entries.length,1);});
 function env(){return{DB:database(),PUBLIC_ORIGIN:'https://emupi2020.github.io',SESSION_SECRET:'x'.repeat(40),ASSETS:{fetch:()=>new Response('static')}};}
 function req(path,data,token='a'.repeat(40),origin='https://emupi2020.github.io'){return new Request('https://requests.example'+path,{method:data?'POST':'GET',headers:{Origin:origin,'Content-Type':'application/json','X-Request-Token':token},body:data?JSON.stringify(data):undefined});}
 test('実DBの同時応募で同名は1件だけ成功',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});const results=await Promise.all(Array.from({length:8},(_,i)=>worker.fetch(req('/api/requests',input(),String(i).repeat(40)),e)));assert.equal(results.filter(r=>r.status===201).length,1);assert.equal(results.filter(r=>r.status===409).length,7);});
 test('修正トークンなしでは編集用の控えを取得できず変更もできない',async()=>{const e=env();const {mutate}=await import('../worker/index.mjs');await mutate(e,s=>{s.open=true;});await worker.fetch(req('/api/requests',input()),e);const own=await(await worker.fetch(req('/api/mine'),e)).json();assert.equal(own.entry.name,'リスナーA');const other=await(await worker.fetch(req('/api/mine',undefined,'b'.repeat(40)),e)).json();assert.equal(other.entry,null);const update=new Request('https://requests.example/api/mine',{method:'PATCH',headers:{Origin:e.PUBLIC_ORIGIN,'Content-Type':'application/json','X-Request-Token':'b'.repeat(40)},body:JSON.stringify({name:'乗っ取り'})});assert.equal((await worker.fetch(update,e)).status,404);});
-test('名前の再入力では一致する受付と予約を閲覧でき、編集情報や期限切れは返さない', async () => {
+test('名前の再入力では一致する受付と予約を閲覧でき、古い未処理リクエストも確認できる', async () => {
   const e = env();
   const { mutate } = await import('../worker/index.mjs');
   await mutate(e, state => {
@@ -126,7 +126,7 @@ test('名前の再入力では一致する受付と予約を閲覧でき、編�
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('Cache-Control'), 'no-store');
   const {entries} = await response.json();
-  assert.deepEqual(entries.map(entry => [entry.song, entry.round]), [['今回の曲', 1], ['予約曲', 2]]);
+  assert.deepEqual(entries.map(entry => [entry.song, entry.round]), [['今回の曲', 1], ['予約曲', 2], ['期限切れ', 1]]);
   for (const entry of entries) {
     assert(!('name' in entry) && !('tokenHash' in entry) && !('editable' in entry) && !('songEditable' in entry));
   }
@@ -616,4 +616,32 @@ test('旧履歴にも募集回を適用し、名前などは公開せず歌唱�
  assert.deepEqual(publicState(s).roundPlayed,[{song:'曲A',artist:old.artist,performedAt:time}]);
  adminAction(s,{action:'cancelPerformance',id:old.id});
  assert.deepEqual(publicState(s).roundPlayed,[]);
+});
+
+test('処理済みの古い履歴は受付から分離し、同じ日付でも重複なく20件ずつ取得する', async () => {
+  const e = env();
+  const { mutate, read } = await import('../worker/index.mjs');
+  const old = Date.now() - 31 * 86400000;
+  await mutate(e, s => {
+    const pending = submit(s, input('まだ待機中'), 'pending', old);
+    for (let i = 0; i < 24; i++) {
+      s.entries.push({...pending, id:'archived-' + i, name:'履歴の持ち主', song:'曲' + i,
+        status:'done', accountId:i === 23 ? 'private-account' : null});
+    }
+    s.round++;
+  });
+  await mutate(e, () => {});
+  assert.equal((await read(e)).state.entries.length, 1);
+  assert.equal(e.DB.native.prepare('SELECT COUNT(*) AS count FROM request_history').get().count, 24);
+  const first = await worker.fetch(req('/api/request-history', {name:'履歴の持ち主'}), e);
+  assert.equal(first.status, 200);
+  const page = await first.json();
+  assert.equal(page.entries.length, 20);
+  assert(page.next);
+  const last = await (await worker.fetch(req('/api/request-history', {name:'履歴の持ち主', before:page.next}), e)).json();
+  assert.equal(last.entries.length, 3);
+  assert.equal(last.next, null);
+  assert.equal(new Set([...page.entries, ...last.entries].map(entry => entry.id)).size, 23);
+  const other = await (await worker.fetch(req('/api/request-history', {name:'違う名前'}), e)).json();
+  assert.deepEqual(other.entries, []);
 });

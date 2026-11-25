@@ -4,6 +4,7 @@ import { api, $, message, safeGet, safeSet, normalize, statusText } from './comm
 let state, items=[], tokens, busy=false;
 let receipts = new Map(), myRequests = [], namedRequests = [], loadedName = '', lookupVersion = 0;
 let account = { enabled: false, signedIn: false, entries: [], receipts: [] };
+let archive = null;
 let refreshVersion = 0;
 try { tokens=JSON.parse(safeGet('emupi-request-tokens')||'{}'); } catch { tokens={}; }
 const duplicateStorageKey = 'emupi-duplicate-requests';
@@ -303,6 +304,7 @@ function showMenuPage(id, focus = false) {
   window.scrollTo(0, 0);
   menuPageTitle.focus();
  }
+ if (panel.id === 'my-history') void loadArchivedHistory();
  if (panel.id === 'played-history') void refreshPlayed();
  if (panel.id === 'playable-songs') void refreshPlayable();
 }
@@ -384,8 +386,42 @@ function historyRow(list, song, artist, status, timestamp) {
  }
  list.append(row);
 }
+function historyOwner() {
+ return lookupName() + ':' + (account.signedIn ? account.method : 'guest');
+}
+async function loadArchivedHistory(more = false) {
+ if (!lookupName()) return;
+ const owner = historyOwner();
+ if (archive?.owner !== owner) archive = {owner, entries: [], next: null, loaded: false, loading: false, error: ''};
+ const current = archive;
+ if (current.loading || (current.loaded && !more) || (more && current.loaded && !current.next)) return;
+ current.loading = true;
+ current.error = '';
+ if (state) renderRequests();
+ try {
+  const page = await api('/api/request-history', {method:'POST', data:{name:lookupName(), before:current.next}});
+  current.entries.push(...page.entries);
+  current.next = page.next;
+  current.loaded = true;
+ } catch (error) {
+  current.error = error.message;
+ } finally {
+  current.loading = false;
+  if (archive === current && historyOwner() === owner && state) renderRequests();
+ }
+}
+$('my-history-more').onclick = () => loadArchivedHistory(true);
+
 function renderHistory(myRequests){
- $('my-history-empty').hidden=Boolean(myRequests.length);$('my-history-count').textContent=myRequests.length?`${myRequests.length}件`:'';$('my-history-list').replaceChildren();
+ const current = archive?.owner === historyOwner() ? archive : null;
+ $('my-history-empty').hidden = Boolean(myRequests.length || current?.loading || current?.error);
+ $('my-history-count').textContent = myRequests.length ? `${myRequests.length}件${current?.next ? '以上' : ''}` : '';
+ $('my-history-feedback').textContent = current?.loading ? '履歴を読み込み中…' : current?.error || '';
+ $('my-history-feedback').hidden = !$('my-history-feedback').textContent;
+ $('my-history-more').hidden = !current?.next && !current?.error;
+ $('my-history-more').disabled = Boolean(current?.loading);
+ $('my-history-more').textContent = current?.error ? '再読み込み' : 'もっと見る';
+ $('my-history-list').replaceChildren();
  const labels={pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:'次回へ保留',skipped:'見送り',removed:'取り下げ'};
  for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${entry.deferReason==='temporary'?'一時保留':labels[entry.status]||entry.status}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt);
 }
@@ -525,7 +561,8 @@ function renderRequests() {
  renderDuplicateSlots();
  renderGreeting();
  lock(busy);
- const history = new Map([...restored, ...myRequests, ...account.entries].map(entry => [entry.id, entry]));
+ const archived = archive?.owner === historyOwner() ? archive.entries : [];
+ const history = new Map([...archived, ...restored, ...myRequests, ...account.entries].map(entry => [entry.id, entry]));
  renderHistory([...history.values()].sort((a, b) => a.createdAt - b.createdAt));
  renderAccount();
 }
@@ -771,6 +808,7 @@ $('request-logout').onclick = async () => {
  try {
   await api('/auth/line/logout', {method:'POST', data:{}});
   closeMenu();
+  archive = null;
   const lastName = lookupName();
   ++lookupVersion;
   $('name').value = '';
