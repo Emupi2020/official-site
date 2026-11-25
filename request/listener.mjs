@@ -1,3 +1,4 @@
+import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs';
 import { closeMenu } from './site-menu.mjs?layout=menu-overlay';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
@@ -666,12 +667,12 @@ function hideSuggestions(except){for(const slot of slots)for(const kind of ['art
 function suggest(slot,kind){
  const input=field(slot,kind),box=field(slot,`${kind}-suggestions`),value=normalize(input.value);hideSuggestions(input);box.replaceChildren();if(!value){box.hidden=true;input.setAttribute('aria-expanded','false');return;}
  let candidates;
- if(kind==='artist')candidates=[...new Map(items.filter(i=>classifyArtist(i.artist)===slot.category&&[i.artist,...(i.artistAliases||[])].some(v=>normalize(v).includes(value))).map(i=>[i.artist,{label:i.artist}])).values()];
+ if(kind==='artist')candidates=[...new Map(items.filter(i=>classifyArtist(i.artist)===slot.category&&artistSearchNames(i).some(v=>normalize(v).includes(value))).map(i=>[i.artist,{label:i.artist}])).values()];
  else {const artistField = field(slot, 'artist');
   const artist = normalize(artistField.value);
   const artists = artistField.tagName === 'SELECT'
     ? new Set([artist])
-    : new Set(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&[i.song,...(i.aliases||[])].some(v=>normalize(v).includes(value))).map(item=>({item}));}
+    : new Set(items.filter(i => artistSearchNames(i).some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&songSearchNames(i).some(v=>normalize(v).includes(value))).map(item=>({item}));}
  for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';if (candidate.item) {
   const song = document.createElement('strong');
   song.textContent = candidate.item.song;
