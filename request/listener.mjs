@@ -94,7 +94,6 @@ for (const slot of slots) {
   showSlot(slot.id, true);
  };
 }
-$('request-detail-back').onclick = closeSlot;
 $('name').value=safeGet('emupi-request-name')||'';
 const viewport = window.visualViewport;
 if (viewport) {
@@ -166,7 +165,6 @@ function setEntryMode(mode, focus = false) {
  entryTitle.textContent = welcome ? welcomeTitle : login ? 'ログイン' : 'はじめての方';
  $('entry-welcome-actions').hidden = !welcome;
  entryForm.hidden = welcome;
- $('entry-back').hidden = welcome;
  $('entry-name-help').hidden = login;
  if (login) entryName.removeAttribute('aria-describedby');
  else entryName.setAttribute('aria-describedby', 'entry-name-help');
@@ -216,11 +214,6 @@ async function requiresPasscode(name) {
 const registrationMode = () => account.passcodeEnabled === false ? 'guest' : 'register';
 $('welcome-register').onclick = () => navigateEntry(registrationMode());
 $('welcome-login').onclick = () => navigateEntry('login');
-$('entry-back').onclick = () => {
- if (entryBusy) return;
- if (window.history.state?.fromWelcome) window.history.back();
- else navigateEntry('welcome', true);
-};
 $('choose-registration-mode').onclick = () => navigateEntry(entryMode === 'register' ? 'guest' : 'register', true);
 $('choose-passcode-login').onclick = () => navigateEntry('login', true);
 $('choose-name-login').onclick = () => navigateEntry(entryMode === 'login' ? 'name-login' : 'login', true);
@@ -321,7 +314,6 @@ for (const {button,panel} of menuPages) {
   showMenuPage(panel.id, true);
  };
 }
-$('menu-page-back').onclick = () => window.history.back();
 $('request-menu-top').onclick = () => {
  $('request-menu-toggle').click();
  const loggedIn = !$('request-screen').hidden;
@@ -335,7 +327,9 @@ $('request-menu-top').onclick = () => {
   window.addEventListener('popstate', focusTop, {once:true});
   window.history.go(-steps);
  } else if (!loggedIn && entryMode !== 'welcome') {
-  $('entry-back').click();
+  if (entryBusy) return;
+  if (window.history.state?.fromWelcome) window.history.back();
+  else navigateEntry('welcome', true);
  } else {
   focusTop();
  }
@@ -347,7 +341,7 @@ function canSubmit(slot) {
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, #request-detail-back, .slot-overview-row')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, .slot-overview-row')) button.disabled = busy;
  newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
