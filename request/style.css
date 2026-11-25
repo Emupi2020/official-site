@@ -150,10 +150,10 @@ body:has(.request-page) { background: #f2f2f7; }
   position: relative;
   grid-template-columns: 76px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 7px;
   width: 100%;
-  min-height: 84px;
-  padding: 4px 0;
+  min-height: 80px;
+  padding: 2px 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -163,7 +163,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .slot-overview-row + .slot-overview-row::before {
   content: '';
   position: absolute;
-  inset: 0 0 auto 88px;
+  inset: 0 0 auto 83px;
   border-top: 1px solid var(--border);
 }
 .request-page .slot-overview-row:hover { background: color-mix(in srgb, var(--text) 3%, transparent); filter: none; }
