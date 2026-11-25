@@ -548,11 +548,9 @@ async function refreshPlayed() {
  if (playedHistory.hidden || document.hidden || playedLoading) return;
  playedLoading = true;
  try { await readPublicState(); }
- catch { /* Keep the last visible list; the next poll retries. */ }
+ catch { /* Keep the last visible list if the refresh fails. */ }
  finally { playedLoading = false; }
 }
-document.addEventListener('visibilitychange', refreshPlayed);
-setInterval(refreshPlayed, 3000);
 async function refresh({useAccountName = false} = {}){
  const version = ++refreshVersion;
  const [next, nextAccount] = await Promise.all([readPublicState(), api('/api/listener-account')]);
@@ -939,4 +937,3 @@ try {
  entryBusy = false;
  updateEntryButton();
 }
-setInterval(()=>{if(!document.hidden&&!busy)refresh().catch(error=>message(error.message,true));},15000);
