@@ -188,8 +188,9 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #request-detail h2 { margin-bottom: 10px; font-size: 22px; }
 .request-page #request-detail :is(.input-group, .slot-receipt) { padding: 0 14px; border-radius: 14px; background: var(--request-block-fill); }
 .request-page #request-detail .input-group {
+  --request-field-gap: 8px;
   display: grid;
-  gap: 8px;
+  gap: var(--request-field-gap);
   padding: 12px;
   background: #f9f9fb;
 }
@@ -335,6 +336,7 @@ body:has(.request-page) { background: #f2f2f7; }
   gap: 4px 16px;
 }
 .request-page .edit-actions .text-button { min-height: 44px; }
+.request-page { --form-action-spacing: 16px; }
 .request-page #request-detail .slot-actions,
 .request-page .menu-page-form .name-form-actions {
   display: grid;
@@ -342,7 +344,10 @@ body:has(.request-page) { background: #f2f2f7; }
   justify-content: stretch;
   justify-items: center;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: var(--form-action-spacing);
+}
+.request-page #request-detail .slot-actions {
+  margin-top: calc(var(--form-action-spacing) - var(--request-field-gap));
 }
 .request-page #request-detail .slot-actions .slot-submit,
 .request-page .menu-page-form .name-form-actions .primary {
