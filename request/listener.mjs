@@ -181,7 +181,6 @@ function showRequestScreen(open, focus = false) {
 }
 const hasSavedName = Boolean($('name').value.trim());
 entryBusy = hasSavedName;
-showRequestScreen(false);
 window.history.replaceState(entryView('welcome'), '');
 const usesPasscode = mode => mode === 'register' || mode === 'login';
 function updateEntryButton() {
@@ -894,6 +893,7 @@ try {
    showRequestScreen(true);
   }
  }
+ if ($('request-screen').hidden && $('entry-screen').hidden) showRequestScreen(false);
  if (account.needsRecovery) {
   const {linked} = await api('/api/listener-account', {method:'POST', data:{}});
   if (linked) await refresh();
@@ -902,6 +902,7 @@ try {
 } catch (error) {
  message(error.message, true);
 } finally {
+ if ($('request-screen').hidden && $('entry-screen').hidden) showRequestScreen(false);
  entryBusy = false;
  updateEntryButton();
 }
