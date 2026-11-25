@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=shared-listener-fields"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=user-menu-top-spacing"><link rel="stylesheet" href="./bug-reports.css?layout=shared-listener-fields"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=completed-draw-label"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title><meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=song-identity"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=user-menu-top-spacing"><link rel="stylesheet" href="./bug-reports.css?layout=shared-listener-fields"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=song-identity"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
 <header class="global-nav listener-nav">
   <div class="nav-content">
     <a id="request-home" href="./" class="nav-icon-container" aria-label="リクエストトップ"><svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text></svg></a>
@@ -89,12 +89,12 @@
 <div class="request-overview-rows" role="group" aria-label="今回のリクエスト">
   <button class="slot-overview-row is-empty" id="open-current-yamapi" type="button" aria-controls="yamapi-detail">
     <img class="slot-overview-art" src="./yamapi-white.png" alt="" width="76" height="76">
-  <span class="slot-overview-info"><strong>山Pの歌まね</strong><span class="slot-overview-song" hidden></span></span>
+  <span class="slot-overview-info"><strong>山Pの歌まね</strong><span class="slot-overview-song" hidden></span><span class="slot-overview-category" hidden>山Pの歌まね</span></span>
     <span class="slot-overview-end"><span class="slot-overview-status">リクエスト</span><span class="slot-overview-chevron" aria-hidden="true"></span></span>
   </button>
   <button class="slot-overview-row is-empty" id="open-current-other" type="button" aria-controls="other-detail">
     <img class="slot-overview-art" src="./other-smoke.png?v=brush-cross" alt="" width="76" height="76">
-  <span class="slot-overview-info"><strong>それ以外の歌まね</strong><span class="slot-overview-song" hidden></span></span>
+  <span class="slot-overview-info"><strong>それ以外の歌まね</strong><span class="slot-overview-song" hidden></span><span class="slot-overview-category" hidden>それ以外の歌まね</span></span>
     <span class="slot-overview-end"><span class="slot-overview-status">リクエスト</span><span class="slot-overview-chevron" aria-hidden="true"></span></span>
   </button>
 </div>
@@ -107,12 +107,12 @@
 <div class="request-overview-rows" role="group" aria-label="次回の予約">
   <button class="slot-overview-row is-empty" id="open-next-yamapi" type="button" aria-controls="reserve-yamapi-detail">
     <img class="slot-overview-art" src="./yamapi-white.png" alt="" width="76" height="76">
-  <span class="slot-overview-info"><strong>山Pの歌まね</strong><span class="slot-overview-song" hidden></span></span>
+  <span class="slot-overview-info"><strong>山Pの歌まね</strong><span class="slot-overview-song" hidden></span><span class="slot-overview-category" hidden>山Pの歌まね</span></span>
     <span class="slot-overview-end"><span class="slot-overview-status">予約する</span><span class="slot-overview-chevron" aria-hidden="true"></span></span>
   </button>
   <button class="slot-overview-row is-empty" id="open-next-other" type="button" aria-controls="reserve-other-detail">
     <img class="slot-overview-art" src="./other-smoke.png?v=brush-cross" alt="" width="76" height="76">
-  <span class="slot-overview-info"><strong>それ以外の歌まね</strong><span class="slot-overview-song" hidden></span></span>
+  <span class="slot-overview-info"><strong>それ以外の歌まね</strong><span class="slot-overview-song" hidden></span><span class="slot-overview-category" hidden>それ以外の歌まね</span></span>
     <span class="slot-overview-end"><span class="slot-overview-status">予約する</span><span class="slot-overview-chevron" aria-hidden="true"></span></span>
   </button>
 </div>

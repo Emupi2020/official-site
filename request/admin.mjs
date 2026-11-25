@@ -202,8 +202,8 @@ function render() {
   $('cant-sing').disabled = busy || !selected;
   const currentLabel = $('current-song-label');
   if (currentLabel) currentLabel.textContent = current?.manualPick ? '手動選択中の曲' : '当選中の曲';
-  if(!current){$('result-name').textContent='';$('selected-song').textContent='';}
-  if(current){$('selected-song').textContent=`${current.song} ／ ${current.artist}`;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;}
+  if(!current){$('result-name').textContent='';$('selected-song').textContent='';$('selected-artist').textContent='';}
+  if(current){$('selected-song').textContent=current.song;$('selected-artist').textContent=current.artist;$('result-song').textContent=current.song;$('result-artist').textContent=current.artist;$('result-name').textContent=`${current.name} さん`;}
   if(!selected)$('cant-sing-dialog').close('cancel');
   const tables = { yamapi: $('entries-yamapi'), other: $('entries-other') };
   const processed = $('entries-processed');
@@ -233,7 +233,7 @@ function render() {
     table.append(row);
   }
   const suggestions=$('suggestions');suggestions.replaceChildren();
-  for(const item of state.suggestions){const row=node('div','','entry row');row.append(node('span',`${item.song} ／ ${item.artist}`,'small'));const remove=node('button','削除','text-button');remove.disabled=busy;remove.onclick=()=>action('removeSuggestion',{id:item.id});row.append(remove);suggestions.append(row);}
+  for(const item of state.suggestions){const row=node('div','','entry row');const identity=node('div');identity.append(node('div',item.song,'entry-title'),node('div',item.artist,'small muted'));row.append(identity);const remove=node('button','削除','text-button');remove.disabled=busy;remove.onclick=()=>action('removeSuggestion',{id:item.id});row.append(remove);suggestions.append(row);}
   if(!state.suggestions.length)suggestions.append(node('p','新しい入力候補はまだありません。','small muted'));
 }
 function renderRoulette(current = state.entries.find(entry => entry.id === state.current)) {

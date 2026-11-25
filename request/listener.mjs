@@ -51,6 +51,24 @@ const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
 const currentSlots = slots.filter(slot => !slot.reserved);
 const reservationSlots = slots.filter(slot => slot.reserved);
+const jacketSources = new Map(currentSlots.map(slot => [slot.category, slot.overview.querySelector('img').getAttribute('src')]));
+function jacket(category, className, size) {
+ const image = document.createElement('img');
+ image.src = jacketSources.get(category);
+ image.alt = '';
+ image.className = className;
+ image.width = image.height = size;
+ return image;
+}
+for (const slot of slots) {
+ const receipt = part(slot, '.slot-receipt');
+ const summary = document.createElement('div');
+ summary.className = 'receipt-summary';
+ const identity = document.createElement('div');
+ identity.append(part(slot, '.slot-song'), part(slot, '.slot-artist'));
+ summary.append(jacket(slot.category, 'slot-overview-art', 76), identity);
+ receipt.prepend(summary);
+}
 const userCurrentList = $('user-current-list');
 const userCurrentRows = currentSlots.map(slot => {
  const row = slot.overview.cloneNode(true);
@@ -98,11 +116,15 @@ function hasSlotRequest(slot) {
 }
 
 function renderSlotOverview(slot) {
- const song = slot.overview.querySelector('.slot-overview-song');
+ const title = slot.overview.querySelector('strong');
+ const artist = slot.overview.querySelector('.slot-overview-song');
+ const category = slot.overview.querySelector('.slot-overview-category');
  const status = slot.overview.querySelector('.slot-overview-status');
  const empty = !hasSlotRequest(slot);
- song.textContent = slot.entry?.song || '';
- song.hidden = !song.textContent;
+ title.textContent = slot.entry?.song || categoryLabel(slot.category);
+ artist.textContent = slot.entry?.artist || '';
+ artist.hidden = !artist.textContent;
+ category.hidden = !slot.entry;
  const submitted = slot.reserved ? '予約済み' : 'リクエスト済み';
  if (!slot.entry) {
   status.textContent = empty ? (slot.reserved ? '予約する' : 'リクエスト') : submitted;
@@ -402,7 +424,7 @@ function feedback(slot, text, error = true) {
  box.classList.toggle('error', error);
 }
 const japanDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Tokyo', dateStyle:'short'});
-function historyRow(list, song, artist, status, timestamp) {
+function historyRow(list, song, artist, status, timestamp, category = classifyArtist(artist)) {
  const row = document.createElement('li');
  const title = document.createElement('div');
  title.className = 'history-song';
@@ -410,7 +432,9 @@ function historyRow(list, song, artist, status, timestamp) {
  const subtitle = document.createElement('div');
  subtitle.className = 'history-artist';
  subtitle.textContent = artist;
- row.append(title, subtitle);
+ const identity = document.createElement('div');
+ identity.append(title, subtitle);
+ row.append(jacket(category, 'history-art', 42), identity);
  if (status || Number.isFinite(timestamp)) {
   const meta = document.createElement('div');
   meta.className = 'history-status';
@@ -425,7 +449,7 @@ function historyRow(list, song, artist, status, timestamp) {
    date.textContent = date.dateTime.replaceAll('-', '/');
    meta.append(date);
   }
-  row.append(meta);
+  identity.append(meta);
  }
  list.append(row);
 }
@@ -465,7 +489,7 @@ function renderHistory(myRequests){
  $('my-history-more').disabled = Boolean(current?.loading);
  $('my-history-more').textContent = current?.error ? '再読み込み' : 'もっと見る';
  $('my-history-list').replaceChildren();
- for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${requestStatusLabel(entry, entry.round > state.round)}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt);
+ for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回 · ':'過去のリクエスト · '}${requestStatusLabel(entry, entry.round > state.round)}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt, entry.category);
 }
 function renderPlayed(played) {
  $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
@@ -488,7 +512,7 @@ async function refreshPlayable() {
   for (const category of ['yamapi','other']) {
    const list = $(`playable-${category}`);
    list.replaceChildren();
-   for (const song of songs.filter(song => song.category === category)) historyRow(list, song.song, song.artist);
+   for (const song of songs.filter(song => song.category === category)) historyRow(list, song.song, song.artist, undefined, undefined, song.category);
    $(`playable-${category}-empty`).hidden = Boolean(list.childElementCount);
   }
   $('playable-groups').hidden = false;
@@ -639,8 +663,16 @@ function suggest(slot,kind){
   const artist = normalize(artistField.value);
   const artists = artistField.tagName === 'SELECT'
     ? new Set([artist])
-    : new Set(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&[i.song,...(i.aliases||[])].some(v=>normalize(v).includes(value))).map(i=>({label:`${i.song} · ${i.artist}`,item:i}));}
- for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';button.textContent=candidate.label;button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');lock(busy);input.focus();};box.append(button);}
+    : new Set(items.filter(i => [i.artist, ...(i.artistAliases || [])].some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&[i.song,...(i.aliases||[])].some(v=>normalize(v).includes(value))).map(item=>({item}));}
+ for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';if (candidate.item) {
+  const song = document.createElement('strong');
+  song.textContent = candidate.item.song;
+  const artist = document.createElement('span');
+  artist.className = 'history-artist';
+  artist.textContent = candidate.item.artist;
+  button.append(song, artist);
+ } else button.textContent = candidate.label;
+ button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');lock(busy);input.focus();};box.append(button);}
  box.hidden=!box.children.length;input.setAttribute('aria-expanded',String(!box.hidden));
 }
 function stopEditing(slot) {
