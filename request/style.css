@@ -72,7 +72,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .history-song{font-size:16px;font-weight:650;line-height:1.5}
 .history-art{display:block;width:42px;height:42px;clip-path:inset(8% 7% round 3px)}
 .slot-overview-category{display:block;margin-top:3px;color:var(--muted);font-size:11px}
-.receipt-summary{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:7px}
+.receipt-summary{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:7px}
 .receipt-summary .slot-artist{margin-top:3px}
 .request-page .suggestions .history-artist{display:block}
 .history-artist{font-size:13px;color:var(--muted);margin-top:3px}
@@ -370,11 +370,10 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .slot-receipt-footer {
   display: grid;
   justify-items: start;
-  gap: var(--form-action-spacing);
-  margin-top: 3px;
+  margin-top: var(--form-action-spacing);
 }
 .request-page .slot-receipt-footer .slot-edit { padding-inline: 0; font-size: 14px; }
-.request-page .slot-receipt .slot-status { margin: 0; color: var(--muted); font-size: 13px; }
+.request-page .slot-receipt .slot-status { margin: 0; color: var(--muted); font-size: 13px; text-align: end; }
 .request-page .slot-duplicate .duplicate-label { margin: 0; color: var(--muted); font-size: 14px; }
 .request-page .slot-duplicate {
   margin-bottom: 8px;

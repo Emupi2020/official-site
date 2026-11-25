@@ -66,7 +66,7 @@ for (const slot of slots) {
  summary.className = 'receipt-summary';
  const identity = document.createElement('div');
  identity.append(part(slot, '.slot-song'), part(slot, '.slot-artist'));
- summary.append(jacket(slot.category, 'slot-overview-art', 76), identity);
+ summary.append(jacket(slot.category, 'slot-overview-art', 76), identity, part(slot, '.slot-status'));
  receipt.prepend(summary);
 }
 const userCurrentList = $('user-current-list');
