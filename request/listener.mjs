@@ -136,6 +136,7 @@ function showRequestScreen(open, focus = false) {
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
  for (const {button} of menuPages) if (button.hasAttribute('data-login-required')) button.hidden = !open;
+ $('request-logout').hidden = !open;
  if (!open) {
   showMenuPage(null);
   showSlot(null);
@@ -769,10 +770,11 @@ async function accountAction(path, data, notice) {
 $('line-link').onclick = () => accountAction('/api/listener-account', {tokens: Object.values(tokens).slice(-100)},
  result => result.linked ? `${result.linked}件のリクエストを連携しました。` : '新しく連携できるリクエストはありません。');
 $('request-logout').onclick = async () => {
- if (busy) return;
+ if (busy || !window.confirm('ログアウトしますか？')) return;
  lock(true);
  try {
   await api('/auth/line/logout', {method:'POST', data:{}});
+  if (!$('request-menu').hidden) $('request-menu-toggle').click();
   const lastName = lookupName();
   ++lookupVersion;
   $('name').value = '';

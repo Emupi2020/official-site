@@ -130,7 +130,7 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .request-top h1 { margin: 0; }
 .request-page .request-top h1 { font-size: clamp(20px, 6vw, 32px); }
-.request-page .request-top #request-logout { min-height: 44px; flex-shrink: 0; font-size: 14px; white-space: nowrap; }
+.request-menu #request-logout::after { display: none; }
 .request-page .request-block {
   margin: 10px 0 0;
   padding: 10px 16px;
