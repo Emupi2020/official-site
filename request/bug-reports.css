@@ -11,6 +11,17 @@
   font: inherit;
   resize: vertical;
 }
+.listener-layout #bug-report-form textarea {
+  border-color: #7d7d7f;
+  border-radius: 10px;
+  background: #fdfdfd;
+  font-size: 16px;
+}
+.listener-layout #bug-report-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
 #bug-report-form .note { margin: 4px 0 10px; }
 #bug-report-form button { border-radius: 10px; }
 #bug-report-list { padding: 0; margin: 0; list-style: none; }
