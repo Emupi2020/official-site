@@ -54,6 +54,7 @@ body.listener-layout {
   padding-inline: 0;
   border-bottom-color: var(--border);
 }
+.listener-nav .request-beta { color: var(--muted); font-size: 11px; font-weight: 400; white-space: nowrap; }
 .listener-nav .nav-icon-container:hover { text-decoration: none; }
 .listener-nav #user-menu-toggle,
 .listener-nav #user-menu-toggle[hidden] + #request-menu-toggle { margin-left: auto; }
