@@ -7,15 +7,42 @@ import { categoryOf } from '../request/categories.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } });
 const stateConflict = () => new Problem('アクセスが重なりました。少し待ってもう一度お試しください。', 409);
-async function saveState(env, revision, state) {
+const songMetadataTables = ['song_suggestions', 'unavailable_songs'];
+function songMetadataChanges(env, revision, previous, current) {
+  const statements = [];
+  for (const [index, table] of songMetadataTables.entries()) {
+    const before = previous[index];
+    const after = current[index];
+    const changed = [...after].filter(([key, record]) => before.get(key) !== record);
+    const removed = [...before.keys()].filter(key => !after.has(key));
+    if (changed.length) {
+      statements.push(env.DB.prepare(`INSERT INTO ${table} (key, record)
+        SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?)
+        WHERE EXISTS (SELECT 1 FROM app_state WHERE id = 1 AND revision = ?)
+        ON CONFLICT(key) DO UPDATE SET record = excluded.record`)
+        .bind(JSON.stringify(changed), revision));
+    }
+    if (removed.length) {
+      statements.push(env.DB.prepare(`DELETE FROM ${table} WHERE key IN (SELECT value FROM json_each(?))
+        AND EXISTS (SELECT 1 FROM app_state WHERE id = 1 AND revision = ?)`)
+        .bind(JSON.stringify(removed), revision));
+    }
+  }
+  return statements;
+}
+async function saveState(env, revision, state, metadata) {
   const cutoff = Date.now() - state.retentionDays * 86400000;
   // Keep finished requests in the live state during the existing admin correction window.
   const undo = JSON.stringify(state.undo);
   const expired = state.entries.filter(entry => entry.createdAt < cutoff && entry.round < state.round
     && !undo?.includes(JSON.stringify(entry.id))
     && ['done', 'removed', 'skipped'].includes(entry.status));
-  const { repertoire = [], ...liveState } = state;
-  if (!expired.length && !repertoire.length) {
+  const { repertoire = [], suggestions, unknown, ...liveState } = state;
+  const statements = songMetadataChanges(env, revision, metadata, [
+    new Map(suggestions.map(record => [record.id, JSON.stringify(record)])),
+    new Map(Object.entries(unknown || {}).map(([key, record]) => [key, JSON.stringify(record)])),
+  ]);
+  if (!expired.length && !repertoire.length && !statements.length) {
     return env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision')
       .bind(JSON.stringify(liveState), revision).first();
   }
@@ -27,7 +54,6 @@ async function saveState(env, revision, state) {
   const archivedIds = new Set(archived.map(entry => entry.id));
   const entries = state.entries.filter(entry => !archivedIds.has(entry.id));
   const current = archivedIds.has(state.current) ? null : state.current;
-  const statements = [];
   if (archived.length) {
     statements.push(env.DB.prepare(`INSERT INTO request_history (id, account_id, name_key, created_at, entry)
       SELECT json_extract(value, '$.id'), json_extract(value, '$.accountId'),
@@ -52,22 +78,32 @@ async function saveState(env, revision, state) {
   return {revision: revision + 1};
 }
 export async function read(env, now = Date.now()) {
-  await env.DB.prepare('INSERT OR IGNORE INTO app_state (id, revision, body) VALUES (1, 0, ?)').bind(JSON.stringify(initialState(now))).run();
+  const { suggestions, unknown, ...initial } = initialState(now);
+  await env.DB.prepare('INSERT OR IGNORE INTO app_state (id, revision, body) VALUES (1, 0, ?)').bind(JSON.stringify(initial)).run();
   for (let attempt = 0; attempt < 12; attempt++) {
-    const row = await env.DB.prepare('SELECT revision, body FROM app_state WHERE id = 1').first();
+    const [live, ...rows] = await env.DB.batch([
+      env.DB.prepare('SELECT revision, body FROM app_state WHERE id = 1'),
+      ...songMetadataTables.map(table => env.DB.prepare(`SELECT key, record FROM ${table} ORDER BY rowid`)),
+    ]);
+    const row = live.results[0];
+    const metadata = rows.map(result => new Map(result.results.map(({ key, record }) => [key, record])));
     const state = { ...JSON.parse(row.body), open: true };
-    if (!rolloverSession(state, now)) return { revision:row.revision, state };
-    const saved = await saveState(env, row.revision, state);
-    if (saved) return { revision:saved.revision, state };
+    // Legacy data stays authoritative until the first successful write migrates it.
+    const legacy = state.suggestions !== undefined || state.unknown !== undefined;
+    state.suggestions ??= [...metadata[0].values()].map(record => JSON.parse(record));
+    state.unknown ??= Object.fromEntries([...metadata[1]].map(([key, record]) => [key, JSON.parse(record)]));
+    if (!rolloverSession(state, now) && !legacy) return { revision:row.revision, state, metadata };
+    const saved = await saveState(env, row.revision, state, metadata);
+    if (saved) continue;
   }
   throw stateConflict();
 }
 export async function mutate(env, action) {
   for (let n = 0; n < 12; n++) {
-    const { revision, state } = await read(env);
+    const { revision, state, metadata } = await read(env);
     prune(state);
     const value = await action(state);
-    const result = await saveState(env, revision, state);
+    const result = await saveState(env, revision, state, metadata);
     if (result) return { value, state };
   }
   throw stateConflict();

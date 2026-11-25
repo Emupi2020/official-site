@@ -646,6 +646,30 @@ test('処理済みの古い履歴は受付から分離し、同じ日付でも�
   assert.deepEqual(other.entries, []);
 });
 
+test('既存の入力候補と歌えない曲を別テーブルに移し、その後の削除も保存する', async () => {
+ const { mutate } = await import('../worker/index.mjs');
+ const e = env();
+ const state = (await read(e)).state;
+ const suggestion = {id:'legacy', artist:'星野源', song:'恋', count:1};
+ const key = songIdentity(suggestion.artist, suggestion.song);
+ const unknown = {[key]:{at:Date.now(), reasons:['no_audio'], artist:'星野源', song:'恋'}};
+ e.DB.native.prepare('UPDATE app_state SET body = ? WHERE id = 1')
+  .run(JSON.stringify({...state, suggestions:[suggestion], unknown}));
+ const migrated = (await read(e)).state;
+ assert.deepEqual(migrated.suggestions, [suggestion]);
+ assert.deepEqual(migrated.unknown, unknown);
+ const live = JSON.parse(e.DB.native.prepare('SELECT body FROM app_state').get().body);
+ assert.equal(live.suggestions, undefined);
+ assert.equal(live.unknown, undefined);
+ await mutate(e, s => {
+  s.suggestions = [];
+  delete s.unknown[key];
+ });
+ const updated = (await read(e)).state;
+ assert.deepEqual(updated.suggestions, []);
+ assert.deepEqual(updated.unknown, {});
+});
+
 test('歌える曲を専用テーブルへ移して履歴と統合し、歌えない曲は表示しない', async () => {
  const { mutate } = await import('../worker/index.mjs');
  const e = env();

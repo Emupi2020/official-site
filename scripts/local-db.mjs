@@ -15,13 +15,16 @@ export function database(path = ':memory:') {
         bind(...values) { args = values; return this; },
         first() { return statement.get(...args) || null; },
         run() { return statement.run(...args); },
-        all() { return { results: statement.all(...args) }; }
+        all() { return { results: statement.all(...args) }; },
+        batchResult() {
+          return statement.columns().length ? this.all() : {meta:this.run()};
+        }
       };
     },
     batch(statements) {
       db.exec('BEGIN');
       try {
-        const results = statements.map(statement => ({meta:statement.run()}));
+        const results = statements.map(statement => statement.batchResult());
         db.exec('COMMIT');
         return results;
       } catch (error) {
