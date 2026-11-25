@@ -100,7 +100,7 @@ function renderSlotOverview(slot) {
  song.hidden = !song.textContent;
  const submitted = slot.reserved ? '予約済み' : 'リクエスト済み';
  if (!slot.entry) {
-  status.textContent = empty ? (slot.reserved ? '予約する' : '') : submitted;
+  status.textContent = empty ? (slot.reserved ? '予約する' : 'リクエスト') : submitted;
  } else if (slot.reserved && slot.entry.status === 'pending') {
   status.textContent = submitted;
  } else {
@@ -641,7 +641,7 @@ function stopEditing(slot) {
  form.hidden = !!slot.entry;
  part(slot, '.slot-receipt').hidden = !slot.entry;
  setSongActions(slot, false);
- part(slot, '.slot-submit').textContent = slot.reserved ? '予約する' : '';
+ part(slot, '.slot-submit').textContent = slot.reserved ? '予約する' : 'リクエスト';
  part(slot, '.slot-cancel').hidden = true;
  hideSuggestions();
 }
