@@ -174,7 +174,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-overview-status:empty { display: none; }
 .slot-overview-row.is-empty .slot-overview-end { color: var(--accent); }
 .slot-overview-chevron { width: 7px; height: 7px; margin-inline: 2px; border-block-start: 1.5px solid currentColor; border-inline-end: 1.5px solid currentColor; transform: rotate(45deg); }
-.slot-overview-end .slot-overview-chevron { color: var(--border); }
+.slot-overview-end .slot-overview-chevron { color: #c7c7cc; border-width: 2px; }
 .request-page .request-back { min-height: 44px; }
 .request-back .slot-overview-chevron { transform: rotate(-135deg); }
 .request-page:has(#menu-page:not([hidden])) > :is(#entry-screen, #request-screen) { display: none; }
