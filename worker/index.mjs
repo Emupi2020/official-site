@@ -14,9 +14,10 @@ async function saveState(env, revision, state) {
   const expired = state.entries.filter(entry => entry.createdAt < cutoff && entry.round < state.round
     && !undo?.includes(JSON.stringify(entry.id))
     && ['done', 'removed', 'skipped'].includes(entry.status));
-  if (!expired.length) {
+  const { repertoire = [], ...liveState } = state;
+  if (!expired.length && !repertoire.length) {
     return env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision')
-      .bind(JSON.stringify(state), revision).first();
+      .bind(JSON.stringify(liveState), revision).first();
   }
 
   const archived = expired.map(entry => ({
@@ -26,16 +27,26 @@ async function saveState(env, revision, state) {
   const archivedIds = new Set(archived.map(entry => entry.id));
   const entries = state.entries.filter(entry => !archivedIds.has(entry.id));
   const current = archivedIds.has(state.current) ? null : state.current;
-  const [, updated] = await env.DB.batch([
-    env.DB.prepare(`INSERT INTO request_history (id, account_id, name_key, created_at, entry)
+  const statements = [];
+  if (archived.length) {
+    statements.push(env.DB.prepare(`INSERT INTO request_history (id, account_id, name_key, created_at, entry)
       SELECT json_extract(value, '$.id'), json_extract(value, '$.accountId'),
         json_extract(value, '$.nameKey'), json_extract(value, '$.createdAt'), json_extract(value, '$.entry')
       FROM json_each(?) WHERE EXISTS (SELECT 1 FROM app_state WHERE id = 1 AND revision = ?)`)
-      .bind(JSON.stringify(archived), revision),
-    env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ?')
-      .bind(JSON.stringify({...state, entries, current}), revision),
-  ]);
-  if (updated.meta.changes !== 1) return null;
+      .bind(JSON.stringify(archived), revision));
+  }
+  if (repertoire.length) {
+    statements.push(env.DB.prepare(`INSERT INTO playable_repertoire (song_key, artist, song)
+      SELECT json_extract(value, '$.songKey'), json_extract(value, '$.artist'), json_extract(value, '$.song')
+      FROM json_each(?) WHERE EXISTS (SELECT 1 FROM app_state WHERE id = 1 AND revision = ?)
+      ON CONFLICT(song_key) DO UPDATE SET artist = excluded.artist, song = excluded.song`)
+      .bind(JSON.stringify(repertoire), revision));
+  }
+  statements.push(env.DB.prepare('UPDATE app_state SET body = ?, revision = revision + 1 WHERE id = 1 AND revision = ?')
+    .bind(JSON.stringify({...liveState, entries, current}), revision));
+  const results = await env.DB.batch(statements);
+  if (results.at(-1).meta.changes !== 1) return null;
+  delete state.repertoire;
   state.entries = entries;
   state.current = current;
   return {revision: revision + 1};
@@ -183,7 +194,12 @@ async function handle(req, env) {
     return authenticated.response;
   }
   if (path === '/api/state' && req.method === 'GET') return json(publicState((await read(env)).state));
-  if (path === '/api/repertoire' && req.method === 'GET') return json({songs:playableSongs((await read(env)).state)});
+  if (path === '/api/repertoire' && req.method === 'GET') {
+    const { state } = await read(env);
+    const { results } = await env.DB.prepare('SELECT song_key AS songKey, artist, song FROM playable_repertoire').all();
+    const repertoire = [...results, ...(state.repertoire || [])];
+    return json({songs:playableSongs({...state, repertoire})});
+  }
   if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
   if (path === '/api/suggestions' && req.method === 'GET') {
     const { state } = await read(env);

@@ -533,7 +533,6 @@ async function refreshPlayable() {
   playableLoading = false;
  }
 }
-setInterval(refreshPlayable, 15000);
 const playedHistory = $('played-history');
 let publicReadVersion = 0, playedVersion = 0, playedLoading = false;
 async function readPublicState() {

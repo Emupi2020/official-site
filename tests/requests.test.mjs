@@ -645,3 +645,27 @@ test('処理済みの古い履歴は受付から分離し、同じ日付でも�
   const other = await (await worker.fetch(req('/api/request-history', {name:'違う名前'}), e)).json();
   assert.deepEqual(other.entries, []);
 });
+
+test('歌える曲を専用テーブルへ移して履歴と統合し、歌えない曲は表示しない', async () => {
+ const { mutate } = await import('../worker/index.mjs');
+ const e = env();
+ const old = Date.now() - 31 * 86400000;
+ const reason = songIdentity('山下智久', 'Reason');
+ const other = songIdentity('星野源', '恋');
+ await mutate(e, s => {
+  s.repertoire = [{artist:'山下智久', song:'Reason', songKey:reason}];
+  s.history = [
+   {artist:'山下智久', song:'Reason', songKey:reason, performedAt:old},
+   {artist:'星野源', song:'恋', songKey:other, performedAt:old},
+   {artist:'NEWS', song:'恋のABO', performedAt:Date.now()},
+  ];
+  s.unknown[reason] = {at:Date.now()};
+ });
+ await mutate(e, () => {});
+ assert.equal((await read(e)).state.repertoire, undefined);
+ assert.equal(e.DB.native.prepare('SELECT COUNT(*) AS n FROM playable_repertoire').get().n, 2);
+ const response = await worker.fetch(req('/api/repertoire'), e);
+ assert.equal(response.status, 200);
+ const {songs} = await response.json();
+ assert.deepEqual(songs.map(song => song.song).sort(), ['恋', '恋のABO']);
+});
