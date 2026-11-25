@@ -138,7 +138,6 @@ body:has(.request-page) { background: #f2f2f7; }
   background: var(--card);
 }
 .request-page .listener-greeting { margin: 0 0 10px; color: var(--muted); font-size: 15px; line-height: 1.4; font-weight: 400; overflow-wrap: anywhere; }
-.request-page #request-screen { --request-block-fill: #f5f5f7; }
 .request-overview-rows { display: grid; margin-top: 10px; }
 .request-page .after-draw-note { margin: 16px 0 0; }
 .request-page .after-draw-note p { margin: 0; }
@@ -186,7 +185,6 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
 #request-detail .request-block:focus { outline: none; }
 .request-page #request-detail h2 { margin-bottom: 10px; font-size: 22px; }
-.request-page #request-detail .slot-receipt { padding: 0 14px; border-radius: 14px; background: var(--request-block-fill); }
 .request-page #request-detail .input-group {
   --request-field-gap: 8px;
   display: grid;
@@ -226,7 +224,6 @@ body:has(.request-page) { background: #f2f2f7; }
   box-shadow: 0 0 0 1px var(--accent);
 }
 .request-page #request-detail .suggestions { position: static; margin-block: 4px 8px; box-shadow: none; }
-.request-page #request-detail .slot-receipt { padding-block: 12px; }
 .request-page #entry-screen {
   max-width: 384px;
   width: 100%;
