@@ -350,7 +350,7 @@ for (const {button,panel} of menuPages) {
   showMenuPage(panel.id, true);
  };
 }
-$('request-menu-top').onclick = () => {
+function goToRequestTop() {
  closeMenu();
  const loggedIn = !$('request-screen').hidden;
  const focusTop = () => {
@@ -369,6 +369,12 @@ $('request-menu-top').onclick = () => {
  } else {
   focusTop();
  }
+}
+$('request-menu-top').onclick = goToRequestTop;
+$('request-home').onclick = event => {
+ if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+ event.preventDefault();
+ goToRequestTop();
 };
 function tokenFor(round,category){const key=`${round}:${category}`;if(!tokens[key]){tokens[key]=crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','');safeSet('emupi-request-tokens',JSON.stringify(tokens));}return tokens[key];}
 function canSubmit(slot) {
