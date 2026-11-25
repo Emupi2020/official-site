@@ -1,4 +1,4 @@
-import { normalize } from './categories.mjs';
+import { normalize } from './categories.mjs?v=kana';
 
 const artistReadings = new Map([
  ['星野源', 'ほしのげん'], ['米津玄師', 'よねづけんし'], ['宇多田ヒカル', 'うただひかる'],
