@@ -1,4 +1,4 @@
-import { closeMenu } from './site-menu.mjs?layout=user-menu';
+import { closeMenu } from './site-menu.mjs?layout=menu-overlay';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize, statusText } from './common.mjs';
 let state, items=[], tokens, busy=false;
