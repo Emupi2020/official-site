@@ -186,13 +186,11 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
 #request-detail .request-block:focus { outline: none; }
 .request-page #request-detail h2 { margin-bottom: 10px; font-size: 22px; }
-.request-page #request-detail :is(.input-group, .slot-receipt) { padding: 0 14px; border-radius: 14px; background: var(--request-block-fill); }
+.request-page #request-detail .slot-receipt { padding: 0 14px; border-radius: 14px; background: var(--request-block-fill); }
 .request-page #request-detail .input-group {
   --request-field-gap: 8px;
   display: grid;
   gap: var(--request-field-gap);
-  padding: 12px;
-  background: #f9f9fb;
 }
 .request-page #request-detail .request-field {
   position: relative;
