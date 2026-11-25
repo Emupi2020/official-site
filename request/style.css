@@ -340,9 +340,11 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .edit-actions .text-button { min-height: 44px; }
 .request-page #request-detail .slot-actions.edit-actions {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
   justify-items: center;
   gap: 4px;
-  margin-top: 12px;
+  margin-top: 4px;
 }
 .request-page #request-detail .slot-actions.edit-actions .slot-submit {
   width: 100%;

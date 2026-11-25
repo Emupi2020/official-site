@@ -654,7 +654,10 @@ function stopEditing(slot) {
  hideSuggestions();
 }
 function setSongActions(slot, editing) {
- part(slot, '.slot-actions').classList.toggle('edit-actions', editing);
+ const actions = part(slot, '.slot-actions');
+ const container = part(slot, editing ? '.input-group' : '.slot-form');
+ container.append(actions);
+ actions.classList.toggle('edit-actions', editing);
 }
 function nameFeedback(text, error = false) {
  const node = $('name-feedback');
