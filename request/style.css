@@ -76,7 +76,9 @@ body:has(.request-page) { background: #f2f2f7; }
 .receipt-summary .slot-artist{margin-top:3px}
 .request-page .suggestions .history-artist{display:block}
 .history-artist{font-size:13px;color:var(--muted);margin-top:3px}
-.history-status{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:3px 12px;color:var(--muted);font-size:12px;margin-top:6px}
+.history-status{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:3px 12px;color:var(--muted);font-size:12px;margin-top:3px}
+.history-status .history-artist{max-width:100%;margin-top:0}
+.history-state{color:var(--muted);font-size:12px;margin-top:3px}
 .history-status time{margin-inline-start:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
 #playable-groups h3{margin:8px 0;font-size:14px}
 #playable-groups section + section{margin-top:16px}

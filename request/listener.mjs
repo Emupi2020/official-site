@@ -433,24 +433,23 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
  subtitle.className = 'history-artist';
  subtitle.textContent = artist;
  const identity = document.createElement('div');
- identity.append(title, subtitle);
- row.append(jacket(category, 'history-art', 42), identity);
- if (status || Number.isFinite(timestamp)) {
-  const meta = document.createElement('div');
-  meta.className = 'history-status';
-  if (status) {
-   const label = document.createElement('span');
-   label.textContent = status;
-   meta.append(label);
-  }
-  if (Number.isFinite(timestamp)) {
-   const date = document.createElement('time');
-   date.dateTime = japanDate.format(timestamp);
-   date.textContent = date.dateTime.replaceAll('-', '/');
-   meta.append(date);
-  }
-  identity.append(meta);
+ const meta = document.createElement('div');
+ meta.className = 'history-status';
+ meta.append(subtitle);
+ if (Number.isFinite(timestamp)) {
+  const date = document.createElement('time');
+  date.dateTime = japanDate.format(timestamp);
+  date.textContent = date.dateTime.replaceAll('-', '/');
+  meta.append(date);
  }
+ identity.append(title, meta);
+ if (status) {
+  const label = document.createElement('div');
+  label.className = 'history-state';
+  label.textContent = status;
+  identity.append(label);
+ }
+ row.append(jacket(category, 'history-art', 42), identity);
  list.append(row);
 }
 function historyOwner() {
