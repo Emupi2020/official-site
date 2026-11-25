@@ -198,6 +198,7 @@ function setEntryMode(mode, focus = false) {
  const guest = mode === 'guest';
  const login = mode === 'login' || mode === 'name-login';
  entryTitle.textContent = welcome ? welcomeTitle : login ? 'ログイン' : 'はじめての方';
+ entryTitle.classList.toggle('request-heading-hidden', welcome);
  $('entry-welcome-actions').hidden = !welcome;
  entryForm.hidden = welcome;
  $('entry-name-help').hidden = login;
