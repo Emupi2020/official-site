@@ -502,7 +502,7 @@ export function adminAction(state, input, now = Date.now()) {
     case 'edit': {
       const e = state.entries.find(e => e.id === input.id);
       if (!e) throw new Problem('応募が見つかりません。', 404);
-      if (e.status !== 'pending') throw new Problem('抽選待ちに戻してから修正してください。', 409);
+      if (e.status !== 'pending') throw new Problem('抽選待ちに戻してから変更してください。', 409);
       const name = text(input.name, '名前', 50), key = nameKey(name);
       const artist = text(input.artist,'歌手名'), category = classifyArtist(artist);
       if (state.entries.some(v => v.id !== e.id && v.round === e.round && categoryOf(v) === category && v.usedNames.includes(key))) throw new Problem('その名前は応募済みです。', 409);

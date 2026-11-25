@@ -338,7 +338,21 @@ body:has(.request-page) { background: #f2f2f7; }
   gap: 4px 16px;
 }
 .request-page .edit-actions .text-button { min-height: 44px; }
-.request-page .edit-actions .edit-save { font-weight: 600; }
+.request-page #request-detail .slot-actions.edit-actions {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+.request-page #request-detail .slot-actions.edit-actions .slot-submit {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 10px;
+}
+.request-page #request-detail .slot-actions.edit-actions .slot-cancel {
+  font-size: 14px;
+  text-decoration: underline;
+}
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
 .request-page .edit-feedback.error { color: var(--danger, #a72b2b); }
 .request-page .slot-actions:not(.edit-actions) { display: flex; justify-content: flex-end; }

@@ -654,19 +654,7 @@ function stopEditing(slot) {
  hideSuggestions();
 }
 function setSongActions(slot, editing) {
- const form = part(slot, '.slot-form');
- const actions = part(slot, '.slot-actions');
- const save = part(slot, '.slot-submit');
- if (editing) {
-  part(slot, '.input-group').append(actions);
-  actions.prepend(part(slot, '.slot-cancel'));
- } else {
-  form.append(actions);
- }
- actions.classList.toggle('edit-actions', editing);
- save.classList.toggle('primary', !editing);
- save.classList.toggle('text-button', editing);
- save.classList.toggle('edit-save', editing);
+ part(slot, '.slot-actions').classList.toggle('edit-actions', editing);
 }
 function nameFeedback(text, error = false) {
  const node = $('name-feedback');
@@ -744,7 +732,7 @@ for(const slot of slots){
     });
     stopEditing(slot);
     await refresh();
-    feedback(slot, '曲を修正しました。', false);
+    feedback(slot, '曲を変更しました。', false);
     savedEdit = true;
    } else {
     const {entry} = await api('/api/requests', {
@@ -799,7 +787,7 @@ for(const slot of slots){
   form.hidden = false;
   part(slot, '.slot-receipt').hidden = true;
   setSongActions(slot, true);
-  part(slot, '.slot-submit').textContent = '曲を保存';
+  part(slot, '.slot-submit').textContent = '変更する';
   part(slot, '.slot-cancel').hidden = false;
   feedback(slot, '');
   lock(busy);

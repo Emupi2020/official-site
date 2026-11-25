@@ -66,7 +66,7 @@ function queueChoices(entry) {
     if (!confirmation || confirm(confirmation)) action(operation, {id:entry.id});
   } });
   if (entry.status === 'pending') {
-    const choices = [{label:'リクエストを修正', handler:() => editRequest(entry)}];
+    const choices = [{label:'リクエストを変更', handler:() => editRequest(entry)}];
     if (entry.round > state.round) choices.push(command('今回の抽選に入れる', 'bringForward'));
     else choices.push(command('今回だけ一時保留', 'hold'));
     choices.push(command('次回配信へ持ち越す', 'defer'));
