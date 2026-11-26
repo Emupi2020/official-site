@@ -625,6 +625,22 @@ function confirmPlayableSearch() {
 }
 playableSearchField.addEventListener('submit', event => {
  event.preventDefault();
+ const {playableCategory, playableArtist} = window.history.state || {};
+ const query = normalize(playableSearch.value);
+ if (query && !selectedPlayableSuggestion && !playableArtist) {
+  const exactArtists = new Map();
+  for (const song of playableSongs || []) {
+   if (playableCategory && song.category !== playableCategory) continue;
+   if (artistSearchNames(song).some(name => normalize(name) === query)) {
+    exactArtists.set(song.artist, song.category);
+   }
+  }
+  if (exactArtists.size === 1) {
+   const [[artist, category]] = exactArtists;
+   navigatePlayable({playableCategory:category, playableView:'artists', playableArtist:artist});
+   return;
+  }
+ }
  confirmPlayableSearch();
 });
 function dismissPlayableSuggestions(event) {
