@@ -360,8 +360,7 @@ function showMenuPage(id, focus = false) {
  if (!activeMenuPage) return;
  const {button,panel} = activeMenuPage;
  menuPageTitle.textContent = button.firstChild.textContent.trim();
- const playableHeading = panel.id === 'playable-songs' ? showPlayableCategory(window.history.state) : null;
- menuPageTitle.hidden = Boolean(playableHeading);
+ if (panel.id === 'playable-songs') showPlayableCategory(window.history.state);
  if (panel === nameSettings && activeMenuPage !== previous) {
   newName.value = lookupName();
   namePasscode.value = '';
@@ -369,7 +368,7 @@ function showMenuPage(id, focus = false) {
  }
  if (focus) {
   window.scrollTo(0, 0);
-  (playableHeading || menuPageTitle).focus();
+  menuPageTitle.focus();
  }
  if (panel.id === 'my-history') void loadArchivedHistory();
  if (panel.id === 'played-history') void refreshPlayed();
@@ -533,9 +532,7 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
  if (browsing) {
   menuPageTitle.textContent = artist || (view === 'artists' ? 'アーティスト' : '曲');
   renderPlayableResults(category, view, artist);
-  return null;
  }
- return selected ? $(`playable-${category}-heading`) : null;
 }
 function navigatePlayable(next) {
  const current = window.history.state;
