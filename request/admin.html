@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=menu-pages"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=menu-pages"></script><script type="module" src="/bug-reports.mjs?v=admin-page"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=menu-pages"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=user-list"></script><script type="module" src="/bug-reports.mjs?v=admin-page"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header>
   <a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a>
   <div class="admin-header-tools">
@@ -23,14 +23,15 @@
 <div id="dashboard" hidden>
 <section id="admin-users" class="admin-subpage" hidden>
   <h1>ユーザー管理</h1>
-  <p class="small muted">パスコード登録済みの名前と、現在のリクエストに記録されている名前を検索できます。</p>
+  <p class="small muted">パスコード登録済みのユーザーと、現在のリクエストに記録されているユーザーを表示します。</p>
   <form id="admin-user-search">
     <label for="admin-user-name">Pocochaの名前</label>
-    <input id="admin-user-name" type="search" maxlength="50" required>
+    <input id="admin-user-name" type="search" maxlength="50">
     <button type="submit">検索</button>
   </form>
   <p id="admin-user-status" class="small muted" role="status" hidden></p>
   <ul id="admin-user-results" class="song-history"></ul>
+  <button id="admin-user-more" class="text-button" type="button" hidden>もっと見る</button>
 </section>
 <section id="admin-bug-reports" class="admin-subpage" hidden>
   <h1>バグ報告</h1>

@@ -392,27 +392,34 @@ async function handle(req, env) {
     if (req.method !== 'GET' && req.headers.get('Origin') !== url.origin) throw new Problem('管理画面から操作してください。', 403);
     if (!await isAdmin(req, env)) throw new Problem('管理者ログインが必要です。', 401);
     if (path === '/api/admin/users' && req.method === 'GET') {
-      const prefix = nameKey(text(url.searchParams.get('name'), 'Pocochaの名前', 50));
+      const search = url.searchParams.get('name')?.trim();
+      const prefix = search ? nameKey(text(search, 'Pocochaの名前', 50)) : '';
+      const offset = Number(url.searchParams.get('offset') ?? 0);
+      if (!Number.isSafeInteger(offset) || offset < 0) throw new Problem('取得位置を確認してください。');
       const {state} = await read(env);
-      const matchingEntries = new Map();
-      for (const entry of state.entries) {
-        const key = nameKey(entry.name);
-        if (key.startsWith(prefix)) matchingEntries.set(entry.accountId || 'guest:' + key, entry);
+      const live = new Map();
+      for (const {name, accountId} of state.entries) {
+        const key = nameKey(name);
+        if (key.startsWith(prefix)) live.set(accountId || 'guest:' + key, {name, key, accountId});
       }
-      const liveMatches = [...matchingEntries.values()].slice(0, 51);
-      const {results:passcodes} = await env.DB.prepare(`
-        SELECT name, account_id AS accountId FROM listener_passcodes
-        WHERE (name_key >= ? AND name_key <= ?)
-          OR account_id IN (SELECT value FROM json_each(?))
-        ORDER BY name_key LIMIT 102
-      `).bind(prefix, prefix + String.fromCodePoint(0x10ffff), JSON.stringify(liveMatches.map(entry => entry.accountId).filter(Boolean))).all();
-      const users = new Map(passcodes.map(({name, accountId}) => [accountId, {name, method:'passcode'}]));
-      for (const {name, accountId} of liveMatches) {
-        const key = accountId || 'guest:' + nameKey(name);
-        if (!users.has(key)) users.set(key, {name, method:accountId ? 'line' : 'guest'});
-      }
-      const sorted = [...users.values()].sort((a,b) => a.name.localeCompare(b.name, 'ja'));
-      return json({users:sorted.slice(0, 50), more:sorted.length > 50 || matchingEntries.size > 51});
+      const {results} = await env.DB.prepare(`
+        WITH live AS (
+          SELECT json_extract(value, '$.name') AS name,
+            json_extract(value, '$.key') AS name_key,
+            json_extract(value, '$.accountId') AS account_id
+          FROM json_each(?)
+        ), users AS (
+          SELECT name, name_key, account_id AS id, 'passcode' AS method
+          FROM listener_passcodes
+          WHERE name_key BETWEEN ? AND ? OR account_id IN (SELECT account_id FROM live)
+          UNION ALL
+          SELECT name, name_key, COALESCE(account_id, name_key), CASE WHEN account_id IS NULL THEN 'guest' ELSE 'line' END
+          FROM live
+          WHERE NOT EXISTS (SELECT 1 FROM listener_passcodes WHERE account_id = live.account_id)
+        )
+        SELECT name, method FROM users ORDER BY name_key, method, id LIMIT 51 OFFSET ?
+      `).bind(JSON.stringify([...live.values()]), prefix, prefix + String.fromCodePoint(0x10ffff), offset).all();
+      return json({users:results.slice(0, 50), next:results.length > 50 ? offset + 50 : null});
     }
     if (path === '/api/admin/bug-reports' && req.method === 'GET') {
       const before = Number(url.searchParams.get('before') ?? Number.MAX_SAFE_INTEGER);

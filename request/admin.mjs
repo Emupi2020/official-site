@@ -22,20 +22,28 @@ if (adminMenu) {
     adminMenu.querySelector('summary').focus();
   });
 }
-$('admin-user-search').onsubmit = async event => {
-  event.preventDefault();
-  const name = $('admin-user-name').value.trim();
-  if (!name) return;
-  const form = event.currentTarget;
-  const submit = form.querySelector('button');
+const adminUserForm = $('admin-user-search');
+const adminUserMore = $('admin-user-more');
+let adminUserName = '';
+let adminUserNext = null;
+let adminUsersLoading = false;
+async function loadAdminUsers(offset = 0) {
+  if (adminUsersLoading) return;
+  adminUsersLoading = true;
+  const submit = adminUserForm.querySelector('button');
   const status = $('admin-user-status');
   const list = $('admin-user-results');
-  submit.disabled = true;
-  list.replaceChildren();
+  submit.disabled = adminUserMore.disabled = true;
+  if (!offset) {
+    list.replaceChildren();
+    adminUserMore.hidden = true;
+    adminUserNext = null;
+  }
   status.hidden = false;
-  status.textContent = '検索中…';
+  status.textContent = '読み込み中…';
   try {
-    const {users, more} = await api('/api/admin/users?' + new URLSearchParams({name}));
+    const params = new URLSearchParams({name:adminUserName, offset});
+    const {users, next} = await api('/api/admin/users?' + params);
     for (const user of users) {
       const row = document.createElement('li');
       const label = document.createElement('strong');
@@ -46,14 +54,25 @@ $('admin-user-search').onsubmit = async event => {
       row.append(label, method);
       list.append(row);
     }
-    status.textContent = users.length ? (more ? '表示は50件までです。名前を絞り込んでください。' : '') : '該当するユーザーが見つかりません。';
+    adminUserNext = next;
+    adminUserMore.hidden = next === null;
+    status.textContent = list.childElementCount ? '' : '該当するユーザーが見つかりません。';
     status.hidden = !status.textContent;
   } catch (error) {
     status.textContent = error.message;
   } finally {
-    submit.disabled = false;
+    adminUsersLoading = false;
+    submit.disabled = adminUserMore.disabled = false;
   }
+}
+adminUserForm.onsubmit = event => {
+  event.preventDefault();
+  if (adminUsersLoading) return;
+  adminUserName = $('admin-user-name').value.trim();
+  loadAdminUsers();
 };
+adminUserMore.onclick = () => { if (adminUserNext !== null) loadAdminUsers(adminUserNext); };
+if (adminView === 'users') document.addEventListener('admin-ready', () => loadAdminUsers());
 const spinDuration = $('spin-duration');
 const rouletteSettings = $('roulette-settings');
 const previewSpin = $('preview-spin');
