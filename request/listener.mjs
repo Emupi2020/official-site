@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=ko';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=ko-copy2';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
 const languageView = history.state?.restoreLanguageView ? history.state : null;
 localizeListenerPage();
@@ -858,7 +858,7 @@ function renderPlayed(played) {
  $('played-total').textContent = totalTracks(played.length);
  $('played-total').hidden = false;
  $('played-count').textContent=played.length?`${played.length}${korean ? '곡' : '曲'}`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
- for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : (korean ? '가창 완료' : '歌唱済み'),entry.performedAt);
+ for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : (korean ? '노래 완료' : '歌唱済み'),entry.performedAt);
 }
 const playable = $('playable-songs');
 const playableCategories = $('playable-categories');

@@ -1,5 +1,5 @@
 import { api, safeGet, $ } from './common.mjs';
-import { listenerError, t } from './listener-language.mjs?v=ko';
+import { listenerError, t } from './listener-language.mjs?v=ko-copy2';
 
 function showStatus(id, text, error = false) {
   const status = $(id);
