@@ -120,7 +120,16 @@ for (const slot of slots) {
  summary.className = 'receipt-summary';
  const identity = document.createElement('div');
  identity.append(part(slot, '.slot-song'), part(slot, '.slot-artist'));
- summary.append(jacket(slot.category, 'slot-overview-art', 76), identity, part(slot, '.slot-status'));
+ const status = part(slot, '.slot-status');
+ status.onclick = () => {
+  const key = status.dataset.statusTag;
+  const description = requestStatusDescriptions[key];
+  if (!description) return;
+  $('request-status-title').textContent = requestStatusLabels[key];
+  $('request-status-description').textContent = description;
+  $('request-status-dialog').showModal();
+ };
+ summary.append(jacket(slot.category, 'slot-overview-art', 76), identity, status);
  receipt.prepend(summary);
 }
 const userCurrentList = $('user-current-list');
@@ -159,7 +168,19 @@ function renderUserCurrentRequests() {
 }
 const reservation = $('next-reservation');
 let activeSlot = null;
-const requestStatusLabels = {unrequested:'未リクエスト', submitted:'リクエスト済み', reserved:'予約済み', temporary:'一時保留', pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'次回に持ち越し', removed:'取り下げ済み'};
+const requestStatusLabels = {unrequested:'未リクエスト', submitted:'リクエスト済み', reserved:'予約済み', temporary:'一時保留', pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'持ち越し', removed:'取り下げ済み'};
+const requestStatusDescriptions = {
+ unrequested:'この枠にはまだリクエストしていません。',
+ submitted:'この枠のリクエストを受け付けました。',
+ reserved:'次回の抽選に向けた予約を受け付けました。',
+ temporary:'この曲は一時的に抽選対象から外れています。',
+ pending:'この曲は抽選対象に入っています。',
+ selected:'この曲が今回の抽選で選ばれました。',
+ done:'この曲は抽選で選ばれ、歌唱が済んでいます。',
+ skipped:'この曲は今回見送りになりました。',
+ deferred:'この曲は次の配信で抽選対象に戻ります。',
+ removed:'この曲のリクエストは取り下げられました。',
+};
 function requestStatusKey(entry, reserved = false) {
  if (reserved && entry.status === 'pending') return 'reserved';
  if (entry.status === 'deferred' && entry.deferReason === 'temporary') return 'temporary';
@@ -194,6 +215,7 @@ function renderSlotOverview(slot) {
 function showSlot(id, focus = false) {
  const previous = activeSlot;
  activeSlot = slots.find(slot => slot.id === id && (!slot.reserved || !reservation.hidden)) || null;
+ if (previous !== activeSlot) $('request-status-dialog').close();
  if (activeSlot?.reserved) reservation.open = true;
  $('request-overview').hidden = Boolean(activeSlot);
  $('request-detail').hidden = !activeSlot;
