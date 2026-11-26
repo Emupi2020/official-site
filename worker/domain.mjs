@@ -162,7 +162,10 @@ export function receipt(state, tokenHash) {
 }
 export function listenerReceipt(state, entry, canManage) {
   const { id, name, artist, song, round, status, deferReason } = entry;
+  const reasons = status === 'deferred' && deferReason === 'unknown' ? unavailableReasons(state.unknown[entry.songKey]) : [];
+  const unavailable = reasons.find(item => item.reason === entry.unavailableReason) || (reasons.length === 1 ? reasons[0] : null);
   return { id, name, artist, song, category: categoryOf(entry), round, status, deferReason,
+    ...(unavailable ? {unavailableReason: unavailable.reason} : {}),
     editable: canManage && canRename(state, entry), songEditable: canManage && canEditSong(state, entry) };
 }
 export function accountRequests(state, accountId) {

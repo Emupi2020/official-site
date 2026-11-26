@@ -123,7 +123,7 @@ for (const slot of slots) {
  const status = part(slot, '.slot-status');
  status.onclick = () => {
   const key = status.dataset.statusTag;
-  const description = requestStatusDescriptions[key];
+  const description = describeRequestStatus(key, slot.entry);
   if (!description) return;
   $('request-status-title').textContent = requestStatusLabels[key];
   $('request-status-description').textContent = description;
@@ -172,15 +172,26 @@ const requestStatusLabels = {unrequested:'未リクエスト', submitted:'リク
 const requestStatusDescriptions = {
  unrequested:'この枠にはまだリクエストしていません。',
  submitted:'この枠のリクエストを受け付けました。',
- reserved:'次回の抽選に向けた予約を受け付けました。',
- temporary:'この曲は一時的に抽選対象から外れています。',
- pending:'この曲は抽選対象に入っています。',
+ reserved:'次回の抽選分として送信された曲です。次の募集枠に切り替わると抽選対象になります。',
+ temporary:'配信側で一時保留にしたため、いまは抽選対象に入りません。',
+ pending:'受付が完了し、抽選で選ばれるのを待っています。',
  selected:'この曲が今回の抽選で選ばれました。',
  done:'この曲は抽選で選ばれ、歌唱が済んでいます。',
- skipped:'この曲は今回見送りになりました。',
+ skipped:'抽選で選ばれたあと、今回は歌わずに見送りとなりました。',
  deferred:'この曲は次の配信で抽選対象に戻ります。',
  removed:'この曲のリクエストは取り下げられました。',
 };
+function describeRequestStatus(key, entry) {
+ if (key !== 'deferred') return requestStatusDescriptions[key];
+ const next = requestStatusDescriptions.deferred;
+ if (entry?.deferReason === 'sung') return 'この配信ですでに歌った曲のため、今回は抽選対象から外れています。' + next;
+ if (entry?.deferReason === 'manual') return '配信側で次の配信へ持ち越す操作をしました。' + next;
+ if (entry?.deferReason === 'unknown') {
+  const reason = {unknown:'曲を知らない', no_audio:'歌唱に使う音源がない'}[entry.unavailableReason];
+  return (reason ? `「${reason}」という理由で、今回は抽選対象から外れています。` : '歌えない理由が登録されたため、今回は抽選対象から外れています。') + next;
+ }
+ return next;
+}
 function requestStatusKey(entry, reserved = false) {
  if (reserved && entry.status === 'pending') return 'reserved';
  if (entry.status === 'deferred' && entry.deferReason === 'temporary') return 'temporary';
