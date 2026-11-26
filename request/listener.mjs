@@ -377,6 +377,12 @@ function showMenuPage(id, focus = false) {
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
   closeMenu();
+  if (panel === nameSettings && activeMenuPage?.panel !== panel) {
+   const url = new URL(location.href);
+   url.searchParams.set('view', 'name-settings');
+   location.assign(url);
+   return;
+  }
   if (activeMenuPage?.panel === panel) {
    const {playableCategory, playableView, playableArtist} = window.history.state || {};
    if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));
@@ -391,6 +397,13 @@ for (const {button,panel} of menuPages) {
 }
 function goToRequestTop() {
  closeMenu();
+ if (window.history.state?.directNamePage) {
+  const url = new URL(location.href);
+  url.searchParams.delete('view');
+  url.searchParams.delete('preview');
+  location.replace(url);
+  return;
+ }
  const loggedIn = !$('request-screen').hidden;
  const focusTop = () => {
   window.scrollTo(0, 0);
@@ -756,7 +769,10 @@ function nameFeedback(text, error = false) {
  node.textContent = text;
  node.classList.toggle('danger', error);
 }
-$('cancel-name').onclick = () => window.history.back();
+$('cancel-name').onclick = () => {
+ if (window.history.state?.directNamePage) goToRequestTop();
+ else window.history.back();
+};
 newName.addEventListener('input', () => nameFeedback(''));
 $('name-form').onsubmit = async event => {
  event.preventDefault();
@@ -1004,8 +1020,7 @@ try {
  entryBusy = false;
  updateEntryButton();
 }
-// Compare Safari rendering without opening either overlay menu.
-if (pageUrl.searchParams.get('preview') === 'name-settings' && !$('request-screen').hidden) {
- window.history.pushState({...window.history.state, menuPage:nameSettings.id}, '');
+if ((pageUrl.searchParams.get('view') ?? pageUrl.searchParams.get('preview')) === 'name-settings' && !$('request-screen').hidden) {
+ window.history.replaceState({...window.history.state, menuPage:nameSettings.id, directNamePage:true}, '');
  showMenuPage(nameSettings.id, true);
 }
