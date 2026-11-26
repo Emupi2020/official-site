@@ -1093,7 +1093,7 @@ function renderAccount() {
 async function confirmSong(data){
  const status = await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);
  if (!status.unknownAt && status.listed !== false) return true;
- let description = 'この曲は、このサイトに配信での歌唱記録がまだないため、「歌える曲」リストに載っていません。このままリクエストできます。';
+ let description = '歌唱記録がまだない曲です。このままリクエストしますか？';
  if (status.unknownAt) {
   const formatter = new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
   const reasons = status.reasons || [{reason:'unknown',at:status.unknownAt}];
