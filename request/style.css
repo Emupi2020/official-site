@@ -192,26 +192,27 @@ body:has(.request-page) { background: #f2f2f7; }
   position: relative;
   margin-block-end: 12px;
 }
-.playable-search-field svg {
+.playable-search-field > svg {
   position: absolute;
   inset-inline-start: 13px;
   inset-block-start: 50%;
   translate: 0 -50%;
-  width: 19px;
-  height: 19px;
+  width: 17px;
+  height: 17px;
   color: var(--muted);
   pointer-events: none;
 }
 #playable-search {
-  min-height: 44px;
-  padding: 8px 14px;
-  padding-inline-start: 39px;
+  min-height: 38px;
+  padding: 0 14px;
+  padding-inline-start: 36px;
   padding-inline-end: 44px;
   border: 0;
   border-radius: 999px;
   background: #f2f2f4;
 }
 #playable-search::placeholder { opacity: 1; }
+#playable-search:focus { outline: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: -1px; }
 #playable-search::-webkit-search-cancel-button { display: none; }
 #playable-search-clear {
   position: absolute;
@@ -222,15 +223,10 @@ body:has(.request-page) { background: #f2f2f7; }
   padding: 0;
   background: transparent;
 }
-#playable-search-clear span {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--muted);
-  color: var(--card);
-  font: 600 14px/1 system-ui, sans-serif;
+#playable-search-clear svg {
+  width: 14px;
+  height: 14px;
+  color: #808087;
 }
 .menu-page-form { max-width: 380px; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
