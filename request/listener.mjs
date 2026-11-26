@@ -566,6 +566,8 @@ function renderHistory(myRequests){
  for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回':'過去のリクエスト'}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt, entry.category, requestStatusKey(entry, entry.round > state.round));
 }
 function renderPlayed(played) {
+ $('played-total').textContent = `全${played.length}曲`;
+ $('played-total').hidden = false;
  $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
  for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : '歌唱済み',entry.performedAt);
 }
@@ -577,6 +579,7 @@ let playableSongs = null;
 function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist} = {}) {
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
+ renderPlayableTotal(selected ? category : undefined, browsing ? artist : undefined);
  playableCategories.hidden = Boolean(selected);
  playableGroups.hidden = !selected || browsing;
  $('playable-results').hidden = !browsing;
@@ -587,6 +590,13 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
   menuPageTitle.textContent = artist || (view === 'artists' ? 'アーティスト' : '曲');
   renderPlayableResults(category, view, artist);
  }
+}
+function renderPlayableTotal(category, artist) {
+ const total = $('playable-total');
+ if (!playableSongs) return;
+ const count = category ? playableSongs.filter(song => song.category === category && (!artist || song.artist === artist)).length : playableSongs.length;
+ total.textContent = `全${count}曲`;
+ total.hidden = false;
 }
 function navigatePlayable(next) {
  const current = window.history.state;
@@ -636,6 +646,7 @@ async function refreshPlayable() {
   songs.sort((a,b) => songOrdering.compare(a.artist,b.artist) || songOrdering.compare(a.song,b.song));
   playableSongs = songs;
   const {playableCategory, playableView, playableArtist} = window.history.state || {};
+  if (!playable.hidden) renderPlayableTotal(playableCategory, playableArtist);
   if (!playable.hidden && playableView) renderPlayableResults(playableCategory, playableView, playableArtist);
   feedback.hidden = true;
  } catch (error) {
