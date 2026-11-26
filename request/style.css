@@ -229,8 +229,18 @@ body:has(.request-page) { background: #f2f2f7; }
   color: #808087;
 }
 .menu-page-form { max-width: 380px; }
-.slot-favorite-picker { margin-block-end: 12px; }
-.slot-favorite-picker > summary { padding-block: 8px; }
+.slot-favorite-picker > summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  min-height: 32px;
+  padding: 0 2px;
+  font-size: 13px;
+  list-style: none;
+}
+.slot-favorite-picker > summary::-webkit-details-marker { display: none; }
+.slot-favorite-picker > summary span { font-size: 16px; }
 .slot-favorite-picker p:empty { display: none; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }

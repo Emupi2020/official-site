@@ -665,14 +665,17 @@ for (const slot of currentSlots) {
  const picker = document.createElement('details');
  picker.className = 'slot-favorite-picker';
  const summary = document.createElement('summary');
- summary.textContent = 'お気に入りから選ぶ';
+ const icon = document.createElement('span');
+ icon.setAttribute('aria-hidden', 'true');
+ icon.textContent = '☆';
+ summary.append(icon, 'お気に入りから選ぶ');
  const choices = document.createElement('div');
  choices.className = 'playable-browse';
  const status = document.createElement('p');
  status.className = 'small muted';
  status.setAttribute('role', 'status');
  picker.append(summary, status, choices);
- part(slot, '.slot-form').prepend(picker);
+ part(slot, '.slot-actions').before(picker);
  slot.favoritePicker = picker;
  picker.addEventListener('toggle', async () => {
   if (!picker.open) return;
