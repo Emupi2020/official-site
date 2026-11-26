@@ -150,6 +150,19 @@ html:has(.listener-layout #request-screen[hidden]),
   margin: 0 auto;
   padding-block: 16px;
 }
+/* Let Safari scroll the document when the keyboard opens on the entry form. */
+html:has(.listener-layout #menu-page[hidden]):has(.listener-layout #entry-form:not([hidden])):not(:has(.listener-nav [aria-expanded="true"])) {
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+.listener-layout:has(#menu-page[hidden]):has(#entry-form:not([hidden])) {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+.listener-layout:has(#menu-page[hidden]):has(#entry-form:not([hidden])) .listener-content {
+  overflow: visible;
+}
 .listener-layout:has(#menu-page[hidden]):has(#entry-screen:not([hidden]) #entry-welcome-actions:not([hidden])) {
   .listener-content { overflow: clip; }
   .request-page {
