@@ -143,6 +143,9 @@ html[data-carry-menu] #request-menu-close[hidden] { display: grid !important; po
   text-align: start;
   text-decoration: none;
 }
+#request-menu-top {
+  margin-block-start: 16px;
+}
 .request-menu-link {
   opacity: 0;
   transform: translateY(-20px);
