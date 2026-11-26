@@ -574,29 +574,20 @@ function renderPlayed(played) {
 const playable = $('playable-songs');
 const playableCategories = $('playable-categories');
 const playableGroups = $('playable-groups');
+const playableSearch = $('playable-search');
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
 function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist} = {}) {
+ playableSearch.value = '';
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
- renderPlayableTotal(selected ? category : undefined, browsing ? artist : undefined);
- playableCategories.hidden = Boolean(selected);
- playableGroups.hidden = !selected || browsing;
- $('playable-results').hidden = !browsing;
  for (const button of playableCategoryButtons) {
   $(`playable-${button.dataset.playableCategory}-detail`).hidden = button !== selected;
  }
  if (browsing) {
   menuPageTitle.textContent = artist || (view === 'artists' ? 'アーティスト' : '曲');
-  renderPlayableResults(category, view, artist);
  }
-}
-function renderPlayableTotal(category, artist) {
- const total = $('playable-total');
- if (!playableSongs) return;
- const count = category ? playableSongs.filter(song => song.category === category && (!artist || song.artist === artist)).length : playableSongs.length;
- total.textContent = `全${count}曲`;
- total.hidden = false;
+ renderPlayableResults();
 }
 function navigatePlayable(next) {
  const current = window.history.state;
@@ -609,16 +600,31 @@ for (const button of playableCategoryButtons) {
 for (const button of $('playable-browse').querySelectorAll('button')) {
  button.onclick = () => navigatePlayable({playableView:button.dataset.playableView});
 }
-function renderPlayableResults(category, view, artist) {
+playableSearch.addEventListener('input', renderPlayableResults);
+function renderPlayableResults() {
+ const {playableCategory: category, playableView: view, playableArtist: artist} = window.history.state || {};
+ const query = normalize(playableSearch.value);
+ const browsing = Boolean(category && view);
+ playableCategories.hidden = Boolean(category || query);
+ playableGroups.hidden = !category || browsing || Boolean(query);
+ $('playable-results').hidden = !browsing && !query;
  const artists = $('playable-artists');
  const tracks = $('playable-track-list');
- const showArtists = view === 'artists' && !artist;
- const songs = (playableSongs || []).filter(song => song.category === category && (!artist || song.artist === artist));
+ const showArtists = view === 'artists' && !artist && !query;
+ const songs = (playableSongs || []).filter(song => (!category || song.category === category) && (!artist || song.artist === artist));
+ const matches = query ? songs.filter(song => [...songSearchNames(song), ...artistSearchNames(song)]
+  .some(name => normalize(name).includes(query))) : songs;
+ const total = $('playable-total');
+ total.hidden = !playableSongs;
+ total.textContent = query ? `検索結果 ${matches.length}曲` : `全${songs.length}曲`;
+ if (!browsing && !query) return;
  artists.hidden = !showArtists;
  tracks.hidden = showArtists;
  artists.replaceChildren();
  tracks.replaceChildren();
- $('playable-empty').hidden = !playableSongs || songs.length > 0;
+ const empty = $('playable-empty');
+ empty.hidden = !playableSongs || matches.length > 0;
+ empty.textContent = query ? '該当する曲がありません。' : 'まだ曲がありません。';
  if (showArtists) {
   for (const name of new Set(songs.map(song => song.artist))) {
    const button = document.createElement('button');
@@ -628,7 +634,7 @@ function renderPlayableResults(category, view, artist) {
    artists.append(button);
   }
  } else {
-  for (const song of songs) historyRow(tracks, song.song, song.artist, undefined, undefined, null);
+  for (const song of matches) historyRow(tracks, song.song, song.artist, undefined, undefined, null);
  }
 }
 const songOrdering = new Intl.Collator('ja');
@@ -645,9 +651,7 @@ async function refreshPlayable() {
   const {songs} = await api('/api/repertoire');
   songs.sort((a,b) => songOrdering.compare(a.artist,b.artist) || songOrdering.compare(a.song,b.song));
   playableSongs = songs;
-  const {playableCategory, playableView, playableArtist} = window.history.state || {};
-  if (!playable.hidden) renderPlayableTotal(playableCategory, playableArtist);
-  if (!playable.hidden && playableView) renderPlayableResults(playableCategory, playableView, playableArtist);
+  if (!playable.hidden) renderPlayableResults();
   feedback.hidden = true;
  } catch (error) {
   feedback.textContent = error.message;

@@ -177,6 +177,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page :is(#menu-page-title, #request-title) { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
 .request-page :is(#menu-page-title, #request-title):focus { outline: none; }
 .song-page-total { margin: -10px 0 16px; color: var(--muted); font-size: 14px; }
+#playable-search { margin-block-end: 16px; }
 .menu-page-form { max-width: 380px; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
