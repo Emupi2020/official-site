@@ -27,6 +27,12 @@ body.listener-layout {
   flex-direction: column;
 }
 .listener-content > .site-footer { flex-shrink: 0; margin-top: auto; padding-block: 16px; }
+.listener-layout:is(:has(#request-screen:not([hidden])), :has(#menu-page:not([hidden]))) {
+  min-height: 100lvh;
+}
+.listener-layout:is(:has(#request-screen:not([hidden])), :has(#menu-page:not([hidden]))) .site-footer {
+  padding-block-end: max(16px, env(safe-area-inset-bottom), calc(100lvh - 100dvh));
+}
 .site-footer .request-notes {
   display: none;
   max-width: 456px;
@@ -85,6 +91,7 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
 }
 .request-menu:not([inert]) {
   height: 100dvh;
+  height: 100lvh;
   visibility: visible;
   opacity: 1;
 }
@@ -92,6 +99,11 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
   max-width: 480px;
   margin: auto;
   padding: calc(var(--header-height) + env(safe-area-inset-top) + 12px) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+@supports (height: 100lvh) {
+  .request-menu-content {
+    padding-block-end: max(24px, env(safe-area-inset-bottom), calc(100lvh - 100dvh + 24px));
+  }
 }
 .request-menu .request-menu-link {
   width: 100%;
@@ -132,16 +144,16 @@ html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
 .request-menu .request-menu-link > span { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--muted); }
 .request-menu .request-menu-link > span:empty { display: none; }
 
-html:has(.listener-layout #request-screen[hidden]),
-.listener-layout:has(#request-screen[hidden]) {
+html:has(.listener-layout #request-screen[hidden]):has(.listener-layout #menu-page[hidden]),
+.listener-layout:has(#request-screen[hidden]):has(#menu-page[hidden]) {
   overflow: hidden;
   overscroll-behavior: none;
 }
-.listener-layout:has(#request-screen[hidden]) {
+.listener-layout:has(#request-screen[hidden]):has(#menu-page[hidden]) {
   height: var(--login-viewport-height, 100dvh);
   min-height: 0;
 }
-.listener-layout:has(#request-screen[hidden]) .listener-content {
+.listener-layout:has(#request-screen[hidden]):has(#menu-page[hidden]) .listener-content {
   overflow: auto;
   overscroll-behavior: contain;
 }
