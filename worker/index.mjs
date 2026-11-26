@@ -249,6 +249,26 @@ async function handle(req, env) {
     }
     return json({ entry });
   }
+  if (path === '/api/listener-favorites' && ['GET', 'POST'].includes(req.method)) {
+    const session = await listenerSession(req, env);
+    if (!session?.accountId || (session.kind === 'pin-listener' && !await passcodeAccount(env, session.accountId))) {
+      throw new Problem('ログインしてください。', 401);
+    }
+    if (req.method === 'GET') {
+      const {results} = await env.DB.prepare('SELECT favorite_key FROM listener_favorites WHERE account_id = ?')
+        .bind(session.accountId).all();
+      return json({favorites:results.map(row => row.favorite_key)});
+    }
+    const {key, saved} = await body(req);
+    if (typeof key !== 'string' || !/^(artist|song):.+$/u.test(key) || key.length > 600 || typeof saved !== 'boolean') {
+      throw new Problem('お気に入りの指定を確認してください。');
+    }
+    const statement = saved
+      ? 'INSERT OR IGNORE INTO listener_favorites (account_id, favorite_key) VALUES (?, ?)'
+      : 'DELETE FROM listener_favorites WHERE account_id = ? AND favorite_key = ?';
+    await env.DB.prepare(statement).bind(session.accountId, key).run();
+    return json({saved});
+  }
   if (path === '/api/listener-account' && ['GET', 'POST'].includes(req.method)) {
     const session = await listenerSession(req, env);
     const accountId = session?.accountId;

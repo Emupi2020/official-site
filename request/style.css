@@ -577,6 +577,32 @@ body:has(.request-page) { background: #f2f2f7; }
 .playable-cover { width: min(76%, 300px); margin: 0 auto; }
 .playable-detail h2 { margin: 8px 0 22px; text-align: center; }
 #playable-track-list li { grid-template-columns: minmax(0, 1fr); }
+#playable-track-list .favorite-song-row { grid-template-columns: minmax(0, 1fr) 44px; }
+.song-history .favorite-song-row { grid-template-columns: 42px minmax(0, 1fr) 44px; }
+.favorite-star {
+  align-self: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.favorite-star svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.favorite-star[aria-pressed="true"] { color: #a86b00; }
+.favorite-star[aria-pressed="true"] svg { fill: currentColor; }
+.menu-page-heading .artist-favorite {
+  align-self: baseline;
+  width: 32px;
+  min-height: 32px;
+  vertical-align: middle;
+}
 .playable-browse button {
   display: flex;
   justify-content: flex-start;

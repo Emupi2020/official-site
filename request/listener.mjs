@@ -407,7 +407,10 @@ function showMenuPage(id, focus = false) {
  if (!activeMenuPage) return;
  const {button,panel} = activeMenuPage;
  menuPageTitle.textContent = button.firstChild.textContent.trim();
+ $('favorite-feedback').hidden = true;
+ menuPage.querySelector('.artist-favorite')?.remove();
  if (panel.id === 'playable-songs') showPlayableCategory(window.history.state);
+ if (panel.id === 'playable-songs' || panel.id === 'played-history') loadFavorites();
  if (panel === nameSettings && activeMenuPage !== previous) {
   newName.value = lookupName();
   namePasscode.value = '';
@@ -526,7 +529,90 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
  }
  if (category) row.append(jacket(category, 'history-art', 42));
  row.append(identity);
+ if (list.id === 'played-list' || list.id === 'playable-track-list') {
+  row.classList.add('favorite-song-row');
+  row.append(favoriteButton('song:' + JSON.stringify([normalize(artist), normalize(song)]), song));
+ }
  list.append(row);
+}
+const favoriteStorageKey = 'emupi-request-favorites';
+let favoriteState;
+function favoritesForListener() {
+ const owner = account.signedIn ? historyOwner() : 'browser';
+ if (favoriteState?.owner === owner) return favoriteState;
+ const current = {owner, synced:account.signedIn, keys:new Set(), pending:new Set(), ready:!account.signedIn, loading:false};
+ if (!current.synced) {
+  try { current.keys = new Set(JSON.parse(safeGet(favoriteStorageKey) || '[]')); } catch {}
+ }
+ favoriteState = current;
+ return current;
+}
+function favoriteFeedback(text) {
+ const feedback = $('favorite-feedback');
+ feedback.textContent = text;
+ feedback.hidden = !text;
+}
+function updateFavoriteButtons(current) {
+ if (favoritesForListener() !== current) return;
+ for (const button of menuPage.querySelectorAll('[data-favorite-key]')) {
+  const key = button.dataset.favoriteKey;
+  button.setAttribute('aria-pressed', String(current.keys.has(key)));
+  button.disabled = !current.ready || current.pending.has(key);
+ }
+}
+async function loadFavorites() {
+ const current = favoritesForListener();
+ updateFavoriteButtons(current);
+ if (current.ready || current.loading) return;
+ current.loading = true;
+ try {
+  const {favorites} = await api('/api/listener-favorites');
+  current.keys = new Set(favorites);
+  current.ready = true;
+ } catch {
+  if (favoritesForListener() === current) favoriteFeedback('お気に入りを読み込めませんでした。');
+ } finally {
+  current.loading = false;
+  updateFavoriteButtons(current);
+ }
+}
+function favoriteButton(key, name) {
+ const button = document.createElement('button');
+ button.type = 'button';
+ button.className = 'favorite-star';
+ button.dataset.favoriteKey = key;
+ button.setAttribute('aria-label', name + 'のお気に入り');
+ button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.6l6.2-.9L12 3Z"/></svg>';
+ const initial = favoritesForListener();
+ button.setAttribute('aria-pressed', String(initial.keys.has(key)));
+ button.disabled = !initial.ready || initial.pending.has(key);
+ button.onclick = async () => {
+  const current = favoritesForListener();
+  if (!current.ready || current.pending.has(key)) return;
+  const saved = !current.keys.has(key);
+  const keys = new Set(current.keys);
+  if (saved) keys.add(key);
+  else keys.delete(key);
+  current.pending.add(key);
+  updateFavoriteButtons(current);
+  favoriteFeedback('');
+  try {
+   if (current.synced) {
+    await api('/api/listener-favorites', {method:'POST', data:{key,saved}});
+    if (saved) current.keys.add(key);
+    else current.keys.delete(key);
+   } else {
+    if (!safeSet(favoriteStorageKey, JSON.stringify([...keys]))) throw new Error();
+    current.keys = keys;
+   }
+  } catch {
+   if (favoritesForListener() === current) favoriteFeedback('お気に入りを変更できませんでした。');
+  } finally {
+   current.pending.delete(key);
+   updateFavoriteButtons(current);
+  }
+ };
+ return button;
 }
 function historyOwner() {
  return lookupName() + ':' + (account.signedIn ? account.method : 'guest');
@@ -592,6 +678,11 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
  }
  if (browsing) {
   menuPageTitle.textContent = artist || (view === 'artists' ? 'アーティスト' : '曲');
+  if (artist) {
+   const star = favoriteButton('artist:' + normalize(artist), artist);
+   star.classList.add('artist-favorite');
+   menuPageTitle.after(star);
+  }
  }
  renderPlayableResults();
 }
