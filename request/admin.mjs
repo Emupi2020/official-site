@@ -1,7 +1,7 @@
 import { categoryOf } from './categories.mjs';
 import { api, $, message, safeGet, safeSet } from './common.mjs?admin=request-exceptions';
 import { setWheel, spin, settle } from './wheel.mjs?spin=natural-stop';
-import { prepareWinnerSound, playWinnerSound } from './roulette-sound.mjs';
+import { prepareRouletteSound, startDrumRoll, playWinnerSound } from './roulette-sound.mjs?audio=acoustic';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
 const adminMenu = $('admin-menu');
@@ -31,12 +31,29 @@ const soundKey = 'emupi-roulette-winner-sound';
 const savedSound = safeGet(soundKey);
 if ([...winnerSound.options].some(option => option.value === savedSound)) winnerSound.value = savedSound;
 winnerSound.onchange = () => safeSet(soundKey, winnerSound.value);
-async function previewWinnerSound() {
-  if (winnerSound.value === 'off') return;
-  await prepareWinnerSound();
-  playWinnerSound(winnerSound.value);
+function prepareSpinAudio() {
+  if (winnerSound.value !== 'off') return prepareRouletteSound();
 }
-$('preview-sound').onclick = previewWinnerSound;
+async function spinWithAudio(song, songs, audioReady) {
+  const duration = spinTime();
+  const start = performance.now();
+  let buffers, stopRoll;
+  let spinning = true;
+  void audioReady?.then(loaded => {
+    buffers = loaded;
+    const remaining = duration - (performance.now() - start);
+    if (spinning && loaded && remaining > 100 && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      stopRoll = startDrumRoll(loaded, remaining);
+    }
+  });
+  try {
+    await spin(song, songs, duration);
+    return buffers;
+  } finally {
+    spinning = false;
+    stopRoll?.();
+  }
+}
 let state, busy = false, dismissedResult = null, drawCategory = defaultCategory;
 let refreshVersion = 0;
 const hasWinner = entry => entry?.status === 'selected' || (entry?.status === 'done' && Boolean(entry.autoDone));
@@ -171,10 +188,10 @@ async function action(action, extra = {}) {
   undoFeedback('');
   $('roulette-screen').classList.add('spinning');
   const drawing = ['draw', 'advance'].includes(action);
-  if (drawing && winnerSound.value !== 'off') prepareWinnerSound();
+  const audioReady = drawing ? prepareSpinAudio() : undefined;
   try {
     if (!await postAdminAction({action, ...extra, ...(drawing ? {category:drawCategory} : {})})) return;
-    await refresh(drawing, action === 'selectSong');
+    await refresh(drawing, action === 'selectSong', audioReady);
     if (action === 'undo' && state) undoFeedback('直前の操作を取り消しました。');
     if (action === 'resetRequest') message('リクエストを初期化しました。');
   } catch (error) {
@@ -269,7 +286,7 @@ function renderRoulette(current = state.entries.find(entry => entry.id === state
   }
   if (wasHidden && !result.hidden) $('dismiss-result').focus();
 }
-async function refresh(animate = false, manual = false) {
+async function refresh(animate = false, manual = false, audioReady) {
   const version = ++refreshVersion;
   try{
     let next = await api('/api/admin');
@@ -278,10 +295,11 @@ async function refresh(animate = false, manual = false) {
     if (adminMenu) adminMenu.hidden = false;
     const current = next.entries.find(entry => entry.id === next.current);
     const animatedWinner = animate && current?.status === 'selected';
+    let buffers;
     if (current?.status === 'selected' && (animate || manual || current.revealedAt)) {
       if (animate) {
         $('result').hidden = true;
-        await spin(current.song, poolFor(next).map(entry => entry.song), spinTime());
+        buffers = await spinWithAudio(current.song, poolFor(next).map(entry => entry.song), audioReady);
       }
       if (version !== refreshVersion) return;
       state = next;
@@ -292,7 +310,7 @@ async function refresh(animate = false, manual = false) {
     }
     state = next;
     render();
-    if (animatedWinner && !$('result').hidden) playWinnerSound(winnerSound.value);
+    if (animatedWinner && !$('result').hidden) playWinnerSound(winnerSound.value, buffers);
   }catch(error){if(version!==refreshVersion)return;if(error.status===401){$('login').hidden=false;$('dashboard').hidden=true;if(adminMenu){adminMenu.open=false;adminMenu.hidden=true;}$('roulette-screen').close();state=null;}else throw error;}
 }
 $('login-form').onsubmit=async event=>{
@@ -317,10 +335,10 @@ previewSpin?.addEventListener('click', async () => {
   lock(true);
   stageMessage('');
   previewSpin.textContent = 'プレビュー中';
-  if (winnerSound.value !== 'off') prepareWinnerSound();
+  const audioReady = prepareSpinAudio();
   try {
-    await spin(sample, songs, spinTime());
-    playWinnerSound(winnerSound.value);
+    const buffers = await spinWithAudio(sample, songs, audioReady);
+    playWinnerSound(winnerSound.value, buffers);
   } finally {
     busy = false;
     previewSpin.textContent = 'プレビュー';
@@ -330,6 +348,7 @@ previewSpin?.addEventListener('click', async () => {
   }
 });
 $('open-roulette').onclick = () => {
+  void prepareSpinAudio();
   if (rouletteSettings) rouletteSettings.open = false;
   drawCategory = defaultCategory;
   dismissedResult = null;

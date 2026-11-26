@@ -1,75 +1,79 @@
 let audio;
-let noise;
-let playing;
+let samples;
 
-export async function prepareWinnerSound() {
+// Acoustic samples: Virtuosity Drums (CC0), distributed by Keyboardia.
+const sampleFiles = ['roulette-snare-soft.m4a', 'roulette-snare.m4a', 'roulette-cymbal.m4a'];
+
+export async function prepareRouletteSound() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) return;
   try {
     audio ||= new AudioContext();
-    if (audio.state !== 'running') await audio.resume();
+    const resume = audio.state === 'running' ? Promise.resolve() : audio.resume();
+    samples ||= Promise.all(sampleFiles.map(async file => {
+      const response = await fetch(new URL(file, import.meta.url));
+      if (!response.ok) throw new Error('Could not load roulette audio');
+      return audio.decodeAudioData(await response.arrayBuffer());
+    })).catch(() => {
+      samples = undefined;
+      return null;
+    });
+    const [, buffers] = await Promise.all([resume, samples]);
+    return buffers;
   } catch {
-    // Sound is optional even when the browser blocks audio.
+    // The draw still works when audio is unavailable.
   }
 }
 
-export function playWinnerSound(sound) {
-  if (sound === 'off' || audio?.state !== 'running') return;
-  if (playing) playing.disconnect();
-  const output = audio.createGain();
+function hit(buffer, at, level, duration = buffer.duration) {
+  const source = audio.createBufferSource();
+  const gain = audio.createGain();
+  source.buffer = buffer;
+  duration = Math.min(duration, buffer.duration);
+  gain.gain.value = level;
+  gain.gain.setValueAtTime(level, at + duration * 0.7);
+  gain.gain.linearRampToValueAtTime(0, at + duration);
+  source.connect(gain).connect(audio.destination);
+  source.onended = () => { source.disconnect(); gain.disconnect(); };
+  source.start(at);
+  source.stop(at + duration);
+  return source;
+}
+
+export function startDrumRoll(buffers, duration) {
   const start = audio.currentTime + 0.015;
-  output.gain.value = 0.25;
-  output.connect(audio.destination);
-  playing = output;
-
-  function voice(source, time, duration, level, filterType, frequency) {
-    const gain = audio.createGain();
-    gain.gain.setValueAtTime(level, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-    if (filterType) {
-      const filter = audio.createBiquadFilter();
-      filter.type = filterType;
-      filter.frequency.value = frequency;
-      source.connect(filter).connect(gain);
-    } else source.connect(gain);
-    gain.connect(output);
-    source.start(time);
-    source.stop(time + duration);
+  const end = duration / 1000;
+  const sources = [];
+  for (let t = 0, i = 0; t < end - 0.05; i++) {
+    const progress = t / end;
+    const accent = i % 4 === 3;
+    sources.push(hit(buffers[Number(accent)], start + t, (0.10 + progress * 0.24) * (accent ? 1 : 0.7), 0.16));
+    t += 0.095 - progress * 0.036 + (i % 2 === 0 ? 0.004 : -0.004);
   }
+  return () => {
+    for (const source of sources) source.stop();
+  };
+}
 
-  function hit(offset, duration, level, filter, frequency) {
-    if (!noise) {
-      noise = audio.createBuffer(1, audio.sampleRate, audio.sampleRate);
-      const samples = noise.getChannelData(0);
-      for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
-    }
-    const source = audio.createBufferSource();
-    source.buffer = noise;
-    voice(source, start + offset, duration, level, filter, frequency);
-  }
-
-  function tone(offset, frequency, duration, level, type = 'sine') {
-    const source = audio.createOscillator();
-    source.type = type;
-    source.frequency.value = frequency;
-    voice(source, start + offset, duration, level);
-  }
-
+export function playWinnerSound(sound, buffers) {
+  if (!audio || audio.state !== 'running' || !buffers || sound === 'off') return;
+  const at = audio.currentTime + 0.015;
+  const [, snare, crash] = buffers;
   if (sound === 'chime') {
-    [659, 784, 1047].forEach((frequency, i) => tone(i * 0.08, frequency, 0.26, 0.26));
-  } else {
-    const snare = sound === 'roll' ? [0, 0.065, 0.125, 0.18, 0.23, 0.28] : [0, 0.10];
-    snare.forEach((offset, i) => {
-      hit(offset, 0.11, 0.18 + 0.24 * (i + 1) / snare.length, 'bandpass', 1850);
-      tone(offset, 185, 0.065, 0.09, 'triangle');
+    [659, 784, 1047].forEach((frequency, i) => {
+      const tone = audio.createOscillator();
+      const gain = audio.createGain();
+      const start = at + i * 0.075;
+      tone.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.045, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
+      tone.connect(gain).connect(audio.destination);
+      tone.onended = () => { tone.disconnect(); gain.disconnect(); };
+      tone.start(start);
+      tone.stop(start + 0.28);
     });
-    hit(snare.at(-1) + 0.045, 0.45, 0.34, 'highpass', 5700);
+    return;
   }
-
-  setTimeout(() => {
-    if (playing === output) {
-      output.disconnect();
-      playing = null;
-    }
-  }, 900);
+  if (sound === 'snare') hit(snare, at, 0.45);
+  hit(crash, at, sound === 'crash' ? 0.42 : 0.34, 1.05);
 }
