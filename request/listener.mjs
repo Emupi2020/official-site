@@ -237,6 +237,9 @@ function setEntryMode(mode, focus = false) {
  if (guest) $('enter-request').setAttribute('aria-describedby', 'guest-entry-note');
  else $('enter-request').removeAttribute('aria-describedby');
  $('passcode-field').hidden = !usesPasscode(mode);
+ $('entry-passcode-help').hidden = mode !== 'register';
+ if (mode === 'register') entryPasscode.setAttribute('aria-describedby', 'entry-passcode-help');
+ else entryPasscode.removeAttribute('aria-describedby');
  $('entry-signin').hidden = !guest && mode !== 'register';
  $('entry-login-links').hidden = !login;
  $('choose-name-login').textContent = mode === 'name-login' ? 'パスコードでログイン' : '名前だけでログイン';

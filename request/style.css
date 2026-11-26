@@ -252,7 +252,7 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .entry-welcome-actions button { margin: 0; }
 .request-page #entry-screen .secondary { background: transparent; border: 1px solid var(--border); }
-.request-page #entry-name-help {
+.request-page :is(#entry-name-help, #entry-passcode-help) {
   display: none;
   margin: 6px 0 0;
   padding: 8px 12px;
@@ -261,7 +261,7 @@ body:has(.request-page) { background: #f2f2f7; }
   background: #fff;
   line-height: 1.5;
 }
-.request-page .request-field:focus-within > #entry-name-help:not([hidden]) { display: block; }
+.request-page .request-field:focus-within > :is(#entry-name-help, #entry-passcode-help):not([hidden]) { display: block; }
 .request-page #guest-entry-note { margin: 10px 0 0; color: var(--danger); line-height: 1.55; }
 .request-page #enter-request { margin-top: 16px; }
 .request-page #enter-request:disabled {
