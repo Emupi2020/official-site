@@ -199,10 +199,6 @@ document.addEventListener('click', clearLogoutNotice, true);
 document.addEventListener('keydown', clearLogoutNotice, true);
 const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMode:mode, fromWelcome});
 function showRequestScreen(open, focus = false) {
- if (!$('menu-page-loading').hidden) {
-  $('menu-page-loading').hidden = true;
-  menuPage.hidden = true;
- }
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
  for (const {button} of menuPages) if (button.hasAttribute('data-login-required')) button.hidden = !open;
@@ -218,10 +214,13 @@ function showRequestScreen(open, focus = false) {
   initialMenuPage = null;
   if (page) {
    window.history.replaceState({...window.history.state, menuPage:page.panel.id, directMenuPage:true}, '');
-   showMenuPage(page.panel.id, true);
+   Promise.resolve(showMenuPage(page.panel.id, true)).finally(() => {
+    delete document.documentElement.dataset.carryMenu;
+   });
    return;
   }
  }
+ delete document.documentElement.dataset.carryMenu;
  if (focus) (open ? $('request-title') : entryTitle).focus();
 }
 const hasSavedName = Boolean($('name').value.trim());
@@ -386,9 +385,9 @@ function showMenuPage(id, focus = false) {
   window.scrollTo(0, 0);
   menuPageTitle.focus();
  }
- if (panel.id === 'my-history') void loadArchivedHistory();
- if (panel.id === 'played-history') void refreshPlayed();
- if (panel.id === 'playable-songs' && previous !== activeMenuPage) void refreshPlayable();
+ if (panel.id === 'my-history') return loadArchivedHistory();
+ if (panel.id === 'played-history') return refreshPlayed();
+ if (panel.id === 'playable-songs' && previous !== activeMenuPage) return refreshPlayable();
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {

@@ -100,6 +100,22 @@ body.listener-layout {
   visibility: visible;
   opacity: 1;
 }
+html[data-carry-menu="request-menu"] #request-menu,
+html[data-carry-menu="user-menu"] #user-menu {
+  height: 100lvh;
+  visibility: visible;
+  opacity: 1;
+  transition: none;
+}
+html[data-carry-menu="request-menu"] #request-menu .request-menu-link,
+html[data-carry-menu="user-menu"] #user-menu .request-menu-link {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+html[data-carry-menu="user-menu"] #user-menu .request-menu-link[hidden] { display: flex !important; }
+html[data-carry-menu="user-menu"] #user-current-empty { visibility: hidden; }
+html[data-carry-menu] #request-menu-close[hidden] { display: grid !important; pointer-events: none; }
 .request-menu-content {
   max-width: 480px;
   margin: auto;

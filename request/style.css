@@ -128,15 +128,7 @@ body:has(.request-page) { background: #f2f2f7; }
   transform: rotate(45deg);
 }
 .admin-main .request-table-card[open] > summary::after { transform: rotate(135deg); }
-.request-page .request-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-.request-page .request-top h1 { margin: 0; }
-.request-page .request-top h1 { font-size: clamp(20px, 6vw, 32px); }
+.request-page:has(#request-overview[hidden]) .request-top { display: none; }
 .request-page .request-block {
   margin: 10px 0 0;
   padding: 10px 16px;
@@ -183,8 +175,8 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-overview-end .slot-overview-chevron { color: var(--row-chevron); border-width: 2px; }
 #request-overview .slot-overview-row.is-empty .slot-overview-status:not([data-status-tag]) { color: var(--muted); font-size: 12px; }
 .request-page:has(#menu-page:not([hidden])) > :is(#entry-screen, #request-screen) { display: none; }
-.request-page #menu-page-title { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
-.request-page #menu-page-title:focus { outline: none; }
+.request-page :is(#menu-page-title, #request-title) { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
+.request-page :is(#menu-page-title, #request-title):focus { outline: none; }
 .menu-page-form { max-width: 380px; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
