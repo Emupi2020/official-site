@@ -195,6 +195,7 @@ function showSlot(id, focus = false) {
  $('reservation-detail-label').hidden = !activeSlot?.reserved;
  for (const slot of slots) slot.detail.hidden = slot !== activeSlot;
  const previousRow = previous && (!previous.reserved || !reservation.hidden) && previous.openButton;
+ if (previous !== activeSlot) previous?.favoritePicker?.removeAttribute('open');
  if (focus) (activeSlot?.detail || previousRow || $('request-title')).focus();
 }
 function closeSlot() {
@@ -506,6 +507,10 @@ function lock(value) {
  for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, .slot-overview-open')) button.disabled = busy;
  newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
+ for (const slot of currentSlots) {
+  slot.favoritePicker.hidden = Boolean(slot.entry || slot.editing);
+  if (slot.favoritePicker.hidden) slot.favoritePicker.open = false;
+ }
 }
 function feedback(slot, text, error = true) {
  const box = part(slot, '.slot-feedback');
@@ -642,12 +647,67 @@ async function openFavorites() {
  await loadFavorites();
  if (!current.ready || $('favorites').hidden || favoritesForListener() !== current) return;
  if (current.keys.size && !playableSongs) {
-  try { playableSongs = (await api('/api/repertoire')).songs; }
+  try { await loadFavoriteRepertoire(); }
   catch {
    if (!$('favorites').hidden) favoriteFeedback('お気に入りの曲名を読み込めませんでした。');
   }
  }
  if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
+}
+async function loadFavoriteRepertoire() {
+ if (!playableSongs) {
+  const {songs} = await api('/api/repertoire');
+  playableSongs = songs.sort((a,b) => songOrdering.compare(a.artist,b.artist) || songOrdering.compare(a.song,b.song));
+ }
+ return playableSongs;
+}
+for (const slot of currentSlots) {
+ const picker = document.createElement('details');
+ picker.className = 'slot-favorite-picker';
+ const summary = document.createElement('summary');
+ summary.textContent = 'お気に入りから選ぶ';
+ const choices = document.createElement('div');
+ choices.className = 'playable-browse';
+ const status = document.createElement('p');
+ status.className = 'small muted';
+ status.setAttribute('role', 'status');
+ picker.append(summary, status, choices);
+ part(slot, '.slot-form').prepend(picker);
+ slot.favoritePicker = picker;
+ picker.addEventListener('toggle', async () => {
+  if (!picker.open) return;
+  choices.replaceChildren();
+  status.textContent = '読み込み中…';
+  const favorites = favoritesForListener();
+  await loadFavorites();
+  try {
+   if (!favorites.ready) throw new Error();
+   const songs = favorites.keys.size ? await loadFavoriteRepertoire() : [];
+   if (!picker.open || favoritesForListener() !== favorites) return;
+   const artistField = field(slot, 'artist');
+   for (const {artist, song, category} of songs) {
+    if (category !== slot.category || !favorites.keys.has(favoriteSongKey(artist, song))) continue;
+    if (artistField instanceof HTMLSelectElement && ![...artistField.options].some(option => option.value === artist)) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = song + ' · ' + artist;
+    button.onclick = () => {
+     if (busy || slot.entry || slot.editing) return;
+     slot.draftRound ??= slot.round;
+     artistField.value = artist;
+     field(slot, 'song').value = song;
+     hideSuggestions();
+     picker.open = false;
+     lock(busy);
+     summary.focus();
+    };
+    choices.append(button);
+   }
+   status.textContent = choices.childElementCount ? '' : 'この枠のお気に入りの曲はありません。';
+  } catch {
+   status.textContent = 'お気に入りを読み込めませんでした。';
+  }
+ });
 }
 function renderFavorites(current) {
  const artists = $('favorite-artist-list');

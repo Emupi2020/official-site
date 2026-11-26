@@ -229,6 +229,9 @@ body:has(.request-page) { background: #f2f2f7; }
   color: #808087;
 }
 .menu-page-form { max-width: 380px; }
+.slot-favorite-picker { margin-block-end: 12px; }
+.slot-favorite-picker > summary { padding-block: 8px; }
+.slot-favorite-picker p:empty { display: none; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
 .request-page #reservation-detail-label { margin: 0 0 3px; }
