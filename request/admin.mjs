@@ -5,6 +5,13 @@ import { prepareRouletteSound, startDrumRoll, playWinnerSound } from './roulette
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
 const adminMenu = $('admin-menu');
+const adminView = new URLSearchParams(location.search).get('view');
+const adminSubpage = new Map([['users', 'admin-users'], ['reports', 'admin-bug-reports'], ['suggestions', 'admin-suggestions']]).get(adminView);
+if (adminSubpage) {
+  $('admin-overview').hidden = true;
+  $(adminSubpage).hidden = false;
+  document.title = $(adminSubpage).querySelector('h1').textContent + ' | リクエスト管理';
+}
 if (adminMenu) {
   document.addEventListener('click', event => {
     if (adminMenu.open && !adminMenu.contains(event.target)) adminMenu.open = false;
@@ -14,16 +21,39 @@ if (adminMenu) {
     adminMenu.open = false;
     adminMenu.querySelector('summary').focus();
   });
-  adminMenu.addEventListener('toggle', () => {
-    if (!adminMenu.open) for (const section of adminMenu.querySelectorAll('details[open]')) section.open = false;
-  });
-  const sections = [...adminMenu.querySelectorAll('.admin-menu-panel > details')];
-  for (const section of sections) {
-    section.addEventListener('toggle', () => {
-      if (section.open) for (const other of sections) if (other !== section) other.open = false;
-    });
-  }
 }
+$('admin-user-search').onsubmit = async event => {
+  event.preventDefault();
+  const name = $('admin-user-name').value.trim();
+  if (!name) return;
+  const form = event.currentTarget;
+  const submit = form.querySelector('button');
+  const status = $('admin-user-status');
+  const list = $('admin-user-results');
+  submit.disabled = true;
+  list.replaceChildren();
+  status.hidden = false;
+  status.textContent = '検索中…';
+  try {
+    const {users, more} = await api('/api/admin/users?' + new URLSearchParams({name}));
+    for (const user of users) {
+      const row = document.createElement('li');
+      const label = document.createElement('strong');
+      label.textContent = user.name;
+      const method = document.createElement('span');
+      method.className = 'small muted';
+      method.textContent = {passcode:'パスコード', line:'LINE', guest:'名前のみ'}[user.method];
+      row.append(label, method);
+      list.append(row);
+    }
+    status.textContent = users.length ? (more ? '表示は50件までです。名前を絞り込んでください。' : '') : '該当するユーザーが見つかりません。';
+    status.hidden = !status.textContent;
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+};
 const spinDuration = $('spin-duration');
 const rouletteSettings = $('roulette-settings');
 const previewSpin = $('preview-spin');
@@ -297,8 +327,10 @@ async function refresh(animate = false, manual = false, audioReady) {
   try{
     let next = await api('/api/admin');
     if (version !== refreshVersion) return;
+    const firstLoad = $('dashboard').hidden;
     $('login').hidden=true;$('dashboard').hidden=false;
     if (adminMenu) adminMenu.hidden = false;
+    if (firstLoad) document.dispatchEvent(new Event('admin-ready'));
     const current = next.entries.find(entry => entry.id === next.current);
     const animatedWinner = animate && current?.status === 'selected';
     let buffers;

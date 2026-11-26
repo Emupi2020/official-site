@@ -391,6 +391,29 @@ async function handle(req, env) {
   if (path.startsWith('/api/admin')) {
     if (req.method !== 'GET' && req.headers.get('Origin') !== url.origin) throw new Problem('管理画面から操作してください。', 403);
     if (!await isAdmin(req, env)) throw new Problem('管理者ログインが必要です。', 401);
+    if (path === '/api/admin/users' && req.method === 'GET') {
+      const prefix = nameKey(text(url.searchParams.get('name'), 'Pocochaの名前', 50));
+      const {state} = await read(env);
+      const matchingEntries = new Map();
+      for (const entry of state.entries) {
+        const key = nameKey(entry.name);
+        if (key.startsWith(prefix)) matchingEntries.set(entry.accountId || 'guest:' + key, entry);
+      }
+      const liveMatches = [...matchingEntries.values()].slice(0, 51);
+      const {results:passcodes} = await env.DB.prepare(`
+        SELECT name, account_id AS accountId FROM listener_passcodes
+        WHERE (name_key >= ? AND name_key <= ?)
+          OR account_id IN (SELECT value FROM json_each(?))
+        ORDER BY name_key LIMIT 102
+      `).bind(prefix, prefix + String.fromCodePoint(0x10ffff), JSON.stringify(liveMatches.map(entry => entry.accountId).filter(Boolean))).all();
+      const users = new Map(passcodes.map(({name, accountId}) => [accountId, {name, method:'passcode'}]));
+      for (const {name, accountId} of liveMatches) {
+        const key = accountId || 'guest:' + nameKey(name);
+        if (!users.has(key)) users.set(key, {name, method:accountId ? 'line' : 'guest'});
+      }
+      const sorted = [...users.values()].sort((a,b) => a.name.localeCompare(b.name, 'ja'));
+      return json({users:sorted.slice(0, 50), more:sorted.length > 50 || matchingEntries.size > 51});
+    }
     if (path === '/api/admin/bug-reports' && req.method === 'GET') {
       const before = Number(url.searchParams.get('before') ?? Number.MAX_SAFE_INTEGER);
       if (!Number.isSafeInteger(before) || before < 1) throw new Problem('取得位置を確認してください。');

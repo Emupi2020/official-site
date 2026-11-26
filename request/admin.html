@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=flat-menu"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=flat-menu"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=menu-pages"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=menu-pages"></script><script type="module" src="/bug-reports.mjs?v=admin-page"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header>
   <a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a>
   <div class="admin-header-tools">
@@ -8,17 +8,10 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </summary>
       <nav class="admin-menu-panel" aria-label="管理メニュー">
-<details id="admin-bug-reports">
-  <summary>バグ報告</summary>
-  <button id="refresh-bug-reports" type="button" class="text-button">更新</button>
-  <p id="admin-bug-report-status" class="small muted" role="status" hidden></p>
-  <ol id="bug-report-list"></ol>
-  <button id="more-bug-reports" type="button" class="text-button" hidden>以前の報告を表示</button>
-</details>
-<details>
-  <summary>入力候補</summary>
-  <div id="suggestions"></div>
-</details>
+<a href="/admin">リクエスト管理トップ</a>
+<a href="/admin?view=users">ユーザー管理</a>
+<a href="/admin?view=reports">バグ報告</a>
+<a href="/admin?view=suggestions">入力候補</a>
 <button id="next-session" type="button">次の配信を開始</button>
 <button id="logout" type="button">ログアウト</button>
       </nav>
@@ -28,6 +21,29 @@
 <main class="admin-main"><div id="message" class="message" role="status" hidden></div>
 <section id="login" class="card" hidden><h2>配信者ログイン</h2><form id="login-form"><label for="password">パスワード</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button id="login-submit" class="primary" type="submit">ログイン</button></form></section>
 <div id="dashboard" hidden>
+<section id="admin-users" class="admin-subpage" hidden>
+  <h1>ユーザー管理</h1>
+  <p class="small muted">パスコード登録済みの名前と、現在のリクエストに記録されている名前を検索できます。</p>
+  <form id="admin-user-search">
+    <label for="admin-user-name">Pocochaの名前</label>
+    <input id="admin-user-name" type="search" maxlength="50" required>
+    <button type="submit">検索</button>
+  </form>
+  <p id="admin-user-status" class="small muted" role="status" hidden></p>
+  <ul id="admin-user-results" class="song-history"></ul>
+</section>
+<section id="admin-bug-reports" class="admin-subpage" hidden>
+  <h1>バグ報告</h1>
+  <button id="refresh-bug-reports" type="button" class="text-button">更新</button>
+  <p id="admin-bug-report-status" class="small muted" role="status" hidden></p>
+  <ol id="bug-report-list"></ol>
+  <button id="more-bug-reports" type="button" class="text-button" hidden>以前の報告を表示</button>
+</section>
+<section id="admin-suggestions" class="admin-subpage" hidden>
+  <h1>入力候補</h1>
+  <div id="suggestions"></div>
+</section>
+<div id="admin-overview">
 <div class="row admin-top"><div><h1>リクエスト</h1><span id="round"></span> · <span id="status" class="status"></span><div class="small muted" id="counts"></div></div></div>
 <section id="current-info" class="card" aria-label="当選曲の操作" hidden>
   <div id="current-song-details" hidden>
@@ -67,6 +83,7 @@
 </details>
 </section>
 
+</div>
 </div>
 <dialog id="roulette-screen" class="roulette-screen" aria-label="配信用ルーレット"><button id="close-roulette" class="roulette-close" aria-label="管理画面に戻る">×</button><div class="broadcast-wheel">
 <div id="roulette-categories" class="roulette-categories" role="group" aria-label="抽選対象">

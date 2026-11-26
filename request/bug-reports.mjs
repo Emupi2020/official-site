@@ -87,7 +87,10 @@ if (section) {
     }
   }
 
-  section.addEventListener('toggle', () => { if (section.open) loadReports(); });
+  if (new URLSearchParams(location.search).get('view') === 'reports') {
+    if ($('dashboard').hidden) document.addEventListener('admin-ready', () => loadReports(), {once:true});
+    else loadReports();
+  }
   refresh.onclick = () => loadReports();
   more.onclick = () => loadReports(cursor);
 }
