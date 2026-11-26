@@ -377,27 +377,21 @@ function showMenuPage(id, focus = false) {
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
   closeMenu();
-  if (panel === nameSettings && activeMenuPage?.panel !== panel) {
-   const url = new URL(location.href);
-   url.searchParams.set('view', 'name-settings');
-   location.assign(url);
-   return;
-  }
   if (activeMenuPage?.panel === panel) {
    const {playableCategory, playableView, playableArtist} = window.history.state || {};
    if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));
    else menuPageTitle.focus();
    return;
   }
-  const next = {...window.history.state, menuPage:panel.id, playableCategory:null, playableView:null, playableArtist:null};
-  if (activeMenuPage) window.history.replaceState(next, '');
-  else window.history.pushState(next, '');
-  showMenuPage(panel.id, true);
+  const url = new URL(location.href);
+  url.searchParams.delete('preview');
+  url.searchParams.set('view', panel.id === nameSettings.id ? 'name-settings' : panel.id);
+  location.assign(url);
  };
 }
 function goToRequestTop() {
  closeMenu();
- if (window.history.state?.directNamePage) {
+ if (activeMenuPage && window.history.state?.directMenuPage) {
   const url = new URL(location.href);
   url.searchParams.delete('view');
   url.searchParams.delete('preview');
@@ -770,7 +764,7 @@ function nameFeedback(text, error = false) {
  node.classList.toggle('danger', error);
 }
 $('cancel-name').onclick = () => {
- if (window.history.state?.directNamePage) goToRequestTop();
+ if (window.history.state?.directMenuPage) goToRequestTop();
  else window.history.back();
 };
 newName.addEventListener('input', () => nameFeedback(''));
@@ -971,7 +965,10 @@ logoutConfirmation.addEventListener('close', async () => {
   $('account-settings').open = false;
   $('line-feedback').textContent = '';
   $('entry-line-feedback').hidden = true;
-  window.history.replaceState(entryView('welcome'), '');
+  const url = new URL(location.href);
+  url.searchParams.delete('view');
+  url.searchParams.delete('preview');
+  window.history.replaceState(entryView('welcome'), '', url);
   showRequestScreen(false, true);
   logoutNotice.textContent = 'ログアウトしました。';
   logoutNoticeTimer = setTimeout(clearLogoutNotice, 3000);
@@ -1020,7 +1017,10 @@ try {
  entryBusy = false;
  updateEntryButton();
 }
-if ((pageUrl.searchParams.get('view') ?? pageUrl.searchParams.get('preview')) === 'name-settings' && !$('request-screen').hidden) {
- window.history.replaceState({...window.history.state, menuPage:nameSettings.id, directNamePage:true}, '');
- showMenuPage(nameSettings.id, true);
+const view = pageUrl.searchParams.get('view') ?? pageUrl.searchParams.get('preview');
+const directPage = menuPages.find(({button, panel}) =>
+ !button.hidden && (view === panel.id || (view === 'name-settings' && panel === nameSettings)));
+if (directPage) {
+ window.history.replaceState({...window.history.state, menuPage:directPage.panel.id, directMenuPage:true}, '');
+ showMenuPage(directPage.panel.id, true);
 }
