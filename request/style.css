@@ -177,7 +177,29 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page :is(#menu-page-title, #request-title) { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
 .request-page :is(#menu-page-title, #request-title):focus { outline: none; }
 .song-page-total { margin: -10px 0 16px; color: var(--muted); font-size: 14px; }
-#playable-search { margin-block-end: 16px; }
+.playable-search-field {
+  position: relative;
+  margin-block-end: 12px;
+}
+.playable-search-field svg {
+  position: absolute;
+  inset-inline-start: 13px;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  width: 19px;
+  height: 19px;
+  color: var(--muted);
+  pointer-events: none;
+}
+#playable-search {
+  min-height: 44px;
+  padding: 8px 14px;
+  padding-inline-start: 39px;
+  border: 0;
+  border-radius: 999px;
+  background: #f2f2f4;
+}
+#playable-search::placeholder { opacity: 1; }
 .menu-page-form { max-width: 380px; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
