@@ -75,7 +75,11 @@ export function unavailableReasons(record) {
 export function songStatus(state, artist, song) {
   const key = songIdentity(text(artist, 'アーティスト名'), text(song, '曲名'), state.suggestions);
   const record = state.unknown?.[key];
-  return { unknownAt: record?.at || null, reasons: unavailableReasons(record) };
+  return { songKey: key, unknownAt: record?.at || null, reasons: unavailableReasons(record) };
+}
+export function hasRecentPerformance(state, songKey) {
+  return (state.history || []).some(entry =>
+    (entry.songKey || songIdentity(entry.artist, entry.song, state.suggestions)) === songKey);
 }
 function collectedSongs(state, performances) {
   const songs = new Map((state.repertoire || []).map(song => [song.songKey, song]));

@@ -1091,10 +1091,26 @@ function renderAccount() {
  $('account-settings').hidden = ['manage-passcode', 'manage-passcode-login', 'line-start', 'line-link'].every(id => $(id).hidden);
 }
 async function confirmSong(data){
- const status=await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);if(!status.unknownAt)return true;
- const formatter=new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
- $('unknown-description').textContent=(status.reasons||[{reason:'unknown',at:status.unknownAt}]).map(item=>item.reason==='no_audio'?`${formatter.format(item.at)}時点では、この曲の音源がありませんでした。`:`${formatter.format(item.at)}時点では、えむぴーがこの曲をまだ覚えていませんでした。`).join('\n')+'\nそれでもリクエストしますか？';
- const dialog=$('unknown-warning');dialog.returnValue='';const confirmed=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='request'),{once:true});dialog.showModal();});if(confirmed)data.unknownAcknowledgedAt=status.unknownAt;return confirmed;
+ const status = await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);
+ if (!status.unknownAt && status.listed !== false) return true;
+ let description = 'この曲は、このサイトに配信での歌唱記録がまだないため、「歌える曲」リストに載っていません。このままリクエストできます。';
+ if (status.unknownAt) {
+  const formatter = new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const reasons = status.reasons || [{reason:'unknown',at:status.unknownAt}];
+  description = reasons.map(({reason, at}) => reason === 'no_audio'
+   ? `${formatter.format(at)}時点では、この曲の音源がありませんでした。`
+   : `${formatter.format(at)}時点では、えむぴーがこの曲をまだ覚えていませんでした。`
+  ).join('\n') + '\nそれでもリクエストしますか？';
+ }
+ $('unknown-description').textContent = description;
+ const dialog = $('unknown-warning');
+ dialog.returnValue = '';
+ const confirmed = await new Promise(resolve => {
+  dialog.addEventListener('close', () => resolve(dialog.returnValue === 'request'), {once:true});
+  dialog.showModal();
+ });
+ if (confirmed && status.unknownAt) data.unknownAcknowledgedAt = status.unknownAt;
+ return confirmed;
 }
 function hideSuggestions(except){for(const slot of slots)for(const kind of ['artist','song']){const input=field(slot,kind);if(input.tagName!=='SELECT'&&input!==except){field(slot,`${kind}-suggestions`).hidden=true;input.setAttribute('aria-expanded','false');}}}
 function suggest(slot,kind){

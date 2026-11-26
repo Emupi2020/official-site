@@ -1,4 +1,4 @@
-import { initialState, publicState, playableSongs, ownRequests, requestsByName, receipt, listenerReceipt, listenerRequest, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
+import { initialState, publicState, playableSongs, ownRequests, requestsByName, receipt, listenerReceipt, listenerRequest, accountRequests, submit, rename, canRename, editSong, adminAction, songStatus, hasRecentPerformance, nameKey, text, Problem, prune, rolloverSession } from './domain.mjs';
 import { hash, isAdmin, auth } from './auth.mjs';
 import { isOfficialSiteRequest, lineAuth, lineEnabled, listenerId, listenerSession } from './line-login.mjs';
 import { passcodeAuth, passcodeAccount, passcodeAccountId, passcodeRequiredMessage, preparePasscodeRename } from './passcode.mjs';
@@ -236,7 +236,14 @@ async function handle(req, env) {
     const repertoire = [...results, ...(state.repertoire || [])];
     return json({songs:playableSongs({...state, repertoire})});
   }
-  if (path === '/api/song-status' && req.method === 'GET') return json(songStatus((await read(env)).state, url.searchParams.get('artist'), url.searchParams.get('song')));
+  if (path === '/api/song-status' && req.method === 'GET') {
+    const {state} = await read(env);
+    const {songKey, ...status} = songStatus(state, url.searchParams.get('artist'), url.searchParams.get('song'));
+    const listed = !status.unknownAt && (hasRecentPerformance(state, songKey)
+      || (state.repertoire || []).some(song => song.songKey === songKey)
+      || Boolean(await env.DB.prepare('SELECT 1 FROM playable_repertoire WHERE song_key = ?').bind(songKey).first()));
+    return json({...status, listed});
+  }
   if (path === '/api/suggestions' && req.method === 'GET') {
     const { state } = await read(env);
     return json({ items: [...catalog, ...state.suggestions.map(s => ({ artist: s.artist, song: s.song }))] });
