@@ -575,6 +575,7 @@ const playable = $('playable-songs');
 const playableCategories = $('playable-categories');
 const playableGroups = $('playable-groups');
 const playableSearch = $('playable-search');
+const playableSearchClear = $('playable-search-clear');
 const playableSearchField = playableSearch.parentElement;
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
@@ -605,11 +606,17 @@ for (const button of $('playable-browse').querySelectorAll('button')) {
  button.onclick = () => navigatePlayable({playableView:button.dataset.playableView});
 }
 playableSearch.addEventListener('input', renderPlayableResults);
+playableSearchClear.addEventListener('click', () => {
+ playableSearch.value = '';
+ playableSearch.focus();
+ renderPlayableResults();
+});
 playableSearchField.addEventListener('submit', event => {
  event.preventDefault();
  playableSearch.blur();
 });
 function renderPlayableResults() {
+ playableSearchClear.hidden = !playableSearch.value;
  const route = window.history.state || {};
  const {playableCategory: category, playableView: view, playableArtist: artist} = route;
  const value = normalize(playableSearch.value);
