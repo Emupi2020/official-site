@@ -360,7 +360,7 @@ function showMenuPage(id, focus = false) {
  if (!activeMenuPage) return;
  const {button,panel} = activeMenuPage;
  menuPageTitle.textContent = button.firstChild.textContent.trim();
- const playableHeading = panel.id === 'playable-songs' ? showPlayableCategory(window.history.state?.playableCategory) : null;
+ const playableHeading = panel.id === 'playable-songs' ? showPlayableCategory(window.history.state) : null;
  menuPageTitle.hidden = Boolean(playableHeading);
  if (panel === nameSettings && activeMenuPage !== previous) {
   newName.value = lookupName();
@@ -379,11 +379,12 @@ for (const {button,panel} of menuPages) {
  button.onclick = () => {
   closeMenu();
   if (activeMenuPage?.panel === panel) {
-   if (window.history.state?.playableCategory) window.history.back();
+   const {playableCategory, playableView, playableArtist} = window.history.state || {};
+   if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));
    else menuPageTitle.focus();
    return;
   }
-  const next = {...window.history.state, menuPage:panel.id, playableCategory:null};
+  const next = {...window.history.state, menuPage:panel.id, playableCategory:null, playableView:null, playableArtist:null};
   if (activeMenuPage) window.history.replaceState(next, '');
   else window.history.pushState(next, '');
   showMenuPage(panel.id, true);
@@ -399,7 +400,7 @@ function goToRequestTop() {
  if (activeMenuPage || activeSlot) {
   const backToWelcome = !loggedIn && entryMode !== 'welcome' && window.history.state?.fromWelcome;
   const steps = Number(Boolean(activeMenuPage)) + Number(Boolean(activeSlot || backToWelcome))
-    + Number(Boolean(window.history.state?.playableDetailStep));
+    + (window.history.state?.playableDepth || 0);
   window.addEventListener('popstate', focusTop, {once:true});
   window.history.go(-steps);
  } else if (!loggedIn && entryMode !== 'welcome') {
@@ -519,42 +520,72 @@ const playable = $('playable-songs');
 const playableCategories = $('playable-categories');
 const playableGroups = $('playable-groups');
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
-function showPlayableCategory(category) {
+let playableSongs = null;
+function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist} = {}) {
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
+ const browsing = Boolean(selected && view);
  playableCategories.hidden = Boolean(selected);
- playableGroups.hidden = !selected;
+ playableGroups.hidden = !selected || browsing;
+ $('playable-results').hidden = !browsing;
  for (const button of playableCategoryButtons) {
   $(`playable-${button.dataset.playableCategory}-detail`).hidden = button !== selected;
  }
+ if (browsing) {
+  menuPageTitle.textContent = artist || (view === 'artists' ? 'アーティスト' : '曲');
+  renderPlayableResults(category, view, artist);
+  return null;
+ }
  return selected ? $(`playable-${category}-heading`) : null;
 }
+function navigatePlayable(next) {
+ const current = window.history.state;
+ window.history.pushState({...current, ...next, playableDepth:(current.playableDepth || 0) + 1}, '');
+ showMenuPage(playable.id, true);
+}
 for (const button of playableCategoryButtons) {
- button.onclick = () => {
-  window.history.pushState({...window.history.state, playableCategory:button.dataset.playableCategory, playableDetailStep:true}, '');
-  showMenuPage(playable.id, true);
- };
+ button.onclick = () => navigatePlayable({playableCategory:button.dataset.playableCategory});
+}
+for (const button of $('playable-browse').querySelectorAll('button')) {
+ button.onclick = () => navigatePlayable({playableView:button.dataset.playableView});
+}
+function renderPlayableResults(category, view, artist) {
+ const artists = $('playable-artists');
+ const tracks = $('playable-track-list');
+ const showArtists = view === 'artists' && !artist;
+ const songs = (playableSongs || []).filter(song => song.category === category && (!artist || song.artist === artist));
+ artists.hidden = !showArtists;
+ tracks.hidden = showArtists;
+ artists.replaceChildren();
+ tracks.replaceChildren();
+ $('playable-empty').hidden = !playableSongs || songs.length > 0;
+ if (showArtists) {
+  for (const name of new Set(songs.map(song => song.artist))) {
+   const button = document.createElement('button');
+   button.type = 'button';
+   button.textContent = name;
+   button.onclick = () => navigatePlayable({playableArtist:name});
+   artists.append(button);
+  }
+ } else {
+  for (const song of songs) historyRow(tracks, song.song, song.artist, undefined, undefined, null);
+ }
 }
 const songOrdering = new Intl.Collator('ja');
 let playableLoading = false;
-let playableLoaded = false;
 async function refreshPlayable() {
  if (playable.hidden || document.hidden || playableLoading) return;
  playableLoading = true;
  const feedback = $('playable-feedback');
- if (!playableLoaded) {
+ if (!playableSongs) {
   feedback.textContent = '読み込み中…';
   feedback.hidden = false;
  }
  try {
   const {songs} = await api('/api/repertoire');
   songs.sort((a,b) => songOrdering.compare(a.artist,b.artist) || songOrdering.compare(a.song,b.song));
-  for (const category of ['yamapi','other']) {
-   const list = $(`playable-${category}`);
-   list.replaceChildren();
-   for (const song of songs.filter(song => song.category === category)) historyRow(list, song.song, song.artist, undefined, undefined, null);
-   $(`playable-${category}-empty`).hidden = Boolean(list.childElementCount);
-  }
-  playableLoaded = true;
+  playableSongs = songs;
+  const {playableCategory, playableView, playableArtist} = window.history.state || {};
+  if (!playable.hidden && playableView) renderPlayableResults(playableCategory, playableView, playableArtist);
   feedback.hidden = true;
  } catch (error) {
   feedback.textContent = error.message;

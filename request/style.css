@@ -532,4 +532,29 @@ body:has(.request-page) { background: #f2f2f7; }
 .playable-categories img { margin-block-end: -7%; }
 .playable-cover { width: min(76%, 300px); margin: 0 auto; }
 .playable-detail h2 { margin: 8px 0 22px; text-align: center; }
-.playable-detail .song-history li { grid-template-columns: minmax(0, 1fr); }
+#playable-track-list li { grid-template-columns: minmax(0, 1fr); }
+.playable-browse button {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 4px;
+  gap: 12px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.playable-browse button + button { border-top: 1px solid var(--border); }
+.playable-browse button > :is(svg, span) { width: 18px; flex: 0 0 18px; color: var(--muted); text-align: center; }
+.playable-browse button::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin-inline-start: auto;
+  border-block-start: 2px solid #c7c7cc;
+  border-inline-end: 2px solid #c7c7cc;
+  transform: rotate(45deg);
+}
