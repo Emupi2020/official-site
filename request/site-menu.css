@@ -33,6 +33,12 @@ body.listener-layout {
 .listener-layout:is(:has(#request-screen:not([hidden])), :has(#menu-page:not([hidden]))) .site-footer {
   padding-block-end: max(16px, env(safe-area-inset-bottom), calc(100lvh - 100dvh));
 }
+/* Give short detail pages room to scroll past the bottom toolbar. */
+.listener-layout:is(:has(#menu-page:not([hidden])), :has(#request-screen:not([hidden]) #request-detail:not([hidden]))) {
+  --detail-scroll-room: max(48px, env(safe-area-inset-bottom));
+  min-height: calc(100lvh + var(--detail-scroll-room));
+  padding-block-end: var(--detail-scroll-room);
+}
 .site-footer .request-notes {
   display: none;
   max-width: 456px;
