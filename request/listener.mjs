@@ -581,8 +581,8 @@ let showPlayableSuggestions = false;
 let selectedPlayableSuggestion = null;
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
-function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist} = {}) {
- playableSearch.value = '';
+function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist, playableSearchValue = ''} = {}) {
+ playableSearch.value = playableSearchValue;
  showPlayableSuggestions = false;
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
@@ -667,7 +667,7 @@ function renderPlayableSuggestions(options) {
   button.append(detail);
   button.onclick = () => {
    if (field === 'artist') {
-    navigatePlayable({playableCategory:category, playableView:'artists', playableArtist:name});
+    navigatePlayable({playableCategory:category, playableView:'artists', playableArtist:name, playableSearchValue:name});
     return;
    }
    selectedPlayableSuggestion = {field, name, artist};
@@ -679,7 +679,8 @@ function renderPlayableSuggestions(options) {
 }
 function renderPlayableResults() {
  const {playableCategory: category, playableView: view, playableArtist: artist} = window.history.state || {};
- const query = normalize(playableSearch.value);
+ const value = normalize(playableSearch.value);
+ const query = artist && !showPlayableSuggestions && !selectedPlayableSuggestion && value === normalize(artist) ? '' : value;
  const browsing = Boolean(category && view);
  playableCategories.hidden = Boolean(category || query);
  playableGroups.hidden = !category || browsing || Boolean(query);
