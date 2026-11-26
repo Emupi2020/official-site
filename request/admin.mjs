@@ -1,7 +1,7 @@
 import { categoryOf } from './categories.mjs';
 import { api, $, message, safeGet, safeSet } from './common.mjs?admin=request-exceptions';
 import { setWheel, spin, settle } from './wheel.mjs?spin=natural-stop';
-import { prepareRouletteSound, startDrumRoll, playWinnerSound } from './roulette-sound.mjs?audio=acoustic';
+import { prepareRouletteSound, startDrumRoll, playWinnerSound } from './roulette-sound.mjs?audio=continuous-roll';
 const categoryTabs = [...$('roulette-categories').querySelectorAll('button')];
 const defaultCategory = 'yamapi';
 const adminMenu = $('admin-menu');

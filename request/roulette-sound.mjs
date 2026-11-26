@@ -1,8 +1,8 @@
 let audio;
 let samples;
 
-// Acoustic samples: Virtuosity Drums (CC0), distributed by Keyboardia.
-const sampleFiles = ['roulette-snare-soft.m4a', 'roulette-snare.m4a', 'roulette-cymbal.m4a'];
+// Roll: Joseph Sardin, BigSoundBank #2400 (CC0). Hits: Virtuosity Drums (CC0).
+const sampleFiles = ['roulette-drum-roll.mp3', 'roulette-snare.m4a', 'roulette-cymbal.m4a'];
 
 export async function prepareRouletteSound() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -41,17 +41,25 @@ function hit(buffer, at, level, duration = buffer.duration) {
 }
 
 export function startDrumRoll(buffers, duration) {
+  const source = audio.createBufferSource();
+  const gain = audio.createGain();
   const start = audio.currentTime + 0.015;
-  const end = duration / 1000;
-  const sources = [];
-  for (let t = 0, i = 0; t < end - 0.05; i++) {
-    const progress = t / end;
-    const accent = i % 4 === 3;
-    sources.push(hit(buffers[Number(accent)], start + t, (0.10 + progress * 0.24) * (accent ? 1 : 0.7), 0.16));
-    t += 0.095 - progress * 0.036 + (i % 2 === 0 ? 0.004 : -0.004);
-  }
+  const end = start + duration / 1000;
+  source.buffer = buffers[0];
+  source.loop = true;
+  // Loop the sustained roll before the recorded release.
+  source.loopStart = 0.5;
+  source.loopEnd = Math.min(1.9, source.buffer.duration - 0.4);
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(0.26, start + 0.045);
+  gain.gain.linearRampToValueAtTime(0.42, end - 0.025);
+  gain.gain.linearRampToValueAtTime(0, end);
+  source.connect(gain).connect(audio.destination);
+  source.onended = () => { source.disconnect(); gain.disconnect(); };
+  source.start(start, source.loopStart);
+  source.stop(end);
   return () => {
-    for (const source of sources) source.stop();
+    if (audio.currentTime < end) source.stop();
   };
 }
 
