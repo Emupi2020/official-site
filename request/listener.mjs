@@ -425,8 +425,8 @@ for (const {button,panel} of menuPages) {
  button.onclick = () => {
   if (activeMenuPage?.panel === panel) {
    closeMenu();
-   const {playableCategory, playableView, playableArtist} = window.history.state || {};
-   if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));
+   const {playableDepth = 0} = window.history.state || {};
+   if (playableDepth) window.history.go(-(1 + playableDepth));
    else menuPageTitle.focus();
    return;
   }
@@ -584,7 +584,7 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
  selectedPlayableSuggestion = null;
- const searchLabel = view === 'artists' && !artist ? '歌手名で検索' : '曲名・歌手名で検索';
+ const searchLabel = view === 'artists' && !artist ? 'アーティスト名で検索' : '曲名・アーティスト名で検索';
  playableSearch.placeholder = searchLabel;
  playableSearch.setAttribute('aria-label', searchLabel);
  for (const button of playableCategoryButtons) {
@@ -619,15 +619,19 @@ playableSearch.addEventListener('keydown', event => {
 function renderPlayableSuggestions(options) {
  playableSuggestions.replaceChildren();
  playableSuggestions.hidden = options.size === 0;
- for (const {field, name, artist} of [...options.values()].slice(0, 8)) {
+ for (const {field, name, artist, category} of [...options.values()].slice(0, 8)) {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = name;
   const detail = document.createElement('span');
   detail.className = 'small muted';
-  detail.textContent = field === 'artist' ? '歌手' : artist;
+  detail.textContent = field === 'artist' ? 'アーティスト' : artist;
   button.append(detail);
   button.onclick = () => {
+   if (field === 'artist') {
+    navigatePlayable({playableCategory:category, playableView:'artists', playableArtist:name});
+    return;
+   }
    selectedPlayableSuggestion = {field, name, artist};
    playableSearch.value = name;
    playableSearch.focus();
@@ -655,7 +659,7 @@ function renderPlayableResults() {
   }
   const artistMatches = artistSearchNames(song).some(name => normalize(name).includes(query));
   const songMatches = !showArtists && songSearchNames(song).some(name => normalize(name).includes(query));
-  if (artistMatches) suggestions.set('artist:' + song.artist, {field:'artist', name:song.artist});
+  if (artistMatches) suggestions.set('artist:' + song.artist, {field:'artist', name:song.artist, category:song.category});
   if (songMatches) suggestions.set(JSON.stringify([song.artist, song.song]), {field:'song', name:song.song, artist:song.artist});
   return artistMatches || songMatches;
  }) : songs;
@@ -673,7 +677,7 @@ function renderPlayableResults() {
  tracks.replaceChildren();
  const empty = $('playable-empty');
  empty.hidden = !playableSongs || matches.length > 0;
- empty.textContent = query ? (showArtists ? '該当する歌手がいません。' : '該当する曲がありません。') : 'まだ曲がありません。';
+ empty.textContent = query ? (showArtists ? '該当するアーティストがいません。' : '該当する曲がありません。') : 'まだ曲がありません。';
  if (showArtists) {
   for (const name of matchedArtists) {
    const button = document.createElement('button');

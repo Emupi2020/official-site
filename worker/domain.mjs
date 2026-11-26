@@ -73,7 +73,7 @@ export function unavailableReasons(record) {
   return Object.entries(record.reasons || { unknown: record.at }).map(([reason, at]) => ({ reason, at }));
 }
 export function songStatus(state, artist, song) {
-  const key = songIdentity(text(artist, '歌手名'), text(song, '曲名'), state.suggestions);
+  const key = songIdentity(text(artist, 'アーティスト名'), text(song, '曲名'), state.suggestions);
   const record = state.unknown?.[key];
   return { unknownAt: record?.at || null, reasons: unavailableReasons(record) };
 }
@@ -177,9 +177,9 @@ export function accountRequests(state, accountId) {
 export function submit(state, input, tokenHash, now = Date.now(), accountId = null) {
   const round = input.round === undefined ? state.round : input.round;
   if (!Number.isInteger(round) || ![state.round, state.round+1].includes(round)) throw new Problem('受付回が切り替わりました。画面を更新して選び直してください。',409);
-  const name = text(input.name, 'Pocochaの名前', 50), artist = text(input.artist, '歌手名'), song = text(input.song, '曲名');
+  const name = text(input.name, 'Pocochaの名前', 50), artist = text(input.artist, 'アーティスト名'), song = text(input.song, '曲名');
   const key = nameKey(name), category = classifyArtist(artist);
-  if (input.category !== undefined && input.category !== category) throw new Problem('歌手名に合う歌まね枠を選んでください。');
+  if (input.category !== undefined && input.category !== category) throw new Problem('アーティスト名に合う歌まね枠を選んでください。');
   const roundLabel = round === state.round ? '今回' : '次回の予約';
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && (e.tokenHash === tokenHash || (accountId && e.accountId === accountId)))) {
     throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
@@ -210,7 +210,7 @@ function rememberSong(state, artist, song) {
 }
 export function editSong(state, entry, input) {
   if (!canEditSong(state, entry)) throw new Problem('このリクエストの曲は変更できません。', 409);
-  const artist = text(input.artist, '歌手名'), song = text(input.song, '曲名');
+  const artist = text(input.artist, 'アーティスト名'), song = text(input.song, '曲名');
   if (classifyArtist(artist) !== categoryOf(entry)) throw new Problem('同じ歌まね枠の曲を選んでください。');
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
@@ -504,7 +504,7 @@ export function adminAction(state, input, now = Date.now()) {
       if (!e) throw new Problem('応募が見つかりません。', 404);
       if (e.status !== 'pending') throw new Problem('抽選待ちに戻してから変更してください。', 409);
       const name = text(input.name, '名前', 50), key = nameKey(name);
-      const artist = text(input.artist,'歌手名'), category = classifyArtist(artist);
+      const artist = text(input.artist,'アーティスト名'), category = classifyArtist(artist);
       if (state.entries.some(v => v.id !== e.id && v.round === e.round && categoryOf(v) === category && v.usedNames.includes(key))) throw new Problem('その名前は応募済みです。', 409);
       e.name = name; if (!e.usedNames.includes(key)) e.usedNames.push(key);
       e.artist = artist; e.category = category; e.song = text(input.song, '曲名');

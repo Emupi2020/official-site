@@ -76,7 +76,7 @@ let rowActionsTrigger;
 function editRequest(entry) {
   const name = prompt('Pocochaの名前', entry.name);
   if (name === null) return;
-  const artist = prompt('歌手名', entry.artist);
+  const artist = prompt('アーティスト名', entry.artist);
   if (artist === null) return;
   const song = prompt('曲名', entry.song);
   if (song !== null) action('edit', {id:entry.id, name, artist, song});
