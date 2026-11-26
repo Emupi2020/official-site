@@ -83,5 +83,5 @@ export function playWinnerSound(sound, buffers) {
     return;
   }
   if (sound === 'snare') hit(snare, at, 0.45);
-  hit(crash, at, sound === 'crash' ? 0.42 : 0.34, 1.05);
+  hit(crash, at, sound === 'crash' ? 0.64 : 0.58, 1.05);
 }
