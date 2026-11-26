@@ -163,7 +163,22 @@ body:has(.request-page) { background: #f2f2f7; }
   inset: 0 0 auto 83px;
   border-top: 1px solid var(--border);
 }
-:is(.request-page, .user-current-requests) .slot-overview-row:hover { background: color-mix(in srgb, var(--text) 3%, transparent); filter: none; }
+.request-page button.slot-overview-row {
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+.request-page button.slot-overview-row:hover { filter: none; }
+.request-page button.slot-overview-row:active::after {
+  --pressed-color: color-mix(in srgb, var(--text) 3%, transparent);
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--pressed-color);
+  box-shadow: 0 0 0 100vmax var(--pressed-color);
+  clip-path: inset(0 -100vmax);
+}
 .slot-overview-art { display: block; width: 76px; height: 76px; object-fit: contain; clip-path: inset(8% 7% round 5px); }
 .slot-overview-info { min-width: 0; overflow-wrap: anywhere; }
 .slot-overview-song { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
