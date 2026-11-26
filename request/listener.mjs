@@ -1,5 +1,5 @@
 import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=kana';
-import { closeMenu } from './site-menu.mjs?layout=menu-overlay';
+import { closeMenu } from './site-menu.mjs?layout=instant-name-settings';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
 let state, items=[], tokens, busy=false;
@@ -376,7 +376,7 @@ function showMenuPage(id, focus = false) {
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
-  closeMenu();
+  closeMenu({immediate: panel === nameSettings});
   if (activeMenuPage?.panel === panel) {
    const {playableCategory, playableView, playableArtist} = window.history.state || {};
    if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));

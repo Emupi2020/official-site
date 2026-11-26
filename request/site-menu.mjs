@@ -24,8 +24,13 @@ function setActiveMenu(next, restoreFocus = true) {
  else if (restoreFocus) previous?.toggle.focus();
 }
 
-export function closeMenu() {
- if (activeMenu) setActiveMenu(null);
+export function closeMenu({immediate = false} = {}) {
+ if (!activeMenu) return;
+ const {panel} = activeMenu;
+ setActiveMenu(null);
+ if (immediate) {
+  for (const animation of panel.getAnimations()) animation.cancel();
+ }
 }
 
 for (const menu of menus) {
