@@ -184,6 +184,7 @@ body:has(.request-page) { background: #f2f2f7; }
   margin-block-end: 16px;
 }
 .request-page .menu-page-heading #menu-page-title { margin-block-end: 0; }
+#menu-page:has(#playable-songs:not([hidden])) .menu-page-heading { justify-content: flex-start; }
 .song-page-total { color: var(--muted); font-size: 14px; white-space: nowrap; }
 #menu-page:has(#played-history[hidden]) #played-total,
 #menu-page:has(#playable-songs[hidden]) #playable-total { display: none; }
