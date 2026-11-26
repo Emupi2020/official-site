@@ -1,6 +1,6 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title>
 <!-- Update the request-release value when publishing listener-facing changes. -->
-<meta name="request-release" content="20261126-03">
+<meta name="request-release" content="20261126-04">
 <script>
 (() => {
   const release = document.querySelector('meta[name="request-release"]').content;
@@ -193,18 +193,18 @@
   <div id="playable-songs" hidden>
 <p id="playable-feedback" class="note" role="status" hidden></p>
   <div id="playable-categories" class="playable-categories">
-    <button type="button" data-playable-category="yamapi"><img src="./yamapi-white.png" alt=""><span>山Pの歌まね</span></button>
-    <button type="button" data-playable-category="other"><img src="./other-smoke.png?v=brush-cross" alt=""><span>それ以外の歌まね</span></button>
+    <button type="button" data-playable-category="yamapi"><img src="./yamapi-white-large.png" alt=""><span>山Pの歌まね</span></button>
+    <button type="button" data-playable-category="other"><img src="./other-smoke-large.png" alt=""><span>それ以外の歌まね</span></button>
   </div>
   <div id="playable-groups" hidden>
     <section id="playable-yamapi-detail" class="playable-detail" aria-labelledby="playable-yamapi-heading" hidden>
-      <img class="playable-cover" src="./yamapi-white.png" alt="">
+      <img class="playable-cover" src="./yamapi-white-large.png" alt="">
       <h2 id="playable-yamapi-heading" tabindex="-1">山Pの歌まね</h2>
       <ul id="playable-yamapi" class="song-history"></ul>
       <p id="playable-yamapi-empty" class="note" hidden>まだ曲がありません。</p>
     </section>
     <section id="playable-other-detail" class="playable-detail" aria-labelledby="playable-other-heading" hidden>
-      <img class="playable-cover" src="./other-smoke.png?v=brush-cross" alt="">
+      <img class="playable-cover" src="./other-smoke-large.png" alt="">
       <h2 id="playable-other-heading" tabindex="-1">それ以外の歌まね</h2>
       <ul id="playable-other" class="song-history"></ul>
       <p id="playable-other-empty" class="note" hidden>まだ曲がありません。</p>
