@@ -16,8 +16,9 @@ function clearRowPress() {
 document.addEventListener('pointerdown', event => {
  if (!event.isPrimary || event.button !== 0) return;
  clearRowPress();
- const row = event.target.closest('button.slot-overview-row, .request-menu-link, .playable-browse button');
- if (!row || row.matches(':disabled') || row.closest('[inert]')) return;
+ const control = event.target.closest('.slot-overview-open, .request-menu-link, .playable-browse button');
+ if (!control || control.matches(':disabled') || control.closest('[inert]')) return;
+ const row = control.closest('.slot-overview-row') || control;
  pressedRow = row;
  pressedPointer = event.pointerId;
  row.setAttribute('data-row-pressed', '');
@@ -76,9 +77,9 @@ function renderDuplicateSlots() {
 window.addEventListener('pageshow', renderDuplicateSlots);
 document.addEventListener('visibilitychange', renderDuplicateSlots);
 const slots = [...document.querySelectorAll('.request-slot')].map(root => {
- const overview = $(`open-${root.id}`);
+ const openButton = $(`open-${root.id}`);
  return {root, id:root.id, category:root.dataset.category, reserved:root.dataset.reserved === 'true',
-  entry:null, token:null, round:null, draftRound:null, overview, detail:$(overview.getAttribute('aria-controls'))};
+  entry:null, token:null, round:null, draftRound:null, overview:openButton.parentElement, openButton, detail:$(openButton.getAttribute('aria-controls'))};
 });
 const field=(slot,name)=>$(`${slot.id}-${name}`);
 const part=(slot,selector)=>slot.root.querySelector(selector);
@@ -93,6 +94,19 @@ function jacket(category, className, size) {
  image.width = image.height = size;
  return image;
 }
+function renderArtistLink(container, artist) {
+ container.replaceChildren();
+ if (!artist) return;
+ const link = document.createElement('a');
+ const url = new URL(location.href);
+ url.searchParams.delete('preview');
+ url.searchParams.set('view', 'playable-songs');
+ url.searchParams.set('artist', artist);
+ link.className = 'artist-link';
+ link.href = url.href;
+ link.textContent = artist;
+ container.append(link);
+}
 for (const slot of slots) {
  const receipt = part(slot, '.slot-receipt');
  const summary = document.createElement('div');
@@ -105,11 +119,12 @@ for (const slot of slots) {
 const userCurrentList = $('user-current-list');
 const userCurrentRows = currentSlots.map(slot => {
  const row = slot.overview.cloneNode(true);
- row.removeAttribute('id');
+ const openButton = row.querySelector('.slot-overview-open');
+ openButton.removeAttribute('id');
  row.classList.remove('is-empty');
  row.hidden = true;
  userCurrentList.append(row);
- row.onclick = () => {
+ openButton.onclick = () => {
   if (busy) return;
   closeMenu();
   const method = activeSlot || activeMenuPage ? 'replaceState' : 'pushState';
@@ -117,18 +132,19 @@ const userCurrentRows = currentSlots.map(slot => {
   showMenuPage(null);
   showSlot(slot.id, true);
  };
- return {slot, row};
+ return {slot, row, openButton};
 });
 function renderUserCurrentRequests() {
  let count = 0;
- for (const {slot, row} of userCurrentRows) {
+ for (const {slot, row, openButton} of userCurrentRows) {
   const entry = slot.entry;
   row.hidden = !entry || !['pending', 'selected'].includes(entry.status);
   if (row.hidden) continue;
   count++;
   row.querySelector('strong').textContent = entry.song;
   const artist = row.querySelector('.slot-overview-song');
-  artist.textContent = entry.artist;
+  renderArtistLink(artist, entry.artist);
+  openButton.setAttribute('aria-label', entry.song);
   artist.hidden = !entry.artist;
   renderStatusTag(row.querySelector('.slot-overview-status'), requestStatusKey(entry));
  }
@@ -159,7 +175,8 @@ function renderSlotOverview(slot) {
  const status = slot.overview.querySelector('.slot-overview-status');
  const empty = !hasSlotRequest(slot);
  title.textContent = slot.entry?.song || categoryLabel(slot.category);
- artist.textContent = slot.entry?.artist || '';
+ renderArtistLink(artist, slot.entry?.artist);
+ slot.openButton.setAttribute('aria-label', title.textContent);
  artist.hidden = !artist.textContent;
  category.hidden = !slot.entry;
  if (slot.entry) renderStatusTag(status, requestStatusKey(slot.entry, slot.reserved));
@@ -177,14 +194,14 @@ function showSlot(id, focus = false) {
  $('request-detail').hidden = !activeSlot;
  $('reservation-detail-label').hidden = !activeSlot?.reserved;
  for (const slot of slots) slot.detail.hidden = slot !== activeSlot;
- const previousRow = previous && (!previous.reserved || !reservation.hidden) && previous.overview;
+ const previousRow = previous && (!previous.reserved || !reservation.hidden) && previous.openButton;
  if (focus) (activeSlot?.detail || previousRow || $('request-title')).focus();
 }
 function closeSlot() {
  if (activeSlot) window.history.back();
 }
 for (const slot of slots) {
- slot.overview.onclick = () => {
+ slot.openButton.onclick = () => {
   if (activeSlot || busy) return;
   window.history.pushState({requestScreen:true, currentSlot:slot.id}, '');
   showSlot(slot.id, true);
@@ -486,7 +503,7 @@ function canSubmit(slot) {
 }
 function lock(value) {
  busy = value;
- for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, .slot-overview-row')) button.disabled = busy;
+ for (const button of document.querySelectorAll('.slot-cancel, .slot-edit, #save-name, #cancel-name, #line-link, #request-logout, .slot-overview-open')) button.disabled = busy;
  newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
 }
@@ -505,16 +522,9 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
  const title = document.createElement('div');
  title.className = 'history-song';
  title.textContent = song;
- const subtitle = document.createElement(list.id === 'favorite-track-list' ? 'a' : 'div');
+ const subtitle = document.createElement('div');
  subtitle.className = 'history-artist';
- subtitle.textContent = artist;
- if (subtitle instanceof HTMLAnchorElement) {
-  const url = new URL(location.href);
-  url.searchParams.delete('preview');
-  url.searchParams.set('view', 'playable-songs');
-  url.searchParams.set('artist', artist);
-  subtitle.href = url.href;
- }
+ renderArtistLink(subtitle, artist);
  const identity = document.createElement('div');
  const meta = document.createElement('div');
  meta.className = 'history-status';
@@ -652,7 +662,9 @@ function renderFavorites(current) {
    const name = names.get(key.slice(7)) || key.slice(7);
    const row = document.createElement('li');
    row.className = 'favorite-song-row';
-   row.textContent = name;
+   const identity = document.createElement('div');
+   renderArtistLink(identity, name);
+   row.append(identity);
    row.append(favoriteButton(key, name));
    artists.append(row);
   } else if (key.startsWith('song:')) {
@@ -931,7 +943,7 @@ function renderRequests() {
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;part(slot,'.slot-artist').textContent=mine.artist;renderStatusTag(part(slot,'.slot-status'), requestStatusKey(mine, slot.reserved));part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
+  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;renderArtistLink(part(slot,'.slot-artist'),mine.artist);renderStatusTag(part(slot,'.slot-status'), requestStatusKey(mine, slot.reserved));part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
  renderUserCurrentRequests();

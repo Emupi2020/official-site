@@ -582,7 +582,8 @@ body:has(.request-page) { background: #f2f2f7; }
 #favorites .favorite-song-row { grid-template-columns: minmax(0, 1fr) 44px; align-items: center; }
 #favorite-artists:not([hidden]) + #favorite-tracks { margin-block-start: 16px; }
 #favorites h2 { margin-block-end: 8px; font-size: 17px; }
-#favorite-track-list a.history-artist {
+.artist-link {
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -637,16 +638,29 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 
 /* Full-width feedback for navigable list rows. */
-.listener-layout :is(button.slot-overview-row, .request-menu-link, .playable-browse button) {
+.listener-layout :is(.slot-overview-row, .request-menu-link, .playable-browse button) {
   position: relative;
   isolation: isolate;
   -webkit-tap-highlight-color: transparent;
 }
-.listener-layout :is(button.slot-overview-row, .request-menu-link, .playable-browse button):hover {
+.listener-layout :is(.slot-overview-open, .request-menu-link, .playable-browse button):hover {
   filter: none;
   text-decoration: none;
 }
-.listener-layout button.slot-overview-row[data-row-pressed]::after,
+.slot-overview-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+.slot-overview-row .artist-link {
+  position: relative;
+  z-index: 2;
+}
+.listener-layout .slot-overview-row[data-row-pressed]::after,
 .listener-layout :is(.request-menu-link, .playable-browse button)[data-row-pressed]::before {
   --pressed-color: color-mix(in srgb, var(--text) 3%, transparent);
   content: '';
