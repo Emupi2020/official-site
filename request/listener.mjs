@@ -2,6 +2,16 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=ko';
+const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
+const languageView = history.state?.restoreLanguageView ? history.state : null;
+localizeListenerPage();
+const notesButton = $('request-notes-toggle');
+notesButton.onclick = () => {
+ const notes = $('request-notes');
+ notes.hidden = !notes.hidden;
+ notesButton.setAttribute('aria-expanded', String(!notes.hidden));
+};
 let pressedRow;
 let pressedPointer;
 let pressReleaseTimer;
@@ -105,12 +115,17 @@ function renderArtistLink(container, artist) {
  link.className = 'artist-link';
  link.href = url.href;
  link.textContent = artist;
+ if (korean && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(artist)) link.lang = 'ja';
  container.append(link);
 }
 function renderSongIdentity(title, subtitle, song, artist, link = true) {
  title.classList.toggle('song-identity-title', Boolean(artist));
  subtitle.classList.add('song-identity-artist');
  title.textContent = song;
+ if (korean) {
+  title.lang = artist && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(song) ? 'ja' : '';
+  subtitle.lang = artist && /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(artist) ? 'ja' : '';
+ }
  if (link) renderArtistLink(subtitle, artist);
  else subtitle.textContent = artist;
 }
@@ -168,27 +183,27 @@ function renderUserCurrentRequests() {
 }
 const reservation = $('next-reservation');
 let activeSlot = null;
-const requestStatusLabels = {unrequested:'未リクエスト', submitted:'リクエスト済み', reserved:'予約済み', temporary:'一時保留', pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'持ち越し', removed:'取り下げ済み'};
+const requestStatusLabels = {unrequested:t('未リクエスト'), submitted:t('リクエスト済み'), reserved:t('予約済み'), temporary:t('一時保留'), pending:t('抽選待ち'), selected:t('当選'), done:t('当選済み'), skipped:t('見送り'), deferred:t('持ち越し'), removed:t('取り下げ済み')};
 const requestStatusDescriptions = {
- unrequested:'このカテゴリにはまだリクエストしていません。',
- submitted:'このカテゴリのリクエストを受け付けました。',
- reserved:'次の抽選枠にリクエストを予約しています。今の抽選枠の曲の対応がすべて終わると、抽選対象になります。',
- temporary:'配信側で一時保留にしたため、いまは抽選対象に入りません。',
- pending:'受付が完了し、抽選で選ばれるのを待っています。',
- selected:'この曲が抽選で選ばれました。',
- done:'この曲は抽選で選ばれ、歌唱が済んでいます。',
- skipped:'抽選で選ばれたあと、今回は歌わずに見送りとなりました。',
- deferred:'この曲は次の配信で抽選対象に戻ります。',
- removed:'この曲のリクエストは取り下げられました。',
+ unrequested:t('このカテゴリにはまだリクエストしていません。'),
+ submitted:t('このカテゴリのリクエストを受け付けました。'),
+ reserved:t('次の抽選枠にリクエストを予約しています。今の抽選枠の曲の対応がすべて終わると、抽選対象になります。'),
+ temporary:t('配信側で一時保留にしたため、いまは抽選対象に入りません。'),
+ pending:t('受付が完了し、抽選で選ばれるのを待っています。'),
+ selected:t('この曲が抽選で選ばれました。'),
+ done:t('この曲は抽選で選ばれ、歌唱が済んでいます。'),
+ skipped:t('抽選で選ばれたあと、今回は歌わずに見送りとなりました。'),
+ deferred:t('この曲は次の配信で抽選対象に戻ります。'),
+ removed:t('この曲のリクエストは取り下げられました。'),
 };
 function describeRequestStatus(key, entry) {
  if (key !== 'deferred') return requestStatusDescriptions[key];
  const next = requestStatusDescriptions.deferred;
- if (entry?.deferReason === 'sung') return 'この配信ですでに歌った曲のため、今回は抽選対象から外れています。' + next;
- if (entry?.deferReason === 'manual') return '配信側で次の配信へ持ち越す操作をしました。' + next;
+ if (entry?.deferReason === 'sung') return t('この配信ですでに歌った曲のため、今回は抽選対象から外れています。') + next;
+ if (entry?.deferReason === 'manual') return t('配信側で次の配信へ持ち越す操作をしました。') + next;
  if (entry?.deferReason === 'unknown') {
-  const reason = {unknown:'曲を知らない', no_audio:'歌唱に使う音源がない'}[entry.unavailableReason];
-  return (reason ? `「${reason}」という理由で、今回は抽選対象から外れています。` : '歌えない理由が登録されたため、今回は抽選対象から外れています。') + next;
+  const reason = {unknown:t('曲を知らない'), no_audio:t('歌唱に使う音源がない')}[entry.unavailableReason];
+  return (reason ? (korean ? `「${reason}」이라는 이유로 현재 추첨 대상에서 제외됐어요. ` : `「${reason}」という理由で、今回は抽選対象から外れています。`) : t('歌えない理由が登録されたため、今回は抽選対象から外れています。')) + next;
  }
  return next;
 }
@@ -212,14 +227,14 @@ function renderSlotOverview(slot) {
  const category = slot.overview.querySelector('.slot-overview-category');
  const status = slot.overview.querySelector('.slot-overview-status');
  const empty = !hasSlotRequest(slot);
- renderSongIdentity(title, artist, slot.entry?.song || categoryLabel(slot.category), slot.entry?.artist);
+ renderSongIdentity(title, artist, slot.entry?.song || t(categoryLabel(slot.category)), slot.entry?.artist);
  slot.openButton.setAttribute('aria-label', title.textContent);
  artist.hidden = !artist.textContent;
  category.hidden = !slot.entry;
  if (slot.entry) renderStatusTag(status, requestStatusKey(slot.entry, slot.reserved));
  else if (empty && slot.reserved) {
   delete status.dataset.statusTag;
-  status.textContent = '次の抽選枠に予約する';
+  status.textContent = t('次の抽選枠に予約する');
  } else renderStatusTag(status, empty ? 'unrequested' : slot.reserved ? 'reserved' : 'submitted');
  slot.overview.classList.toggle('is-empty', empty);
 }
@@ -331,7 +346,7 @@ function setEntryMode(mode, focus = false) {
  const welcome = mode === 'welcome';
  const guest = mode === 'guest';
  const login = mode === 'login' || mode === 'name-login';
- entryTitle.textContent = welcome ? welcomeTitle : login ? 'ログイン' : 'はじめての方';
+ entryTitle.textContent = welcome ? welcomeTitle : login ? t('ログイン') : t('はじめての方');
  entryTitle.classList.toggle('request-heading-hidden', welcome);
  $('entry-welcome-actions').hidden = !welcome;
  entryForm.hidden = welcome;
@@ -347,12 +362,12 @@ function setEntryMode(mode, focus = false) {
  else entryPasscode.removeAttribute('aria-describedby');
  $('entry-signin').hidden = !guest && mode !== 'register';
  $('entry-login-links').hidden = !login;
- $('choose-name-login').textContent = mode === 'name-login' ? 'パスコードでログイン' : '名前だけでログイン';
- $('choose-registration-mode').textContent = guest ? 'パスコードを設定して始める' : '名前だけで始める';
+ $('choose-name-login').textContent = mode === 'name-login' ? t('パスコードでログイン') : t('名前だけでログイン');
+ $('choose-registration-mode').textContent = guest ? t('パスコードを設定して始める') : t('名前だけで始める');
  entryPasscode.required = usesPasscode(mode);
  entryPasscode.value = '';
  entryPasscode.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
- $('enter-request').textContent = guest ? '名前だけで始める' : mode === 'register' ? 'パスコードを設定して始める' : 'ログイン';
+ $('enter-request').textContent = guest ? t('名前だけで始める') : mode === 'register' ? t('パスコードを設定して始める') : t('ログイン');
  passcodeFeedback('');
  renderEntryOptions();
  updateEntryButton();
@@ -378,7 +393,7 @@ function promptForPasscode(name) {
  safeSet(rememberedNameKey, name);
  entryName.value = name;
  navigateEntry('login', true);
- passcodeFeedback('この名前にはパスコードが設定されています。');
+ passcodeFeedback(t('この名前にはパスコードが設定されています。'));
  entryPasscode.focus();
 }
 async function requiresPasscode(name) {
@@ -421,8 +436,8 @@ entryForm.onsubmit = async event => {
  } catch (error) {
   needsPasscode = error.code === 'passcode_required';
   if (!needsPasscode) {
-   if (nameOnly) message(error.message, true);
-   else passcodeFeedback(error.message);
+   if (nameOnly) message(listenerError(error), true);
+   else passcodeFeedback(listenerError(error));
    return;
   }
  } finally {
@@ -442,7 +457,7 @@ entryForm.onsubmit = async event => {
  if (nameOnly) {
   await refreshNameRequests(true);
  } else {
-  try { await refresh({useAccountName:true}); } catch (error) { message(error.message, true); }
+  try { await refresh({useAccountName:true}); } catch (error) { message(listenerError(error), true); }
  }
 };
 window.addEventListener('popstate', event => {
@@ -632,7 +647,7 @@ async function loadFavorites() {
   current.keys = new Set(favorites);
   current.ready = true;
  } catch {
-  if (favoritesForListener() === current) favoriteFeedback('お気に入りを読み込めませんでした。');
+  if (favoritesForListener() === current) favoriteFeedback(t('お気に入りを読み込めませんでした。'));
  } finally {
   current.loading = false;
   updateFavoriteButtons(current);
@@ -643,7 +658,7 @@ function favoriteButton(key, name) {
  button.type = 'button';
  button.className = 'favorite-star';
  button.dataset.favoriteKey = key;
- button.setAttribute('aria-label', name + 'のお気に入り');
+ button.setAttribute('aria-label', korean ? name + ' 즐겨찾기' : name + 'のお気に入り');
  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.6l6.2-.9L12 3Z"/></svg>';
  const initial = favoritesForListener();
  button.setAttribute('aria-pressed', String(initial.keys.has(key)));
@@ -669,7 +684,7 @@ function favoriteButton(key, name) {
    }
    if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
   } catch {
-   if (favoritesForListener() === current) favoriteFeedback('お気に入りを変更できませんでした。');
+   if (favoritesForListener() === current) favoriteFeedback(t('お気に入りを変更できませんでした。'));
   } finally {
    current.pending.delete(key);
    updateFavoriteButtons(current);
@@ -684,7 +699,7 @@ async function openFavorites() {
  if (current.keys.size && !playableSongs) {
   try { await loadFavoriteRepertoire(); }
   catch {
-   if (!$('favorites').hidden) favoriteFeedback('お気に入りの曲名を読み込めませんでした。');
+   if (!$('favorites').hidden) favoriteFeedback(t('お気に入りの曲名を読み込めませんでした。'));
   }
  }
  if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
@@ -704,19 +719,19 @@ for (const slot of currentSlots) {
  const icon = document.createElement('span');
  icon.setAttribute('aria-hidden', 'true');
  icon.textContent = '☆';
- picker.append(icon, 'お気に入りから選ぶ');
+ picker.append(icon, t('お気に入りから選ぶ'));
  const dialog = document.createElement('dialog');
  dialog.className = 'listener-dialog slot-favorite-dialog';
  const heading = document.createElement('h2');
  heading.id = slot.id + '-favorites-heading';
- heading.textContent = 'お気に入りから選ぶ';
+ heading.textContent = t('お気に入りから選ぶ');
  heading.tabIndex = -1;
  heading.autofocus = true;
  dialog.setAttribute('aria-labelledby', heading.id);
  const close = document.createElement('button');
  close.type = 'button';
  close.className = 'secondary';
- close.textContent = '閉じる';
+ close.textContent = t('閉じる');
  close.onclick = () => dialog.close();
  const choices = document.createElement('div');
  choices.className = 'playable-browse';
@@ -735,7 +750,7 @@ for (const slot of currentSlots) {
  picker.addEventListener('click', async () => {
   const version = ++opening;
   choices.replaceChildren();
-  status.textContent = '読み込み中…';
+  status.textContent = t('読み込み中…');
   dialog.showModal();
   const favorites = favoritesForListener();
   await loadFavorites();
@@ -764,9 +779,9 @@ for (const slot of currentSlots) {
     };
     choices.append(button);
    }
-   status.textContent = choices.childElementCount ? '' : 'このカテゴリのお気に入りの曲はありません。';
+   status.textContent = choices.childElementCount ? '' : t('このカテゴリのお気に入りの曲はありません。');
   } catch {
-   if (version === opening) status.textContent = 'お気に入りを読み込めませんでした。';
+   if (version === opening) status.textContent = t('お気に入りを読み込めませんでした。');
   }
  });
 }
@@ -819,7 +834,7 @@ async function loadArchivedHistory(more = false) {
   current.next = page.next;
   current.loaded = true;
  } catch (error) {
-  current.error = error.message;
+  current.error = listenerError(error);
  } finally {
   current.loading = false;
   if (archive === current && historyOwner() === owner && state) renderRequests();
@@ -830,20 +845,20 @@ $('my-history-more').onclick = () => loadArchivedHistory(true);
 function renderHistory(myRequests){
  const current = archive?.owner === historyOwner() ? archive : null;
  $('my-history-empty').hidden = Boolean(myRequests.length || current?.loading || current?.error);
- $('my-history-count').textContent = myRequests.length ? `${myRequests.length}件${current?.next ? '以上' : ''}` : '';
- $('my-history-feedback').textContent = current?.loading ? '履歴を読み込み中…' : current?.error || '';
+ $('my-history-count').textContent = myRequests.length ? `${myRequests.length}${korean ? '건' : '件'}${current?.next ? (korean ? ' 이상' : '以上') : ''}` : '';
+ $('my-history-feedback').textContent = current?.loading ? t('履歴を読み込み中…') : current?.error || '';
  $('my-history-feedback').hidden = !$('my-history-feedback').textContent;
  $('my-history-more').hidden = !current?.next && !current?.error;
  $('my-history-more').disabled = Boolean(current?.loading);
- $('my-history-more').textContent = current?.error ? '再読み込み' : 'もっと見る';
+ $('my-history-more').textContent = current?.error ? t('再読み込み') : t('もっと見る');
  $('my-history-list').replaceChildren();
- for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次の抽選枠への予約':entry.round===state.round?'今の抽選枠':'過去のリクエスト'}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲はこの配信で歌唱済み':''}`,entry.createdAt, entry.category, requestStatusKey(entry, entry.round > state.round));
+ for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${t(categoryLabel(entry.category))} · ${entry.round>state.round?t('次の抽選枠への予約'):entry.round===state.round?t('今の抽選枠'):t('過去のリクエスト')}${entry.status!=='done'&&entry.playedThisSession? ' · ' + t('同じ曲はこの配信で歌唱済み') : ''}`,entry.createdAt, entry.category, requestStatusKey(entry, entry.round > state.round));
 }
 function renderPlayed(played) {
- $('played-total').textContent = `全${played.length}曲`;
+ $('played-total').textContent = totalTracks(played.length);
  $('played-total').hidden = false;
- $('played-count').textContent=played.length?`${played.length}曲`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
- for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : '歌唱済み',entry.performedAt);
+ $('played-count').textContent=played.length?`${played.length}${korean ? '곡' : '曲'}`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
+ for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : (korean ? '가창 완료' : '歌唱済み'),entry.performedAt);
 }
 const playable = $('playable-songs');
 const playableCategories = $('playable-categories');
@@ -857,14 +872,14 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
  playableSearch.value = playableSearchValue;
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
- const searchLabel = view === 'artists' && !artist ? 'アーティスト名で検索' : '曲名・アーティスト名で検索';
+ const searchLabel = view === 'artists' && !artist ? t('アーティスト名で検索') : t('曲名・アーティスト名で検索');
  playableSearch.placeholder = searchLabel;
  playableSearch.setAttribute('aria-label', searchLabel);
  for (const button of playableCategoryButtons) {
   $(`playable-${button.dataset.playableCategory}-detail`).hidden = button !== selected;
  }
  if (browsing) {
-  menuPageTitle.textContent = artist || (view === 'artists' ? 'アーティスト' : '曲');
+  menuPageTitle.textContent = artist || (view === 'artists' ? t('アーティスト') : t('曲'));
   if (artist) {
    const star = favoriteButton('artist:' + normalize(artist), artist);
    star.classList.add('artist-favorite');
@@ -922,9 +937,9 @@ function renderPlayableResults() {
  const total = $('playable-total');
  total.hidden = !playableSongs;
  const counts = [];
- if (matchedArtists.size || artistList) counts.push(`${matchedArtists.size}組`);
- if (matchedTracks.length || !counts.length) counts.push(`${matchedTracks.length}曲`);
- total.textContent = query ? `検索結果 ${counts.join('・')}` : `全${songs.length}曲`;
+ if (matchedArtists.size || artistList) counts.push(`${matchedArtists.size}${korean ? '팀' : '組'}`);
+ if (matchedTracks.length || !counts.length) counts.push(`${matchedTracks.length}${korean ? '곡' : '曲'}`);
+ total.textContent = query ? (korean ? `검색 결과 ${counts.join(' · ')}` : `検索結果 ${counts.join('・')}`) : totalTracks(songs.length);
  if (!browsing && !query) return;
  artists.hidden = matchedArtists.size === 0;
  tracks.hidden = matchedTracks.length === 0;
@@ -932,7 +947,7 @@ function renderPlayableResults() {
  tracks.replaceChildren();
  const empty = $('playable-empty');
  empty.hidden = !playableSongs || matchedArtists.size > 0 || matchedTracks.length > 0;
- empty.textContent = query ? '該当する結果がありません。' : 'まだ曲がありません。';
+ empty.textContent = query ? t('該当する結果がありません。') : t('まだ曲がありません。');
  for (const [name, artistCategory] of matchedArtists) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -952,7 +967,7 @@ async function refreshPlayable() {
  playableLoading = true;
  const feedback = $('playable-feedback');
  if (!playableSongs) {
-  feedback.textContent = '読み込み中…';
+  feedback.textContent = t('読み込み中…');
   feedback.hidden = false;
  }
  try {
@@ -962,7 +977,7 @@ async function refreshPlayable() {
   if (!playable.hidden) renderPlayableResults();
   feedback.hidden = true;
  } catch (error) {
-  feedback.textContent = error.message;
+  feedback.textContent = listenerError(error);
   feedback.hidden = false;
  } finally {
   playableLoading = false;
@@ -1020,8 +1035,8 @@ function lookupName() {
 function renderGreeting() {
  const name = lookupName();
  const hour = Number(japanHour.format(new Date()));
- const salutation = hour < 5 || hour >= 18 ? 'こんばんは' : hour < 11 ? 'おはようございます' : 'こんにちは';
- const text = name ? `${salutation}、${name}さん` : '';
+ const salutation = hour < 5 || hour >= 18 ? t('こんばんは') : hour < 11 ? t('おはようございます') : t('こんにちは');
+ const text = name ? (korean ? `${name}님, 안녕하세요` : `${salutation}、${name}さん`) : '';
  if (greeting.textContent !== text) greeting.textContent = text;
 }
 async function refreshNameRequests(reportError = false) {
@@ -1047,7 +1062,7 @@ async function refreshNameRequests(reportError = false) {
   if (entries.length) safeSet('emupi-request-name', name);
   if (state) renderRequests();
  } catch (error) {
-  if (reportError && version === lookupVersion && name === lookupName()) message(error.message, true);
+  if (reportError && version === lookupVersion && name === lookupName()) message(listenerError(error), true);
  }
 }
 function renderRequests() {
@@ -1093,14 +1108,14 @@ function renderAccount() {
 async function confirmSong(data){
  const status = await api(`/api/song-status?${new URLSearchParams({artist:data.artist,song:data.song})}`);
  if (!status.unknownAt && status.listed !== false) return true;
- let description = '歌唱記録がまだない曲です。このままリクエストしますか？';
+ let description = t('歌唱記録がまだない曲です。このままリクエストしますか？');
  if (status.unknownAt) {
-  const formatter = new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const formatter = new Intl.DateTimeFormat(korean ? 'ko-KR' : 'ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
   const reasons = status.reasons || [{reason:'unknown',at:status.unknownAt}];
   description = reasons.map(({reason, at}) => reason === 'no_audio'
-   ? `${formatter.format(at)}時点では、この曲の音源がありませんでした。`
-   : `${formatter.format(at)}時点では、えむぴーがこの曲をまだ覚えていませんでした。`
-  ).join('\n') + '\nそれでもリクエストしますか？';
+   ? (korean ? `${formatter.format(at)} 기준으로 이 곡의 음원이 없었어요.` : `${formatter.format(at)}時点では、この曲の音源がありませんでした。`)
+   : (korean ? `${formatter.format(at)} 기준으로 えむぴー가 이 곡을 아직 익히지 못했어요.` : `${formatter.format(at)}時点では、えむぴーがこの曲をまだ覚えていませんでした。`)
+  ).join('\n') + '\n' + t('それでもリクエストしますか？');
  }
  $('unknown-description').textContent = description;
  const dialog = $('unknown-warning');
@@ -1138,7 +1153,7 @@ function stopEditing(slot) {
  form.reset();
  form.hidden = !!slot.entry;
  part(slot, '.slot-receipt').hidden = !slot.entry;
- part(slot, '.slot-submit').textContent = slot.reserved ? '次の抽選枠に予約する' : 'リクエストする';
+ part(slot, '.slot-submit').textContent = slot.reserved ? t('次の抽選枠に予約する') : t('リクエストする');
  part(slot, '.slot-cancel').hidden = true;
  hideSuggestions();
 }
@@ -1167,7 +1182,7 @@ $('name-form').onsubmit = async event => {
    namePasscode.value = '';
   } else {
    if (await requiresPasscode(name)) {
-    nameFeedback('この名前にはパスコードが設定されています。別の名前を入力してください。', true);
+    nameFeedback(t('この名前にはパスコードが設定されています。別の名前を入力してください。'), true);
     return;
    }
    if (editable.length) {
@@ -1179,10 +1194,10 @@ $('name-form').onsubmit = async event => {
   safeSet(rememberedNameKey, name);
   renderGreeting();
   if (state) renderRequests();
-  nameFeedback('名前を変更しました。');
-  try { await refresh(); } catch (error) { message(error.message, true); }
+  nameFeedback(t('名前を変更しました。'));
+  try { await refresh(); } catch (error) { message(listenerError(error), true); }
  } catch (error) {
-  nameFeedback(error.message, true);
+  nameFeedback(listenerError(error), true);
  } finally {
   lock(false);
  }
@@ -1195,10 +1210,10 @@ for(const slot of slots){
  const rejected = document.createElement('p');
  rejected.className = 'edit-feedback error duplicate-error';
  rejected.hidden = true;
- rejected.textContent = slot.reserved ? 'すでに予約があるため、今入力した曲は予約されませんでした。' : 'すでにリクエストがあるため、今入力した曲は送信されませんでした。';
+ rejected.textContent = slot.reserved ? t('すでに予約があるため、今入力した曲は予約されませんでした。') : t('すでにリクエストがあるため、今入力した曲は送信されませんでした。');
  const status = document.createElement('p');
  status.className = 'duplicate-label';
- status.textContent = slot.reserved ? 'このカテゴリは次の抽選枠に予約済みです。' : 'このカテゴリはリクエスト済みです。';
+ status.textContent = slot.reserved ? t('このカテゴリは次の抽選枠に予約済みです。') : t('このカテゴリはリクエスト済みです。');
  duplicate.append(status, rejected);
  slot.root.append(duplicate);
  const box=document.createElement('div');box.className='slot-feedback edit-feedback';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
@@ -1221,7 +1236,7 @@ for(const slot of slots){
     });
     stopEditing(slot);
     await refresh();
-    feedback(slot, '曲を変更しました。', false);
+    feedback(slot, t('曲を変更しました。'), false);
     savedEdit = true;
    } else {
     const {entry} = await api('/api/requests', {
@@ -1251,7 +1266,7 @@ for(const slot of slots){
     await refresh().catch(() => renderDuplicateSlots());
     return;
    }
-   feedback(slot, error.message);
+   feedback(slot, listenerError(error));
    if (error.status === 409) { slot.draftRound = null; await refresh().catch(() => {}); }
   } finally {
    lock(false);
@@ -1275,7 +1290,7 @@ for(const slot of slots){
   const form = part(slot, '.slot-form');
   form.hidden = false;
   part(slot, '.slot-receipt').hidden = true;
-  part(slot, '.slot-submit').textContent = '変更する';
+  part(slot, '.slot-submit').textContent = t('変更する');
   part(slot, '.slot-cancel').hidden = false;
   feedback(slot, '');
   lock(busy);
@@ -1311,14 +1326,14 @@ async function accountAction(path, data, notice) {
   await refresh();
   status.textContent = notice(result);
  } catch (error) {
-  status.textContent = error.message;
+  status.textContent = listenerError(error);
  } finally {
   lock(false);
   renderAccount();
  }
 }
 $('line-link').onclick = () => accountAction('/api/listener-account', {tokens: Object.values(tokens).slice(-100)},
- result => result.linked ? `${result.linked}件のリクエストを連携しました。` : '新しく連携できるリクエストはありません。');
+ result => result.linked ? (korean ? `신청곡 ${result.linked}건을 연동했어요.` : `${result.linked}件のリクエストを連携しました。`) : t('新しく連携できるリクエストはありません。'));
 const logoutConfirmation = $('logout-confirmation');
 $('request-logout').onclick = () => {
  if (busy || logoutConfirmation.open) return;
@@ -1355,11 +1370,11 @@ logoutConfirmation.addEventListener('close', async () => {
   url.searchParams.delete('preview');
   window.history.replaceState(entryView('welcome'), '', url);
   showRequestScreen(false, true);
-  logoutNotice.textContent = 'ログアウトしました。';
+  logoutNotice.textContent = t('ログアウトしました。');
   logoutNoticeTimer = setTimeout(clearLogoutNotice, 3000);
   await refresh();
  } catch (error) {
-  message(error.message, true);
+  message(listenerError(error), true);
  } finally {
   lock(false);
  }
@@ -1368,7 +1383,7 @@ const pageUrl = new URL(location.href);
 const lineConnected = pageUrl.searchParams.get('line') === 'connected';
 if (pageUrl.searchParams.has('line')) {
  $('account-settings').open = true;
- const notice = lineConnected ? 'LINEでログインしました。' : 'LINEでログインできませんでした。もう一度お試しください。';
+ const notice = lineConnected ? t('LINEでログインしました。') : t('LINEでログインできませんでした。もう一度お試しください。');
  $('line-feedback').textContent = notice;
  $('entry-line-feedback').textContent = notice;
  $('entry-line-feedback').hidden = false;
@@ -1396,9 +1411,16 @@ try {
  }
  items = (await api('/api/suggestions')).items;
 } catch (error) {
- message(error.message, true);
+ message(listenerError(error), true);
 } finally {
  if ($('request-screen').hidden && $('entry-screen').hidden) showRequestScreen(false);
  entryBusy = false;
+ if (languageView && languageView.requestScreen === !$('request-screen').hidden) {
+  const {restoreLanguageView, ...route} = languageView;
+  history.replaceState(route, '');
+  if (!route.requestScreen && route.entryMode && (route.entryMode !== 'welcome' || entryMode === 'welcome')) setEntryMode(route.entryMode);
+  showMenuPage(route.menuPage);
+  if (route.requestScreen) showSlot(route.currentSlot);
+ }
  updateEntryButton();
 }

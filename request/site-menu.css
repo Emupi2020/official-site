@@ -48,15 +48,24 @@ body.listener-layout {
 .listener-layout:has(#request-screen:not([hidden]) #request-overview:not([hidden])):has(#menu-page[hidden]) .request-notes {
   display: block;
 }
-.request-notes > summary {
-  min-height: 44px;
-  padding-block: 12px;
-  list-style: none;
+.footer-preferences,
+.footer-notes-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   color: var(--muted);
   font-size: 13px;
-  cursor: pointer;
 }
-.request-notes > summary::-webkit-details-marker { display: none; }
+.footer-notes-entry { display: none; }
+.listener-layout:has(#request-screen:not([hidden]) #request-overview:not([hidden])):has(#menu-page[hidden]) .footer-notes-entry { display: flex; }
+.footer-preferences button {
+  min-height: 44px;
+  padding: 0 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
 .request-rules { padding-block-end: 12px; font-size: 14px; line-height: 1.65; text-align: start; }
 .request-rules h3 { margin: 0 0 4px; font-size: 15px; }
 .request-rules ul { margin: 0; padding-inline-start: 1.3em; }

@@ -1,4 +1,5 @@
 import { api, safeGet, $ } from './common.mjs';
+import { listenerError, t } from './listener-language.mjs?v=ko';
 
 function showStatus(id, text, error = false) {
   const status = $(id);
@@ -20,7 +21,7 @@ if (form) {
     if (sending || !message || $('request-screen').hidden) return;
     const name = safeGet('emupi-request-name') || $('name').value;
     if (!name.trim()) {
-      showStatus('bug-report-status', 'Pocochaの名前を設定してください。', true);
+      showStatus('bug-report-status', t('Pocochaの名前を設定してください。'), true);
       return;
     }
     sending = true;
@@ -30,9 +31,9 @@ if (form) {
     try {
       await api('/api/bug-reports', {method:'POST', data:{name, message}});
       input.value = '';
-      showStatus('bug-report-status', '送信しました。');
+      showStatus('bug-report-status', t('送信しました。'));
     } catch (error) {
-      showStatus('bug-report-status', error.message, true);
+      showStatus('bug-report-status', listenerError(error), true);
     } finally {
       sending = false;
       input.readOnly = false;
