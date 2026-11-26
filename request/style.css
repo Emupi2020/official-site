@@ -176,7 +176,17 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page:has(#menu-page:not([hidden])) > :is(#entry-screen, #request-screen) { display: none; }
 .request-page :is(#menu-page-title, #request-title) { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
 .request-page :is(#menu-page-title, #request-title):focus { outline: none; }
-.song-page-total { margin: -10px 0 16px; color: var(--muted); font-size: 14px; }
+.menu-page-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block-end: 16px;
+}
+.request-page .menu-page-heading #menu-page-title { margin-block-end: 0; }
+.song-page-total { color: var(--muted); font-size: 14px; white-space: nowrap; }
+#menu-page:has(#played-history[hidden]) #played-total,
+#menu-page:has(#playable-songs[hidden]) #playable-total { display: none; }
 .playable-search-field {
   position: relative;
   margin-block-end: 12px;
