@@ -211,8 +211,6 @@ body:has(.request-page) { background: #f2f2f7; }
   background: #f2f2f4;
 }
 #playable-search::placeholder { opacity: 1; }
-#playable-suggestions button:focus-visible { background: var(--bg); }
-#playable-suggestions .small { display: block; }
 .menu-page-form { max-width: 380px; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
@@ -610,3 +608,5 @@ body:has(.request-page) { background: #f2f2f7; }
   box-shadow: 0 0 0 100vmax var(--pressed-color);
   clip-path: inset(0 -100vmax);
 }
+
+#playable-artists:not([hidden]) + #playable-track-list:not([hidden]) { margin-block-start: 8px; }

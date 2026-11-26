@@ -575,18 +575,13 @@ const playable = $('playable-songs');
 const playableCategories = $('playable-categories');
 const playableGroups = $('playable-groups');
 const playableSearch = $('playable-search');
-const playableSuggestions = $('playable-suggestions');
 const playableSearchField = playableSearch.parentElement;
-let showPlayableSuggestions = false;
-let selectedPlayableSuggestion = null;
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
 function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist, playableSearchValue = ''} = {}) {
  playableSearch.value = playableSearchValue;
- showPlayableSuggestions = false;
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
- selectedPlayableSuggestion = null;
  const searchLabel = view === 'artists' && !artist ? 'アーティスト名で検索' : '曲名・アーティスト名で検索';
  playableSearch.placeholder = searchLabel;
  playableSearch.setAttribute('aria-label', searchLabel);
@@ -609,124 +604,60 @@ for (const button of playableCategoryButtons) {
 for (const button of $('playable-browse').querySelectorAll('button')) {
  button.onclick = () => navigatePlayable({playableView:button.dataset.playableView});
 }
-playableSearch.addEventListener('input', () => {
- selectedPlayableSuggestion = null;
- showPlayableSuggestions = true;
- renderPlayableResults();
-});
-function closePlayableSuggestions() {
- showPlayableSuggestions = false;
- playableSuggestions.hidden = true;
-}
-function confirmPlayableSearch() {
- closePlayableSuggestions();
- renderPlayableResults();
- playableSearch.blur();
-}
+playableSearch.addEventListener('input', renderPlayableResults);
 playableSearchField.addEventListener('submit', event => {
  event.preventDefault();
- const {playableCategory, playableArtist} = window.history.state || {};
- const query = normalize(playableSearch.value);
- if (query && !selectedPlayableSuggestion && !playableArtist) {
-  const exactArtists = new Map();
-  for (const song of playableSongs || []) {
-   if (playableCategory && song.category !== playableCategory) continue;
-   if (artistSearchNames(song).some(name => normalize(name) === query)) {
-    exactArtists.set(song.artist, song.category);
-   }
-  }
-  if (exactArtists.size === 1) {
-   const [[artist, category]] = exactArtists;
-   navigatePlayable({playableCategory:category, playableView:'artists', playableArtist:artist});
-   return;
-  }
- }
- confirmPlayableSearch();
+ playableSearch.blur();
 });
-function dismissPlayableSuggestions(event) {
- if (!playableSearchField.contains(event.target)) closePlayableSuggestions();
-}
-document.addEventListener('pointerdown', dismissPlayableSuggestions);
-document.addEventListener('focusin', dismissPlayableSuggestions);
-playableSearch.addEventListener('keydown', event => {
- if (!event.isComposing && event.key === 'Escape' && !playableSuggestions.hidden) {
-  event.preventDefault();
-  closePlayableSuggestions();
- }
-});
-function renderPlayableSuggestions(options) {
- playableSuggestions.replaceChildren();
- playableSuggestions.hidden = options.size === 0;
- for (const {field, name, artist, category} of [...options.values()].slice(0, 8)) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = name;
-  const detail = document.createElement('span');
-  detail.className = 'small muted';
-  detail.textContent = field === 'artist' ? 'アーティスト' : artist;
-  button.append(detail);
-  button.onclick = () => {
-   if (field === 'artist') {
-    navigatePlayable({playableCategory:category, playableView:'artists', playableArtist:name, playableSearchValue:name});
-    return;
-   }
-   selectedPlayableSuggestion = {field, name, artist};
-   playableSearch.value = name;
-   confirmPlayableSearch();
-  };
-  playableSuggestions.append(button);
- }
-}
 function renderPlayableResults() {
- const {playableCategory: category, playableView: view, playableArtist: artist} = window.history.state || {};
+ const route = window.history.state || {};
+ const {playableCategory: category, playableView: view, playableArtist: artist} = route;
  const value = normalize(playableSearch.value);
- const query = artist && !showPlayableSuggestions && !selectedPlayableSuggestion && value === normalize(artist) ? '' : value;
+ const query = artist && value === normalize(artist) ? '' : value;
  const browsing = Boolean(category && view);
  playableCategories.hidden = Boolean(category || query);
  playableGroups.hidden = !category || browsing || Boolean(query);
  $('playable-results').hidden = !browsing && !query;
  const artists = $('playable-artists');
  const tracks = $('playable-track-list');
- const showArtists = view === 'artists' && !artist;
+ const artistList = view === 'artists' && !artist;
  const songs = (playableSongs || []).filter(song => (!category || song.category === category) && (!artist || song.artist === artist));
- const suggestions = new Map();
- const matches = query ? songs.filter(song => {
-  if (selectedPlayableSuggestion) {
-   const {field, name, artist: suggestedArtist} = selectedPlayableSuggestion;
-   return song[field] === name && (!suggestedArtist || song.artist === suggestedArtist);
+ const matchedArtists = new Map();
+ const matchedTracks = [];
+ for (const song of songs) {
+  const artistMatches = query && artistSearchNames(song).some(name => normalize(name).includes(query));
+  if ((artistList && !query) || (!artist && artistMatches)) {
+   matchedArtists.set(song.artist, song.category);
   }
-  const artistMatches = artistSearchNames(song).some(name => normalize(name).includes(query));
-  const songMatches = !showArtists && songSearchNames(song).some(name => normalize(name).includes(query));
-  if (showPlayableSuggestions && artistMatches) suggestions.set('artist:' + song.artist, {field:'artist', name:song.artist, category:song.category});
-  if (showPlayableSuggestions && songMatches) suggestions.set(JSON.stringify([song.artist, song.song]), {field:'song', name:song.song, artist:song.artist});
-  return artistMatches || songMatches;
- }) : songs;
- renderPlayableSuggestions(suggestions);
- const matchedArtists = new Set(matches.map(song => song.artist));
+  if (!artistList && (!query || (artist && artistMatches) || songSearchNames(song).some(name => normalize(name).includes(query)))) {
+   matchedTracks.push(song);
+  }
+ }
  const total = $('playable-total');
  total.hidden = !playableSongs;
- total.textContent = query
-  ? (showArtists ? `検索結果 ${matchedArtists.size}組` : `検索結果 ${matches.length}曲`)
-  : `全${songs.length}曲`;
+ const counts = [];
+ if (matchedArtists.size || artistList) counts.push(`${matchedArtists.size}組`);
+ if (matchedTracks.length || !counts.length) counts.push(`${matchedTracks.length}曲`);
+ total.textContent = query ? `検索結果 ${counts.join('・')}` : `全${songs.length}曲`;
  if (!browsing && !query) return;
- artists.hidden = !showArtists;
- tracks.hidden = showArtists;
+ artists.hidden = matchedArtists.size === 0;
+ tracks.hidden = matchedTracks.length === 0;
  artists.replaceChildren();
  tracks.replaceChildren();
  const empty = $('playable-empty');
- empty.hidden = !playableSongs || matches.length > 0;
- empty.textContent = query ? (showArtists ? '該当するアーティストがいません。' : '該当する曲がありません。') : 'まだ曲がありません。';
- if (showArtists) {
-  for (const name of matchedArtists) {
-   const button = document.createElement('button');
-   button.type = 'button';
-   button.textContent = name;
-   button.onclick = () => navigatePlayable({playableArtist:name});
-   artists.append(button);
-  }
- } else {
-  for (const song of matches) historyRow(tracks, song.song, song.artist, undefined, undefined, null);
+ empty.hidden = !playableSongs || matchedArtists.size > 0 || matchedTracks.length > 0;
+ empty.textContent = query ? '該当する結果がありません。' : 'まだ曲がありません。';
+ for (const [name, artistCategory] of matchedArtists) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = name;
+  button.onclick = () => {
+   window.history.replaceState({...route, playableSearchValue:playableSearch.value}, '');
+   navigatePlayable({playableCategory:artistCategory, playableView:'artists', playableArtist:name, playableSearchValue:query ? name : ''});
+  };
+  artists.append(button);
  }
+ for (const song of matchedTracks) historyRow(tracks, song.song, song.artist, undefined, undefined, null);
 }
 const songOrdering = new Intl.Collator('ja');
 let playableLoading = false;
