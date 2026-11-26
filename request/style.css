@@ -513,13 +513,13 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .playable-categories button {
   display: grid;
-  justify-items: start;
+  justify-items: center;
   align-content: start;
-  gap: 8px;
+  gap: 4px;
   padding: 0;
   background: transparent;
   color: var(--text);
-  text-align: start;
+  text-align: center;
   font-weight: 600;
 }
 .playable-categories img, .playable-cover {
@@ -529,6 +529,7 @@ body:has(.request-page) { background: #f2f2f7; }
   object-fit: cover;
   clip-path: inset(7% round 8px);
 }
+.playable-categories img { margin-block-end: -7%; }
 .playable-cover { width: min(76%, 300px); margin: 0 auto; }
 .playable-detail h2 { margin: 8px 0 22px; text-align: center; }
 .playable-detail .song-history li { grid-template-columns: minmax(0, 1fr); }
