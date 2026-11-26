@@ -245,7 +245,9 @@ function showRequestScreen(open, focus = false) {
   const page = menuPages.find(({button, panel}) => !button.hidden && panel.id === initialMenuPage);
   initialMenuPage = null;
   if (page) {
-   window.history.replaceState({...window.history.state, menuPage:page.panel.id, directMenuPage:true}, '');
+   const artist = page.panel.id === 'playable-songs' && initialParams.get('artist')?.trim();
+   const artistPage = artist ? {playableCategory:classifyArtist(artist), playableView:'artists', playableArtist:artist} : {};
+   window.history.replaceState({...window.history.state, ...artistPage, menuPage:page.panel.id, directMenuPage:true}, '');
    Promise.resolve(showMenuPage(page.panel.id, true)).finally(() => {
     delete document.documentElement.dataset.carryMenu;
    });
@@ -436,6 +438,7 @@ for (const {button,panel} of menuPages) {
   }
   const url = new URL(location.href);
   url.searchParams.delete('preview');
+  url.searchParams.delete('artist');
   url.searchParams.set('view', panel.id === nameSettings.id ? 'name-settings' : panel.id);
   try { sessionStorage.setItem('emupi-menu-destination', url.href); } catch {}
   location.assign(url);
@@ -502,9 +505,16 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
  const title = document.createElement('div');
  title.className = 'history-song';
  title.textContent = song;
- const subtitle = document.createElement('div');
+ const subtitle = document.createElement(list.id === 'favorite-track-list' ? 'a' : 'div');
  subtitle.className = 'history-artist';
  subtitle.textContent = artist;
+ if (subtitle instanceof HTMLAnchorElement) {
+  const url = new URL(location.href);
+  url.searchParams.delete('preview');
+  url.searchParams.set('view', 'playable-songs');
+  url.searchParams.set('artist', artist);
+  subtitle.href = url.href;
+ }
  const identity = document.createElement('div');
  const meta = document.createElement('div');
  meta.className = 'history-status';

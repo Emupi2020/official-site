@@ -582,6 +582,10 @@ body:has(.request-page) { background: #f2f2f7; }
 #favorites .favorite-song-row { grid-template-columns: minmax(0, 1fr) 44px; align-items: center; }
 #favorite-artists:not([hidden]) + #favorite-tracks { margin-block-start: 16px; }
 #favorites h2 { margin-block-end: 8px; font-size: 17px; }
+#favorite-track-list a.history-artist {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .favorite-star {
   align-self: center;
   width: 44px;
