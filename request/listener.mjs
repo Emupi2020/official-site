@@ -577,11 +577,13 @@ const playableGroups = $('playable-groups');
 const playableSearch = $('playable-search');
 const playableSuggestions = $('playable-suggestions');
 const playableSearchField = playableSearch.parentElement;
+let showPlayableSuggestions = false;
 let selectedPlayableSuggestion = null;
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
 function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist} = {}) {
  playableSearch.value = '';
+ showPlayableSuggestions = false;
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
  selectedPlayableSuggestion = null;
@@ -609,17 +611,31 @@ for (const button of $('playable-browse').querySelectorAll('button')) {
 }
 playableSearch.addEventListener('input', () => {
  selectedPlayableSuggestion = null;
+ showPlayableSuggestions = true;
  renderPlayableResults();
 });
+function closePlayableSuggestions() {
+ showPlayableSuggestions = false;
+ playableSuggestions.hidden = true;
+}
+function confirmPlayableSearch() {
+ closePlayableSuggestions();
+ renderPlayableResults();
+ playableSearch.blur();
+}
+playableSearchField.addEventListener('submit', event => {
+ event.preventDefault();
+ confirmPlayableSearch();
+});
 function dismissPlayableSuggestions(event) {
- if (!playableSearchField.contains(event.target)) playableSuggestions.hidden = true;
+ if (!playableSearchField.contains(event.target)) closePlayableSuggestions();
 }
 document.addEventListener('pointerdown', dismissPlayableSuggestions);
 document.addEventListener('focusin', dismissPlayableSuggestions);
 playableSearch.addEventListener('keydown', event => {
- if (!event.isComposing && ['Enter', 'Escape'].includes(event.key) && !playableSuggestions.hidden) {
+ if (!event.isComposing && event.key === 'Escape' && !playableSuggestions.hidden) {
   event.preventDefault();
-  playableSuggestions.hidden = true;
+  closePlayableSuggestions();
  }
 });
 function renderPlayableSuggestions(options) {
@@ -640,8 +656,7 @@ function renderPlayableSuggestions(options) {
    }
    selectedPlayableSuggestion = {field, name, artist};
    playableSearch.value = name;
-   playableSearch.focus();
-   renderPlayableResults();
+   confirmPlayableSearch();
   };
   playableSuggestions.append(button);
  }
@@ -665,8 +680,8 @@ function renderPlayableResults() {
   }
   const artistMatches = artistSearchNames(song).some(name => normalize(name).includes(query));
   const songMatches = !showArtists && songSearchNames(song).some(name => normalize(name).includes(query));
-  if (artistMatches) suggestions.set('artist:' + song.artist, {field:'artist', name:song.artist, category:song.category});
-  if (songMatches) suggestions.set(JSON.stringify([song.artist, song.song]), {field:'song', name:song.song, artist:song.artist});
+  if (showPlayableSuggestions && artistMatches) suggestions.set('artist:' + song.artist, {field:'artist', name:song.artist, category:song.category});
+  if (showPlayableSuggestions && songMatches) suggestions.set(JSON.stringify([song.artist, song.song]), {field:'song', name:song.song, artist:song.artist});
   return artistMatches || songMatches;
  }) : songs;
  renderPlayableSuggestions(suggestions);

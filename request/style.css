@@ -206,11 +206,22 @@ body:has(.request-page) { background: #f2f2f7; }
   min-height: 44px;
   padding: 8px 14px;
   padding-inline-start: 39px;
+  padding-inline-end: 65px;
   border: 0;
   border-radius: 999px;
   background: #f2f2f4;
 }
 #playable-search::placeholder { opacity: 1; }
+.playable-search-submit {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  min-height: 0;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+}
 #playable-suggestions button:focus-visible { background: var(--bg); }
 #playable-suggestions .small { display: block; }
 .menu-page-form { max-width: 380px; }
