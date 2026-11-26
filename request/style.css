@@ -229,7 +229,7 @@ body:has(.request-page) { background: #f2f2f7; }
   color: #808087;
 }
 .menu-page-form { max-width: 380px; }
-.slot-favorite-picker > summary {
+.slot-favorite-picker {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -237,11 +237,24 @@ body:has(.request-page) { background: #f2f2f7; }
   min-height: 32px;
   padding: 0 2px;
   font-size: 13px;
-  list-style: none;
+  background: transparent;
+  color: var(--accent);
 }
-.slot-favorite-picker > summary::-webkit-details-marker { display: none; }
-.slot-favorite-picker > summary span { font-size: 16px; }
-.slot-favorite-picker p:empty { display: none; }
+.slot-favorite-picker span { font-size: 16px; }
+.request-page .slot-favorite-dialog {
+  width: min(400px, calc(100% - 40px));
+  max-height: min(70dvh, 520px);
+  padding: 20px;
+}
+.slot-favorite-dialog p:empty { display: none; }
+.request-page .slot-favorite-dialog .playable-browse button {
+  border-radius: 0;
+  padding: 8px 4px;
+}
+.request-page .slot-favorite-dialog > .text-button {
+  display: flex;
+  margin: 8px auto 0;
+}
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
 .request-page #reservation-detail-label { margin: 0 0 3px; }

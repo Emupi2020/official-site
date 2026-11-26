@@ -195,7 +195,7 @@ function showSlot(id, focus = false) {
  $('reservation-detail-label').hidden = !activeSlot?.reserved;
  for (const slot of slots) slot.detail.hidden = slot !== activeSlot;
  const previousRow = previous && (!previous.reserved || !reservation.hidden) && previous.openButton;
- if (previous !== activeSlot) previous?.favoritePicker?.removeAttribute('open');
+ if (previous !== activeSlot) previous?.favoriteDialog?.close();
  if (focus) (activeSlot?.detail || previousRow || $('request-title')).focus();
 }
 function closeSlot() {
@@ -509,7 +509,7 @@ function lock(value) {
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
  for (const slot of currentSlots) {
   slot.favoritePicker.hidden = Boolean(slot.entry || slot.editing);
-  if (slot.favoritePicker.hidden) slot.favoritePicker.open = false;
+  if (slot.favoritePicker.hidden) slot.favoriteDialog.close();
  }
 }
 function feedback(slot, text, error = true) {
@@ -662,31 +662,47 @@ async function loadFavoriteRepertoire() {
  return playableSongs;
 }
 for (const slot of currentSlots) {
- const picker = document.createElement('details');
+ const picker = document.createElement('button');
+ picker.type = 'button';
  picker.className = 'slot-favorite-picker';
- const summary = document.createElement('summary');
+ picker.setAttribute('aria-haspopup', 'dialog');
  const icon = document.createElement('span');
  icon.setAttribute('aria-hidden', 'true');
  icon.textContent = '☆';
- summary.append(icon, 'お気に入りから選ぶ');
+ picker.append(icon, 'お気に入りから選ぶ');
+ const dialog = document.createElement('dialog');
+ dialog.className = 'slot-favorite-dialog';
+ const heading = document.createElement('h2');
+ heading.id = slot.id + '-favorites-heading';
+ heading.textContent = 'お気に入りから選ぶ';
+ dialog.setAttribute('aria-labelledby', heading.id);
+ const close = document.createElement('button');
+ close.type = 'button';
+ close.className = 'text-button';
+ close.textContent = '閉じる';
+ close.onclick = () => dialog.close();
  const choices = document.createElement('div');
  choices.className = 'playable-browse';
  const status = document.createElement('p');
  status.className = 'small muted';
  status.setAttribute('role', 'status');
- picker.append(summary, status, choices);
+ dialog.append(heading, status, choices, close);
  part(slot, '.slot-actions').before(picker);
+ slot.detail.append(dialog);
  slot.favoritePicker = picker;
- picker.addEventListener('toggle', async () => {
-  if (!picker.open) return;
+ slot.favoriteDialog = dialog;
+ let opening = 0;
+ picker.addEventListener('click', async () => {
+  const version = ++opening;
   choices.replaceChildren();
   status.textContent = '読み込み中…';
+  dialog.showModal();
   const favorites = favoritesForListener();
   await loadFavorites();
   try {
    if (!favorites.ready) throw new Error();
    const songs = favorites.keys.size ? await loadFavoriteRepertoire() : [];
-   if (!picker.open || favoritesForListener() !== favorites) return;
+   if (!dialog.open || version !== opening || favoritesForListener() !== favorites) return;
    const artistField = field(slot, 'artist');
    for (const {artist, song, category} of songs) {
     if (category !== slot.category || !favorites.keys.has(favoriteSongKey(artist, song))) continue;
@@ -700,15 +716,14 @@ for (const slot of currentSlots) {
      artistField.value = artist;
      field(slot, 'song').value = song;
      hideSuggestions();
-     picker.open = false;
+     dialog.close();
      lock(busy);
-     summary.focus();
     };
     choices.append(button);
    }
    status.textContent = choices.childElementCount ? '' : 'この枠のお気に入りの曲はありません。';
   } catch {
-   status.textContent = 'お気に入りを読み込めませんでした。';
+   if (version === opening) status.textContent = 'お気に入りを読み込めませんでした。';
   }
  });
 }
