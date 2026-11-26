@@ -1,4 +1,15 @@
 import { normalize } from './categories.mjs?v=kana';
+import { catalog } from './catalog.mjs';
+
+const catalogArtistAliases = new Map();
+const catalogSongAliases = new Map();
+for (const {artist, artistAliases, song, aliases} of catalog) {
+ const artistKey = normalize(artist);
+ const names = catalogArtistAliases.get(artistKey) || new Set();
+ for (const alias of artistAliases || []) names.add(alias);
+ catalogArtistAliases.set(artistKey, names);
+ catalogSongAliases.set(songKey(artist, song), aliases || []);
+}
 
 const artistReadings = new Map([
  ['星野源', 'ほしのげん'], ['米津玄師', 'よねづけんし'], ['宇多田ヒカル', 'うただひかる'],
@@ -25,9 +36,11 @@ function songKey(artist, song) {
 }
 
 export function artistSearchNames(item) {
- return [item.artist, ...(item.artistAliases || []), artistReadings.get(normalize(item.artist))];
+ const key = normalize(item.artist);
+ return [item.artist, ...(item.artistAliases || catalogArtistAliases.get(key) || []), artistReadings.get(key)];
 }
 
 export function songSearchNames(item) {
- return [item.song, ...(item.aliases || []), songReadings.get(songKey(item.artist, item.song))];
+ const key = songKey(item.artist, item.song);
+ return [item.song, ...(item.aliases || catalogSongAliases.get(key) || []), songReadings.get(key)];
 }

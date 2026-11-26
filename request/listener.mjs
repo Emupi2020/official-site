@@ -1,4 +1,4 @@
-import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=kana';
+import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=catalog-aliases';
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
