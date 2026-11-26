@@ -163,22 +163,6 @@ body:has(.request-page) { background: #f2f2f7; }
   inset: 0 0 auto 83px;
   border-top: 1px solid var(--border);
 }
-.request-page button.slot-overview-row {
-  isolation: isolate;
-  -webkit-tap-highlight-color: transparent;
-}
-.request-page button.slot-overview-row:hover { filter: none; }
-.request-page button.slot-overview-row:active::after {
-  --pressed-color: color-mix(in srgb, var(--text) 3%, transparent);
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: var(--pressed-color);
-  box-shadow: 0 0 0 100vmax var(--pressed-color);
-  clip-path: inset(0 -100vmax);
-}
 .slot-overview-art { display: block; width: 76px; height: 76px; object-fit: contain; clip-path: inset(8% 7% round 5px); }
 .slot-overview-info { min-width: 0; overflow-wrap: anywhere; }
 .slot-overview-song { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
@@ -565,4 +549,27 @@ body:has(.request-page) { background: #f2f2f7; }
   border-block-start: 2px solid #c7c7cc;
   border-inline-end: 2px solid #c7c7cc;
   transform: rotate(45deg);
+}
+
+/* Full-width feedback for navigable list rows. */
+.listener-layout :is(button.slot-overview-row, .request-menu-link, .playable-browse button) {
+  position: relative;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+.listener-layout :is(button.slot-overview-row, .request-menu-link, .playable-browse button):hover {
+  filter: none;
+  text-decoration: none;
+}
+.listener-layout button.slot-overview-row[data-row-pressed]::after,
+.listener-layout :is(.request-menu-link, .playable-browse button)[data-row-pressed]::before {
+  --pressed-color: color-mix(in srgb, var(--text) 3%, transparent);
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--pressed-color);
+  box-shadow: 0 0 0 100vmax var(--pressed-color);
+  clip-path: inset(0 -100vmax);
 }

@@ -2,6 +2,38 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
+let pressedRow;
+let pressedPointer;
+let pressReleaseTimer;
+
+function clearRowPress() {
+ clearTimeout(pressReleaseTimer);
+ pressedRow?.removeAttribute('data-row-pressed');
+ pressedRow = null;
+ pressedPointer = null;
+}
+
+document.addEventListener('pointerdown', event => {
+ if (!event.isPrimary || event.button !== 0) return;
+ clearRowPress();
+ const row = event.target.closest('button.slot-overview-row, .request-menu-link, .playable-browse button');
+ if (!row || row.matches(':disabled') || row.closest('[inert]')) return;
+ pressedRow = row;
+ pressedPointer = event.pointerId;
+ row.setAttribute('data-row-pressed', '');
+});
+document.addEventListener('pointerup', event => {
+ if (event.pointerId !== pressedPointer) return;
+ // Keep fast taps visible for a frame without delaying navigation.
+ pressReleaseTimer = setTimeout(clearRowPress, 100);
+});
+document.addEventListener('pointercancel', event => {
+ if (event.pointerId === pressedPointer) clearRowPress();
+});
+for (const event of ['popstate', 'pagehide', 'pageshow', 'blur']) {
+ window.addEventListener(event, clearRowPress);
+}
+
 let state, items=[], tokens, busy=false;
 let receipts = new Map(), myRequests = [], namedRequests = [], loadedName = '', lookupVersion = 0;
 let account = { enabled: false, signedIn: false, entries: [], receipts: [] };
