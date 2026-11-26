@@ -576,6 +576,7 @@ const playableCategories = $('playable-categories');
 const playableGroups = $('playable-groups');
 const playableSearch = $('playable-search');
 const playableSuggestions = $('playable-suggestions');
+const playableSearchField = playableSearch.parentElement;
 let selectedPlayableSuggestion = null;
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
@@ -610,6 +611,11 @@ playableSearch.addEventListener('input', () => {
  selectedPlayableSuggestion = null;
  renderPlayableResults();
 });
+function dismissPlayableSuggestions(event) {
+ if (!playableSearchField.contains(event.target)) playableSuggestions.hidden = true;
+}
+document.addEventListener('pointerdown', dismissPlayableSuggestions);
+document.addEventListener('focusin', dismissPlayableSuggestions);
 playableSearch.addEventListener('keydown', event => {
  if (!event.isComposing && ['Enter', 'Escape'].includes(event.key) && !playableSuggestions.hidden) {
   event.preventDefault();

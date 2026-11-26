@@ -211,7 +211,6 @@ body:has(.request-page) { background: #f2f2f7; }
   background: #f2f2f4;
 }
 #playable-search::placeholder { opacity: 1; }
-.playable-search-field:not(:focus-within) #playable-suggestions { display: none; }
 #playable-suggestions button:focus-visible { background: var(--bg); }
 #playable-suggestions .small { display: block; }
 .menu-page-form { max-width: 380px; }
