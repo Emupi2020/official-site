@@ -5,6 +5,7 @@
 
 /* Listener request form. */
 .request-page {
+  --page-title-gap: 16px;
   --bg: #f2f2f7;
   --card: #ffffff;
   --border: rgba(60, 60, 67, .14);
@@ -174,16 +175,21 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-overview-end .slot-overview-chevron { color: var(--row-chevron); border-width: 2px; }
 #request-overview .slot-overview-row.is-empty .slot-overview-status:not([data-status-tag]) { color: var(--muted); font-size: 12px; }
 .request-page:has(#menu-page:not([hidden])) > :is(#entry-screen, #request-screen) { display: none; }
-.request-page :is(#menu-page-title, #request-title) { margin-bottom: 16px; font-size: clamp(20px, 6vw, 28px); }
+.request-page :is(#menu-page-title, #request-title) { margin-bottom: var(--page-title-gap); font-size: clamp(20px, 6vw, 28px); }
 .request-page :is(#menu-page-title, #request-title):focus { outline: none; }
 .menu-page-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  margin-block-end: 16px;
+  margin-block-end: var(--page-title-gap);
 }
 .request-page .menu-page-heading #menu-page-title { margin-block-end: 0; }
+#menu-page > #favorite-feedback,
+#menu-page :is(#favorite-empty, #bug-report-login-note),
+#menu-page :is(#played-list, #my-history-list):empty ~ .note {
+  margin-block-start: 0;
+}
 #menu-page:has(#playable-songs:not([hidden])) .menu-page-heading { justify-content: flex-start; }
 .song-page-total { color: var(--muted); font-size: 14px; white-space: nowrap; }
 #menu-page:has(#played-history[hidden]) #played-total,
@@ -265,7 +271,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #reservation-detail-label { margin: 0 0 3px; }
 .request-page #request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
 #request-detail .request-block:focus { outline: none; }
-.request-page #request-detail .request-block > h2 { margin-bottom: 10px; font-size: 22px; }
+.request-page #request-detail .request-block > h2 { margin-block-end: var(--page-title-gap); font-size: 22px; }
 .request-page :is(#request-detail, #name-form) .input-group {
   --request-field-gap: 8px;
   display: grid;
