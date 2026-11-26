@@ -35,6 +35,6 @@ closeButton.onclick = closeMenu;
 document.addEventListener('keydown', event => {
  if (event.key === 'Escape') closeMenu();
 });
-window.addEventListener('pagehide', () => {
- if (activeMenu) setActiveMenu(null, false);
+window.addEventListener('pageshow', event => {
+ if (event.persisted && activeMenu) setActiveMenu(null, false);
 });

@@ -1,5 +1,5 @@
 import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=kana';
-import { closeMenu } from './site-menu.mjs?layout=menu-overlay';
+import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
 let state, items=[], tokens, busy=false;
@@ -388,8 +388,8 @@ function showMenuPage(id, focus = false) {
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
-  closeMenu();
   if (activeMenuPage?.panel === panel) {
+   closeMenu();
    const {playableCategory, playableView, playableArtist} = window.history.state || {};
    if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));
    else menuPageTitle.focus();
@@ -402,7 +402,6 @@ for (const {button,panel} of menuPages) {
  };
 }
 function goToRequestTop() {
- closeMenu();
  if (activeMenuPage && window.history.state?.directMenuPage) {
   const url = new URL(location.href);
   url.searchParams.delete('view');
@@ -410,6 +409,7 @@ function goToRequestTop() {
   location.replace(url);
   return;
  }
+ closeMenu();
  const loggedIn = !$('request-screen').hidden;
  const focusTop = () => {
   window.scrollTo(0, 0);
