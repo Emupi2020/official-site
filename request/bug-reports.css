@@ -23,6 +23,8 @@
   box-shadow: 0 0 0 1px var(--accent);
 }
 #bug-report-form .note { margin: 4px 0 10px; }
+.listener-layout #bug-report-form .note { margin: 0; }
+.listener-layout #bug-report-status { margin: 0; }
 #bug-report-form button { border-radius: 10px; }
 #bug-report-list { padding: 0; margin: 0; list-style: none; }
 #bug-report-list li { padding: 12px 0; border-top: 1px solid var(--border); }

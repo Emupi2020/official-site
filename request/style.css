@@ -267,7 +267,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
 #request-detail .request-block:focus { outline: none; }
 .request-page #request-detail .request-block > h2 { margin-block-end: var(--page-title-gap); font-size: 22px; }
-.request-page :is(#request-detail, #name-form) .input-group {
+.request-page :is(#request-detail, #name-form, #feedback-page) .input-group {
   --request-field-gap: 8px;
   display: grid;
   gap: var(--request-field-gap);
@@ -421,8 +421,7 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .edit-actions .text-button { min-height: 44px; }
 .request-page { --form-action-spacing: 16px; }
-.request-page #request-detail .slot-actions,
-.request-page .menu-page-form .name-form-actions {
+.request-page .form-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   justify-content: stretch;
@@ -430,18 +429,16 @@ body:has(.request-page) { background: #f2f2f7; }
   gap: 4px;
   margin-top: var(--form-action-spacing);
 }
-.request-page #request-detail .slot-actions {
+.request-page .input-group > .form-actions {
   margin-top: calc(var(--form-action-spacing) - var(--request-field-gap));
 }
-.request-page #request-detail .slot-actions .slot-submit,
-.request-page .menu-page-form .name-form-actions .primary {
+.request-page .form-actions > .primary {
   width: 100%;
   min-height: 48px;
   margin-top: 0;
   border-radius: 10px;
 }
-.request-page #request-detail .slot-actions .slot-cancel,
-.request-page .menu-page-form .name-form-actions .text-button {
+.request-page .form-actions > .text-button {
   min-height: 44px;
   font-size: 14px;
   text-decoration: underline;
@@ -463,7 +460,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .slot-duplicate.has-error .duplicate-label { color: var(--danger); }
 .request-page .slot-duplicate .duplicate-error { margin: 4px 0 0; }
 .request-page .slot-submit:disabled { opacity: .45; cursor: default; }
-.request-page .slot-actions > .slot-submit:disabled {
+.request-page .form-actions > .primary:disabled {
   color: var(--muted);
   background: color-mix(in srgb, var(--muted) 15%, var(--bg));
   opacity: 1;
