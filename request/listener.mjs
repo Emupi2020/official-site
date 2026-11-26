@@ -869,8 +869,17 @@ async function accountAction(path, data, notice) {
 }
 $('line-link').onclick = () => accountAction('/api/listener-account', {tokens: Object.values(tokens).slice(-100)},
  result => result.linked ? `${result.linked}件のリクエストを連携しました。` : '新しく連携できるリクエストはありません。');
-$('request-logout').onclick = async () => {
- if (busy || !window.confirm('ログアウトしますか？')) return;
+const logoutConfirmation = $('logout-confirmation');
+$('request-logout').onclick = () => {
+ if (busy || logoutConfirmation.open) return;
+ logoutConfirmation.returnValue = '';
+ logoutConfirmation.showModal();
+};
+logoutConfirmation.addEventListener('keydown', event => {
+ if (event.key === 'Escape') event.stopPropagation();
+});
+logoutConfirmation.addEventListener('close', async () => {
+ if (logoutConfirmation.returnValue !== 'logout' || busy) return;
  lock(true);
  try {
   await api('/auth/line/logout', {method:'POST', data:{}});
@@ -901,7 +910,7 @@ $('request-logout').onclick = async () => {
  } finally {
   lock(false);
  }
-};
+});
 const pageUrl = new URL(location.href);
 const lineConnected = pageUrl.searchParams.get('line') === 'connected';
 if (pageUrl.searchParams.has('line')) {
