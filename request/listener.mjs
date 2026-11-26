@@ -433,6 +433,7 @@ for (const {button,panel} of menuPages) {
   const url = new URL(location.href);
   url.searchParams.delete('preview');
   url.searchParams.set('view', panel.id === nameSettings.id ? 'name-settings' : panel.id);
+  try { sessionStorage.setItem('emupi-menu-destination', url.href); } catch {}
   location.assign(url);
  };
 }
