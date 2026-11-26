@@ -179,6 +179,9 @@ const namePasscode = $('name-passcode');
 const menuPage = $('menu-page');
 const menuPageTitle = $('menu-page-title');
 const menuPages = [...document.querySelectorAll('[data-menu-page]')].map(button => ({button, panel:$(button.dataset.menuPage)}));
+const initialParams = new URLSearchParams(location.search);
+const initialView = initialParams.get('view') ?? initialParams.get('preview');
+let initialMenuPage = initialView === 'name-settings' ? nameSettings.id : initialView;
 let activeMenuPage = null;
 const greeting = $('listener-greeting');
 const japanHour = new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Tokyo', hour:'2-digit', hourCycle:'h23'});
@@ -206,6 +209,15 @@ function showRequestScreen(open, focus = false) {
   showSlot(null);
  }
  if (open) renderGreeting();
+ if (initialMenuPage) {
+  const page = menuPages.find(({button, panel}) => !button.hidden && panel.id === initialMenuPage);
+  initialMenuPage = null;
+  if (page) {
+   window.history.replaceState({...window.history.state, menuPage:page.panel.id, directMenuPage:true}, '');
+   showMenuPage(page.panel.id, true);
+   return;
+  }
+ }
  if (focus) (open ? $('request-title') : entryTitle).focus();
 }
 const hasSavedName = Boolean($('name').value.trim());
@@ -994,7 +1006,7 @@ lock(false);
 document.addEventListener('click',event=>{if(!event.target.closest('.sug-wrap'))hideSuggestions();});
 try {
  await refresh({useAccountName:lineConnected});
- if (hasSavedName) {
+ if (hasSavedName && $('request-screen').hidden) {
   const name = lookupName();
   const needsPasscode = !account.signedIn && await requiresPasscode(name);
   entryBusy = false;
@@ -1016,11 +1028,4 @@ try {
  if ($('request-screen').hidden && $('entry-screen').hidden) showRequestScreen(false);
  entryBusy = false;
  updateEntryButton();
-}
-const view = pageUrl.searchParams.get('view') ?? pageUrl.searchParams.get('preview');
-const directPage = menuPages.find(({button, panel}) =>
- !button.hidden && (view === panel.id || (view === 'name-settings' && panel === nameSettings)));
-if (directPage) {
- window.history.replaceState({...window.history.state, menuPage:directPage.panel.id, directMenuPage:true}, '');
- showMenuPage(directPage.panel.id, true);
 }
