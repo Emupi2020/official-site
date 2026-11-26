@@ -17,6 +17,12 @@ if (adminMenu) {
   adminMenu.addEventListener('toggle', () => {
     if (!adminMenu.open) for (const section of adminMenu.querySelectorAll('details[open]')) section.open = false;
   });
+  const sections = [...adminMenu.querySelectorAll('.admin-menu-panel > details')];
+  for (const section of sections) {
+    section.addEventListener('toggle', () => {
+      if (section.open) for (const other of sections) if (other !== section) other.open = false;
+    });
+  }
 }
 const spinDuration = $('spin-duration');
 const rouletteSettings = $('roulette-settings');
@@ -389,7 +395,7 @@ $('cant-sing').onclick = cantSing;
 $('result-cant-sing').onclick = cantSing;
 $('result-defer').onclick = () => resolveWinner('defer', { id:state.current, selected:true });
 $('undo').onclick=()=>action('undo');
-$('next-session').onclick=()=>{if(confirm('次の配信を開始しますか？歌唱履歴を区切り、持ち越したリクエストを抽選に戻します。'))action('session');};
+$('next-session').onclick=()=>{if(confirm('次の配信を開始しますか？歌唱履歴を区切り、持ち越したリクエストを抽選に戻します。\n\n配信は毎日15:00（日本時間）に自動で切り替わります。')){adminMenu.open=false;action('session');}};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};
 try{await refresh();}catch(error){message(error.message,true);}
 setInterval(()=>{if(!document.hidden&&!busy&&!rowActions.matches(':popover-open'))refresh().catch(error=>message(error.message,true));},10000);

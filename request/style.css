@@ -538,10 +538,34 @@ body:has(.request-page) { background: #f2f2f7; }
   color: var(--text);
   box-shadow: 0 8px 24px #0002;
 }
-.admin-menu-panel > details + details { border-top: 1px solid var(--border); }
-.admin-menu-panel > details > summary { min-height: 44px; color: var(--text); font-weight: 600; }
-.admin-menu-panel .card { background: var(--bg); padding: 12px; border-radius: 10px; }
-.admin-menu-panel .card h2 { margin: 0 0 8px; font-size: 16px; }
+.admin-menu-panel > * + * { border-top: 1px solid var(--border); }
+.admin-menu-panel > details > summary,
+.admin-menu-panel > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 4px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+}
+.admin-menu-panel > details > summary::-webkit-details-marker { display: none; }
+.admin-menu-panel > details > summary::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  margin-inline-end: 4px;
+  border-inline-end: 1.5px solid var(--muted);
+  border-block-end: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+}
+.admin-menu-panel > details[open] > summary::after { transform: rotate(225deg); }
+.admin-menu-panel > #logout { color: var(--danger); }
 .admin-menu-panel .entry { overflow-wrap: anywhere; }
 .admin-menu-panel .entry button { flex: 0 0 auto; }
 

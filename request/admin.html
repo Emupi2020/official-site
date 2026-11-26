@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=request-exceptions"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=draw-group-terms"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=flat-menu"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=flat-menu"></script><script type="module" src="/bug-reports.mjs"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header>
   <a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a>
   <div class="admin-header-tools">
@@ -8,14 +8,19 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </summary>
       <nav class="admin-menu-panel" aria-label="管理メニュー">
-<details id="admin-bug-reports" class="manage">
+<details id="admin-bug-reports">
   <summary>バグ報告</summary>
   <button id="refresh-bug-reports" type="button" class="text-button">更新</button>
   <p id="admin-bug-report-status" class="small muted" role="status" hidden></p>
   <ol id="bug-report-list"></ol>
   <button id="more-bug-reports" type="button" class="text-button" hidden>以前の報告を表示</button>
 </details>
-<details class="manage"><summary>管理</summary><section class="card"><div class="buttons"><button id="next-session" class="secondary">次の配信を開始</button></div><p class="small muted">今の抽選枠の曲の対応がすべて終わると、次の抽選枠に切り替わります。毎日15:00（日本時間）に配信を切り替え、持ち越し分を抽選に戻します。早めに切り替えるときは上のボタンを使えます。</p></section><section class="card"><h2>入力候補</h2><div id="suggestions"></div></section><button id="logout" class="text-button">ログアウト</button></details>
+<details>
+  <summary>入力候補</summary>
+  <div id="suggestions"></div>
+</details>
+<button id="next-session" type="button">次の配信を開始</button>
+<button id="logout" type="button">ログアウト</button>
       </nav>
     </details>
   </div>
