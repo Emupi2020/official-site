@@ -671,14 +671,16 @@ for (const slot of currentSlots) {
  icon.textContent = '☆';
  picker.append(icon, 'お気に入りから選ぶ');
  const dialog = document.createElement('dialog');
- dialog.className = 'slot-favorite-dialog';
+ dialog.className = 'listener-dialog slot-favorite-dialog';
  const heading = document.createElement('h2');
  heading.id = slot.id + '-favorites-heading';
  heading.textContent = 'お気に入りから選ぶ';
+ heading.tabIndex = -1;
+ heading.autofocus = true;
  dialog.setAttribute('aria-labelledby', heading.id);
  const close = document.createElement('button');
  close.type = 'button';
- close.className = 'text-button';
+ close.className = 'secondary';
  close.textContent = '閉じる';
  close.onclick = () => dialog.close();
  const choices = document.createElement('div');
@@ -686,7 +688,10 @@ for (const slot of currentSlots) {
  const status = document.createElement('p');
  status.className = 'small muted';
  status.setAttribute('role', 'status');
- dialog.append(heading, status, choices, close);
+ const actions = document.createElement('div');
+ actions.className = 'buttons';
+ actions.append(close);
+ dialog.append(heading, status, choices, actions);
  part(slot, '.slot-actions').before(picker);
  slot.detail.append(dialog);
  slot.favoritePicker = picker;
@@ -709,7 +714,13 @@ for (const slot of currentSlots) {
     if (artistField instanceof HTMLSelectElement && ![...artistField.options].some(option => option.value === artist)) continue;
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = song + ' · ' + artist;
+    const title = document.createElement('span');
+    title.className = 'history-song';
+    title.textContent = song;
+    const subtitle = document.createElement('span');
+    subtitle.className = 'history-artist';
+    subtitle.textContent = artist;
+    button.append(title, subtitle);
     button.onclick = () => {
      if (busy || slot.entry || slot.editing) return;
      slot.draftRound ??= slot.round;

@@ -242,25 +242,30 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .slot-favorite-picker span { font-size: 16px; }
 .request-page .slot-favorite-dialog {
-  width: min(400px, calc(100% - 40px));
   max-height: min(70dvh, 520px);
-  padding: 20px;
 }
 .slot-favorite-dialog p:empty { display: none; }
+.slot-favorite-dialog .playable-browse { margin-block-start: 12px; }
 .request-page .slot-favorite-dialog .playable-browse button {
+  display: grid;
+  gap: 2px;
+  justify-content: stretch;
   border-radius: 0;
-  padding: 8px 4px;
+  padding: 8px 0;
 }
-.request-page .slot-favorite-dialog > .text-button {
-  display: flex;
-  margin: 8px auto 0;
+.slot-favorite-dialog .playable-browse button::after { display: none; }
+.slot-favorite-dialog .playable-browse button > span {
+  width: auto;
+  color: inherit;
+  text-align: start;
 }
+.slot-favorite-dialog .playable-browse button > .history-artist { color: var(--muted); }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
 .request-page #reservation-detail-label { margin: 0 0 3px; }
 .request-page #request-detail .request-block { margin: 0; padding: 0; border: 0; background: transparent; }
 #request-detail .request-block:focus { outline: none; }
-.request-page #request-detail h2 { margin-bottom: 10px; font-size: 22px; }
+.request-page #request-detail .request-block > h2 { margin-bottom: 10px; font-size: 22px; }
 .request-page :is(#request-detail, #name-form) .input-group {
   --request-field-gap: 8px;
   display: grid;
@@ -369,7 +374,7 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .passcode-field { margin-top: 16px; }
 .request-page #passcode-feedback { margin: 8px 0 0; color: var(--danger); }
-.request-page .request-block h2 {
+.request-page .request-block > h2 {
   margin: 0 0 4px;
   font-size: 18px;
   font-weight: 650;
@@ -563,7 +568,8 @@ body:has(.request-page) { background: #f2f2f7; }
 [data-status-tag="removed"] { background: #fbe8e7; color: #8d3235; }
 [data-status-tag="unrequested"] { background: #c62828; color: #fff; }
 .history-tag { margin-block-start: 4px; }
-#logout-confirmation {
+dialog.listener-dialog {
+  max-width: none;
   width: min(300px, calc(100% - 32px));
   padding: 20px 18px 16px;
   border: 0;
@@ -571,11 +577,11 @@ body:has(.request-page) { background: #f2f2f7; }
   background: #fff;
   box-shadow: 0 8px 32px #0002;
 }
-#logout-confirmation::backdrop { background: #0003; backdrop-filter: none; }
-#logout-confirmation h2 { margin: 0; font-size: 17px; text-align: center; outline: none; }
-#logout-confirmation .buttons { margin-top: 16px; gap: 8px; }
-#logout-confirmation button { min-height: 44px; padding: 8px 4px; border: 0; border-radius: 8px; }
-#logout-confirmation .secondary { background: #f5f5f7; }
+dialog.listener-dialog::backdrop { background: #0003; backdrop-filter: none; }
+dialog.listener-dialog h2 { margin: 0; font-size: 17px; text-align: center; outline: none; }
+dialog.listener-dialog .buttons { margin-top: 16px; gap: 8px; }
+dialog.listener-dialog .buttons button { min-height: 44px; padding: 8px 4px; border: 0; border-radius: 8px; }
+dialog.listener-dialog .buttons .secondary { background: #f5f5f7; }
 .playable-categories {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
