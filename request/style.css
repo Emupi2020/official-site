@@ -252,7 +252,22 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .entry-welcome-actions button { margin: 0; }
 .request-page #entry-screen .secondary { background: transparent; border: 1px solid var(--border); }
-.request-page #entry-name-help { margin: 0 0 8px; line-height: 1.5; }
+.request-page #entry-name-help {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: 0;
+  inset-block-end: calc(100% + 8px);
+  max-inline-size: 100%;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: 0 4px 16px #0001;
+  line-height: 1.5;
+  visibility: hidden;
+}
+.request-page .request-field:focus-within > #entry-name-help { visibility: visible; }
 .request-page #guest-entry-note { margin: 10px 0 0; color: var(--danger); line-height: 1.55; }
 .request-page #enter-request { margin-top: 16px; }
 .request-page #enter-request:disabled {
