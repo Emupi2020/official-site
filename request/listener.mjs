@@ -421,6 +421,7 @@ function showMenuPage(id, focus = false) {
   menuPageTitle.focus();
  }
  if (panel.id === 'my-history') return loadArchivedHistory();
+ if (panel.id === 'favorites') return openFavorites();
  if (panel.id === 'played-history') return refreshPlayed();
  if (panel.id === 'playable-songs' && previous !== activeMenuPage) return refreshPlayable();
 }
@@ -529,13 +530,14 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
  }
  if (category) row.append(jacket(category, 'history-art', 42));
  row.append(identity);
- if (list.id === 'played-list' || list.id === 'playable-track-list') {
+ if (['played-list', 'playable-track-list', 'favorite-track-list'].includes(list.id)) {
   row.classList.add('favorite-song-row');
-  row.append(favoriteButton('song:' + JSON.stringify([normalize(artist), normalize(song)]), song));
+  row.append(favoriteButton(favoriteSongKey(artist, song), song));
  }
  list.append(row);
 }
 const favoriteStorageKey = 'emupi-request-favorites';
+const favoriteSongKey = (artist, song) => 'song:' + JSON.stringify([normalize(artist), normalize(song)]);
 let favoriteState;
 function favoritesForListener() {
  const owner = account.signedIn ? historyOwner() : 'browser';
@@ -605,6 +607,7 @@ function favoriteButton(key, name) {
     if (!safeSet(favoriteStorageKey, JSON.stringify([...keys]))) throw new Error();
     current.keys = keys;
    }
+   if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
   } catch {
    if (favoritesForListener() === current) favoriteFeedback('お気に入りを変更できませんでした。');
   } finally {
@@ -613,6 +616,47 @@ function favoriteButton(key, name) {
   }
  };
  return button;
+}
+async function openFavorites() {
+ const current = favoritesForListener();
+ await loadFavorites();
+ if (!current.ready || $('favorites').hidden || favoritesForListener() !== current) return;
+ if (current.keys.size && !playableSongs) {
+  try { playableSongs = (await api('/api/repertoire')).songs; }
+  catch {
+   if (!$('favorites').hidden) favoriteFeedback('お気に入りの曲名を読み込めませんでした。');
+  }
+ }
+ if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
+}
+function renderFavorites(current) {
+ const artists = $('favorite-artist-list');
+ const tracks = $('favorite-track-list');
+ artists.replaceChildren();
+ tracks.replaceChildren();
+ const names = new Map((playableSongs || []).map(({artist}) => [normalize(artist), artist]));
+ const songs = new Map((playableSongs || []).map(song => [favoriteSongKey(song.artist, song.song), song]));
+ for (const key of current.keys) {
+  if (typeof key !== 'string') continue;
+  if (key.startsWith('artist:')) {
+   const name = names.get(key.slice(7)) || key.slice(7);
+   const row = document.createElement('li');
+   row.className = 'favorite-song-row';
+   row.textContent = name;
+   row.append(favoriteButton(key, name));
+   artists.append(row);
+  } else if (key.startsWith('song:')) {
+   let identity;
+   try { identity = JSON.parse(key.slice(5)); } catch { continue; }
+   if (!Array.isArray(identity) || identity.length !== 2 || !identity.every(value => typeof value === 'string')) continue;
+   const [artist, song] = identity;
+   const metadata = songs.get(key);
+   historyRow(tracks, metadata?.song || song, metadata?.artist || names.get(artist) || artist, undefined, undefined, null);
+  }
+ }
+ $('favorite-artists').hidden = !artists.childElementCount;
+ $('favorite-tracks').hidden = !tracks.childElementCount;
+ $('favorite-empty').hidden = Boolean(artists.childElementCount || tracks.childElementCount);
 }
 function historyOwner() {
  return lookupName() + ':' + (account.signedIn ? account.method : 'guest');
@@ -811,17 +855,18 @@ async function refresh({useAccountName = false} = {}){
  if (version !== refreshVersion) return;
  receipts = new Map(owned);
  myRequests = history.entries;
+ const wasSignedIn = account.signedIn;
+ account = nextAccount;
  if (nextAccount.signedIn && nextAccount.name) {
-  if (nextAccount.method === 'passcode' || (!account.signedIn && (useAccountName || !lookupName()))) {
+  if (nextAccount.method === 'passcode' || (!wasSignedIn && (useAccountName || !lookupName()))) {
    $('name').value = nextAccount.name;
    safeSet('emupi-request-name', nextAccount.name);
   }
-  if (!account.signedIn) {
+  if (!wasSignedIn) {
    window.history.replaceState({requestScreen:true, currentSlot:activeSlot?.id, menuPage:activeMenuPage?.panel.id}, '');
    showRequestScreen(true);
   }
  }
- account = nextAccount;
  state=next;
  renderRequests();
  await refreshNameRequests();
