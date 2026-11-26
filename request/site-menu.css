@@ -82,7 +82,6 @@ body.listener-layout {
   inset: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) auto auto;
   z-index: 2;
 }
-html:has(.listener-nav [aria-expanded="true"]) { overflow: hidden; }
 .request-menu {
   position: absolute;
   inset: 0 0 auto;
@@ -169,7 +168,7 @@ html:has(.listener-layout #request-screen[hidden]):has(.listener-layout #menu-pa
   padding-block: 16px;
 }
 /* Let Safari scroll the document when the keyboard opens on the entry form. */
-html:has(.listener-layout #menu-page[hidden]):has(.listener-layout #entry-form:not([hidden])):not(:has(.listener-nav [aria-expanded="true"])) {
+html:has(.listener-layout #menu-page[hidden]):has(.listener-layout #entry-form:not([hidden])) {
   overflow: visible;
   overscroll-behavior: auto;
 }
