@@ -182,15 +182,15 @@ export function submit(state, input, tokenHash, now = Date.now(), accountId = nu
   if (!Number.isInteger(round) || ![state.round, state.round+1].includes(round)) throw new Problem('受付回が切り替わりました。画面を更新して選び直してください。',409);
   const name = text(input.name, 'Pocochaの名前', 50), artist = text(input.artist, 'アーティスト名'), song = text(input.song, '曲名');
   const key = nameKey(name), category = classifyArtist(artist);
-  if (input.category !== undefined && input.category !== category) throw new Problem('アーティスト名に合う歌まね枠を選んでください。');
-  const roundLabel = round === state.round ? '今回' : '次回の予約';
+  if (input.category !== undefined && input.category !== category) throw new Problem('アーティスト名に合うカテゴリを選んでください。');
+  const roundLabel = round === state.round ? '今の抽選枠' : '次の抽選枠';
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && (e.tokenHash === tokenHash || (accountId && e.accountId === accountId)))) {
     throw new Problem(`${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
   }
   if (state.entries.some(e => categoryOf(e) === category && e.round === round && e.usedNames.includes(key))) {
     throw new Problem(`この名前では、${roundLabel}の「${categoryLabel(category)}」はリクエスト済みです。`, 409, 'duplicate_request');
   }
-  if (state.entries.length >= 3000) throw new Problem('応募が上限に達しました。配信者にお知らせください。', 409);
+  if (state.entries.length >= 3000) throw new Problem('リクエストが上限に達しました。配信者にお知らせください。', 409);
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
   if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してから、もう一度リクエストしてください。', 409);
@@ -204,7 +204,7 @@ export function submit(state, input, tokenHash, now = Date.now(), accountId = nu
 export function rename(state, entry, value) {
   if (!canRename(state, entry)) throw new Problem('名前の修正受付は終了しました。配信者にお知らせください。', 409);
   const name = text(value, 'Pocochaの名前', 50), key = nameKey(name);
-  if (state.entries.some(e => e.id !== entry.id && e.round === entry.round && categoryOf(e) === categoryOf(entry) && e.usedNames.includes(key))) throw new Problem('その名前は今回すでに応募されています。', 409);
+  if (state.entries.some(e => e.id !== entry.id && e.round === entry.round && categoryOf(e) === categoryOf(entry) && e.usedNames.includes(key))) throw new Problem('その名前は今の抽選枠の同じカテゴリにリクエスト済みです。', 409);
   entry.name = name;
   if (!entry.usedNames.includes(key)) entry.usedNames.push(key);
 }
@@ -214,7 +214,7 @@ function rememberSong(state, artist, song) {
 export function editSong(state, entry, input) {
   if (!canEditSong(state, entry)) throw new Problem('このリクエストの曲は変更できません。', 409);
   const artist = text(input.artist, 'アーティスト名'), song = text(input.song, '曲名');
-  if (classifyArtist(artist) !== categoryOf(entry)) throw new Problem('同じ歌まね枠の曲を選んでください。');
+  if (classifyArtist(artist) !== categoryOf(entry)) throw new Problem('同じカテゴリの曲を選んでください。');
   const songKey = songIdentity(artist, song, state.suggestions);
   const unknownAt = state.unknown?.[songKey]?.at;
   if (unknownAt && input.unknownAcknowledgedAt !== unknownAt) throw new Problem('この曲の「歌えない理由」の記録を確認してください。', 409);
@@ -255,7 +255,7 @@ function destinationConflict(state, entry, input) {
   const [conflict] = conflicts;
   if (conflicts.length > 1 || conflict.status === 'selected') throw new Problem('同じ枠に処理中のリクエストがあります。先にその曲を処理してください。', 409);
   if (input.replaceId === conflict.id) return conflict;
-  const error = new Problem('同じ人が今回の同じ枠に別の曲をリクエストしています。', 409, 'request_slot_conflict');
+  const error = new Problem('同じ人が今の抽選枠の同じカテゴリに別の曲をリクエストしています。', 409, 'request_slot_conflict');
   error.details = { id:conflict.id, song:conflict.song };
   throw error;
 }
@@ -328,7 +328,7 @@ export function adminAction(state, input, now = Date.now()) {
     case 'selectSong': {
       if (current?.status === 'selected') throw new Problem('今の当選曲を先に処理してください。', 409);
       const entry = eligible(state).find(item => item.id === input.id);
-      if (!entry) throw new Problem('今回の抽選待ちの曲を選んでください。', 409);
+      if (!entry) throw new Problem('今の抽選枠で抽選待ちの曲を選んでください。', 409);
       chooseEntry(state, entry, true);
       break;
     }
@@ -504,11 +504,11 @@ export function adminAction(state, input, now = Date.now()) {
       break;
     case 'edit': {
       const e = state.entries.find(e => e.id === input.id);
-      if (!e) throw new Problem('応募が見つかりません。', 404);
+      if (!e) throw new Problem('リクエストが見つかりません。', 404);
       if (e.status !== 'pending') throw new Problem('抽選待ちに戻してから変更してください。', 409);
       const name = text(input.name, '名前', 50), key = nameKey(name);
       const artist = text(input.artist,'アーティスト名'), category = classifyArtist(artist);
-      if (state.entries.some(v => v.id !== e.id && v.round === e.round && categoryOf(v) === category && v.usedNames.includes(key))) throw new Problem('その名前は応募済みです。', 409);
+      if (state.entries.some(v => v.id !== e.id && v.round === e.round && categoryOf(v) === category && v.usedNames.includes(key))) throw new Problem('その名前はリクエスト済みです。', 409);
       e.name = name; if (!e.usedNames.includes(key)) e.usedNames.push(key);
       e.artist = artist; e.category = category; e.song = text(input.song, '曲名');
       const songKey = songIdentity(e.artist, e.song, state.suggestions);
@@ -521,13 +521,13 @@ export function adminAction(state, input, now = Date.now()) {
     case 'defer': {
       const e = state.entries.find(e => e.id === input.id);
       const isSelected = e && e === current && e.status === 'selected';
-      if (input.selected ? !isSelected : e?.status !== 'pending') throw new Problem(input.selected ? '当選曲が変わりました。確認してから操作してください。' : '待機中の応募を選んでください。', 409);
+      if (input.selected ? !isSelected : e?.status !== 'pending') throw new Problem(input.selected ? '当選曲が変わりました。確認してから操作してください。' : '抽選待ちのリクエストを選んでください。', 409);
       state.undo = { type: 'defer', id: e.id, previousStatus: e.status, previousReason: e.deferReason ?? null };
       e.status = 'deferred'; e.deferReason = 'manual'; break;
     }
     case 'hold': {
       const entry = byId(state, input.id);
-      if (!eligible(state).includes(entry)) throw new Problem('今回の抽選待ちの曲を選んでください。', 409);
+      if (!eligible(state).includes(entry)) throw new Problem('今の抽選枠で抽選待ちの曲を選んでください。', 409);
       rememberQueueChange(state, [entry]);
       entry.status = 'deferred';
       entry.deferReason = 'temporary';
@@ -620,7 +620,7 @@ export function adminAction(state, input, now = Date.now()) {
     }
     case 'remove': {
       const e = state.entries.find(e => e.id === input.id);
-      if (!e) throw new Problem('応募が見つかりません。', 404);
+      if (!e) throw new Problem('リクエストが見つかりません。', 404);
       if (e.status !== 'pending') throw new Problem('抽選待ちのリクエストを選んでください。', 409);
       rememberQueueChange(state, [e]);
       e.status = 'removed'; if (state.current === e.id) state.current = null; break;

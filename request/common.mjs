@@ -30,4 +30,4 @@ export function message(value, error = false) { $('message').hidden = !value; $(
 export function safeGet(key) { try { return localStorage.getItem((window.EMUPI_DEMO?.storagePrefix || '') + key); } catch { return null; } }
 export function safeSet(key, value) { try { localStorage.setItem((window.EMUPI_DEMO?.storagePrefix || '') + key, value); return true; } catch { return false; } }
 export const normalize = value => String(value ?? '').normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-96)).replace(/[\s・･._\-’']/g,'');
-export const statusText = { pending: '抽選待ちです。', selected: '選ばれました！', done: '歌唱済みです。次の受付もお楽しみに。', skipped: '今回は見送りになりました。', deferred: '次回配信に持ち越します。', removed: 'この応募は取り下げられました。' };
+export const statusText = { pending: '抽選待ちです。', selected: '選ばれました！', done: '歌唱済みです。次の受付もお楽しみに。', skipped: '今回は見送りになりました。', deferred: '次の配信に持ち越します。', removed: 'このリクエストは取り下げられました。' };

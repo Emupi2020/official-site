@@ -101,7 +101,7 @@ test('以前の保存データに新項目がなくても知らない機能を�
 });
 test('同名再送・歌唱済み再応募を拒否、次の回は応募可能',()=>{const s=state();submit(s,input(),'one');assert.throws(()=>submit(s,input(' リスナーA '),'two'),/リクエスト済み/);adminAction(s,{action:'draw'});adminAction(s,{action:'done'});assert.equal(s.round,2);submit(s,input(),'four');assert.equal(s.entries.length,2);assert.equal(s.entries[1].status,'deferred');});
 test('同じ端末で名前を変えても追加応募できない',()=>{const s=state();submit(s,input(),'one');assert.throws(()=>submit(s,input('別名'),'one'),/リクエスト済み/);});
-test('名前修正は1件を更新、旧名枠と変更先の重複制限も保持',()=>{const s=state(),e=submit(s,input(),'one');submit(s,input('リスナーB'),'two');assert.throws(()=>rename(s,e,'リスナーB'),/応募/);rename(s,e,'訂正A');assert.equal(s.entries.length,2);assert.throws(()=>submit(s,input(),'three'),/リクエスト済み/);s.open=false;rename(s,e,'変更');assert.equal(e.name,'変更');});
+test('名前修正は1件を更新、旧名枠と変更先の重複制限も保持',()=>{const s=state(),e=submit(s,input(),'one');submit(s,input('リスナーB'),'two');assert.throws(()=>rename(s,e,'リスナーB'),/リクエスト済み/);rename(s,e,'訂正A');assert.equal(s.entries.length,2);assert.throws(()=>submit(s,input(),'three'),/リクエスト済み/);s.open=false;rename(s,e,'変更');assert.equal(e.name,'変更');});
 test('同曲別口、選ばれた1件のみ消化、後着も保留、次回復帰',()=>{const s=state();submit(s,input('A'),'a');submit(s,input('B','Loveless','山下智久'),'b');assert.equal(eligible(s).length,2);adminAction(s,{action:'draw'});adminAction(s,{action:'done'});assert.equal(s.entries.filter(e=>e.status==='done').length,1);assert.equal(s.entries.filter(e=>e.status==='deferred').length,1);submit(s,input('C'),'c');assert.equal(s.entries[2].status,'deferred');assert(s.round>=2);assert.equal(eligible(s).length,0);adminAction(s,{action:'session'});assert.equal(eligible(s).length,2);});
 test('抽選後の途中応募は選択済みに割り込まず次回抽選へ',()=>{const s=state();const a=submit(s,input('A'),'a');adminAction(s,{action:'draw'});const b=submit(s,input('B','別の曲'),'b');assert.equal(s.current,a.id);assert.deepEqual(eligible(s).map(e=>e.id),[b.id]);assert.throws(()=>adminAction(s,{action:'draw'}),/歌唱済み/);});
 test('歌唱済み取り消しで後着の同曲保留も戻る',()=>{const s=state();submit(s,input('A'),'a');adminAction(s,{action:'draw'});adminAction(s,{action:'done'});submit(s,input('B'),'b');adminAction(s,{action:'undo'});assert.equal(s.entries[0].status,'selected');assert.equal(s.entries[1].status,'pending');assert.equal(s.sung.length,0);});
@@ -202,7 +202,7 @@ test('歌唱済みと同曲の予約は当日歌わず、配信を変えると�
  adminAction(s,{action:'session'});assert.equal(eligible(s).length,1);assert.equal(s.entries[0].status,'done');assert.equal(s.entries[1].status,'pending');
 });
 test('予約の名前修正も同じ回の重複を防ぐ',()=>{
- const s=state();const a=submit(s,{...input('A'),round:2},'a');submit(s,{...input('B'),round:2},'b');rename(s,a,'変更後');assert.throws(()=>rename(s,a,'B'),/応募/);assert.throws(()=>submit(s,{...input('A'),round:2},'c'),/リクエスト済み/);assert.equal(eligible(s).length,0);
+ const s=state();const a=submit(s,{...input('A'),round:2},'a');submit(s,{...input('B'),round:2},'b');rename(s,a,'変更後');assert.throws(()=>rename(s,a,'B'),/リクエスト済み/);assert.throws(()=>submit(s,{...input('A'),round:2},'c'),/リクエスト済み/);assert.equal(eligible(s).length,0);
 });
 
 test('同じ人が今と次の回に山P・その他を1曲ずつ、各枠だけ重複を拒否',()=>{
@@ -210,7 +210,7 @@ test('同じ人が今と次の回に山P・その他を1曲ずつ、各枠だけ
  assert.equal(s.entries.length,4);assert.equal(eligible(s,'yamapi').length,1);assert.equal(eligible(s,'other').length,1);
  assert.throws(()=>submit(s,{...input('同じ人','別曲','NEWS'),category:'yamapi'},'again'),/リクエスト済み/);
  assert.throws(()=>submit(s,{...input('別名'),category:'yamapi'},'y1'),/リクエスト済み/);
- assert.throws(()=>submit(s,{...input('別名'),category:'other'},'bad'),/枠/);
+ assert.throws(()=>submit(s,{...input('別名'),category:'other'},'bad'),/カテゴリ/);
 });
 test('山P関連グループ・別名と旧データも同じ枠として扱う',()=>{
  const s=state();for(const artist of ['山下智久','やまぴー','NEWS','にゅーす','修二と彰','亀と山P']){const e=submit(s,input(artist,'曲',artist),artist);delete e.category;}
@@ -232,7 +232,7 @@ test('両方の抽選は両カテゴリを対象にし不正な対象は拒否�
 });
 test('名前訂正と管理者の歌手変更でもカテゴリ別上限を守る',()=>{
  const s=state();const y=submit(s,input('A'),'y'),o=submit(s,input('A','曲','別歌手'),'o');rename(s,o,'訂正後');assert.throws(()=>submit(s,input('A','別曲','他歌手'),'o2'),/リクエスト済み/);
- assert.throws(()=>adminAction(s,{action:'edit',id:o.id,name:'A',artist:'NEWS',song:'曲'}),/応募済み/);
+ assert.throws(()=>adminAction(s,{action:'edit',id:o.id,name:'A',artist:'NEWS',song:'曲'}),/リクエスト済み/);
  rename(s,y,'訂正後');assert.equal(s.entries.length,2);
 });
 test('サーバーAPIでも同名の2枠を許可し、同じ枠の並行リクエストは1件だけ',async()=>{

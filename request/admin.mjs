@@ -96,9 +96,9 @@ function queueChoices(entry) {
   } });
   if (entry.status === 'pending') {
     const choices = [{label:'リクエストを変更', handler:() => editRequest(entry)}];
-    if (entry.round > state.round) choices.push(command('今回の抽選に入れる', 'bringForward'));
+    if (entry.round > state.round) choices.push(command('今の抽選枠の抽選に入れる', 'bringForward'));
     else choices.push(command('今回だけ一時保留', 'hold'));
-    choices.push(command('次回配信へ持ち越す', 'defer'));
+    choices.push(command('次の配信に持ち越す', 'defer'));
     if (entry.round <= state.round && !state.entries.some(item => item.id === state.current && item.status === 'selected')) {
       choices.push(command('この曲を手動で選ぶ', 'selectSong', 'ルーレットを回さず、この曲を選びますか？'));
     }
@@ -106,13 +106,13 @@ function queueChoices(entry) {
     return choices;
   }
   if (entry.status === 'done') return [
-    command('歌唱済みを取り消す', 'cancelPerformance', '歌唱済み一覧からこの記録を外し、今回の抽選に戻しますか？'),
+    command('歌唱済みを取り消す', 'cancelPerformance', '歌唱済み一覧からこの記録を外し、今の抽選枠の抽選に戻しますか？'),
     command('再演用に抽選へ追加', 'encore', '歌唱済みの記録を残して、もう一度抽選に入れますか？'),
   ];
   if (['skipped','removed'].includes(entry.status)) return [command('リクエストを復活', 'restoreRequest')];
   if (entry.status !== 'deferred') return [];
   const repeat = entry.deferReason === 'sung';
-  const choices = [command('今回の抽選に戻す', 'restoreRequest', repeat ? '今回すでに歌った曲です。もう一度抽選に入れますか？' : undefined)];
+  const choices = [command('今の抽選枠の抽選に戻す', 'restoreRequest', repeat ? 'この配信ですでに歌った曲です。もう一度抽選に入れますか？' : undefined)];
   const record = state.unknown?.[entry.songKey];
   if (entry.deferReason === 'unknown' && record) {
     const reasons = Object.keys(record.reasons || {unknown:record.at});
@@ -126,7 +126,7 @@ function rowChoices(entry) {
     label:'リクエストを初期化',
     className:'danger',
     handler:() => {
-      if (!confirm(`${entry.name}さんの「${entry.song}」のリクエストを初期化しますか？\n今の募集・予約の枠なら、リスナーは送り直せます。歌唱済みの記録は残ります。`)) return;
+      if (!confirm(`${entry.name}さんの「${entry.song}」のリクエストを初期化しますか？\n今の抽選枠または次の抽選枠への予約なら、リスナーは送り直せます。歌唱済みの記録は残ります。`)) return;
       const {name, artist, song, status} = entry;
       action('resetRequest', {id:entry.id, expected:{name, artist, song, status}});
     }
@@ -173,7 +173,7 @@ async function postAdminAction(data) {
     await post(data);
   } catch (error) {
     if (error.code !== 'request_slot_conflict' || !error.details) throw error;
-    if (!confirm('今回の同じ枠に「' + error.details.song + '」があります。この曲を取り下げて、選んだ曲と入れ替えますか？')) return false;
+    if (!confirm('今の抽選枠の同じカテゴリに「' + error.details.song + '」があります。この曲を取り下げて、選んだ曲と入れ替えますか？')) return false;
     await post({ ...data, replaceId:error.details.id });
   }
   return true;
@@ -221,7 +221,7 @@ function render() {
   const deferred=state.entries.filter(e=>e.status==='deferred'&&e.deferReason!=='temporary').length;
   const held=state.entries.filter(e=>e.status==='deferred'&&e.deferReason==='temporary').length;
   const reserved=state.entries.filter(e=>e.round===state.round+1&&!['done','removed','skipped'].includes(e.status)).length;
-  $('counts').textContent=`残り ${pending}件 · 次の回の予約 ${reserved}件 · 次回配信へ ${deferred}件${held ? ' · 一時保留 '+held+'件' : ''}`;
+  $('counts').textContent=`残り ${pending}件 · 次の抽選枠への予約 ${reserved}件 · 次の配信に持ち越し ${deferred}件${held ? ' · 一時保留 '+held+'件' : ''}`;
   const current=state.entries.find(e=>e.id===state.current);
   renderRoulette(current);
   const selected = hasWinner(current);
@@ -243,7 +243,7 @@ function render() {
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
     songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'));
-    statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:e.deferReason==='temporary'?'一時保留':'次回へ',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
+    statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:e.deferReason==='temporary'?'一時保留':'持ち越し',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
     if(e.round>state.round)statusCell.prepend(node('div','予約','entry-status'));
     if(e.encoreOf)statusCell.prepend(node('div','再演用','entry-status'));
     row.append(songCell,nameCell,statusCell,actionCell);
@@ -389,7 +389,7 @@ $('cant-sing').onclick = cantSing;
 $('result-cant-sing').onclick = cantSing;
 $('result-defer').onclick = () => resolveWinner('defer', { id:state.current, selected:true });
 $('undo').onclick=()=>action('undo');
-$('next-session').onclick=()=>{if(confirm('次回配信を開始しますか？歌唱履歴を区切り、保留していた応募を抽選に戻します。'))action('session');};
+$('next-session').onclick=()=>{if(confirm('次の配信を開始しますか？歌唱履歴を区切り、持ち越したリクエストを抽選に戻します。'))action('session');};
 $('logout').onclick=async()=>{await fetch('/auth/logout',{method:'POST'});location.reload();};
 try{await refresh();}catch(error){message(error.message,true);}
 setInterval(()=>{if(!document.hidden&&!busy&&!rowActions.matches(':popover-open'))refresh().catch(error=>message(error.message,true));},10000);

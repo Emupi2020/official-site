@@ -167,7 +167,7 @@ async function canManageRequest(env, entry, accountId) {
 function origins(env, req) { return new Set([env.PUBLIC_ORIGIN || 'https://emupi2020.github.io', new URL(req.url).origin]); }
 async function requestToken(req) {
   const value = req.headers.get('X-Request-Token');
-  if (!value || !/^[a-zA-Z0-9_-]{32,100}$/.test(value)) throw new Problem('応募情報を確認できません。ページを開き直してください。');
+  if (!value || !/^[a-zA-Z0-9_-]{32,100}$/.test(value)) throw new Problem('リクエスト情報を確認できません。ページを開き直してください。');
   return hash(value);
 }
 async function limit(req, env, scope = '') {
@@ -192,7 +192,7 @@ async function handle(req, env) {
     if (path === '/admin' || path === '/admin/') return env.ASSETS.fetch(new Request(new URL('/admin', req.url), req));
     return env.ASSETS.fetch(req);
   }
-  if (!env.DB) throw new Problem('応募受付の準備中です。', 503);
+  if (!env.DB) throw new Problem('リクエスト受付の準備中です。', 503);
   if (path === '/api/bug-reports' && req.method === 'POST') {
     await limit(req, env, ':bug-report');
     const input = await body(req);
@@ -373,7 +373,7 @@ async function handle(req, env) {
       const e = viaAccount
         ? state.entries.find(entry => entry.accountId === accountId && entry.id === input.requestId)
         : state.entries.findLast(entry => entry.tokenHash === token);
-      if (!e) throw new Problem('応募が見つかりません。', 404);
+      if (!e) throw new Problem('リクエストが見つかりません。', 404);
       if (!await canManageRequest(env, e, accountId)) throw new Problem('連携したアカウントでログインしてください。', 401);
       if (input?.action === 'editSong') editSong(state, e, input);
       else rename(state, e, input?.name);

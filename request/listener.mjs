@@ -170,12 +170,12 @@ const reservation = $('next-reservation');
 let activeSlot = null;
 const requestStatusLabels = {unrequested:'未リクエスト', submitted:'リクエスト済み', reserved:'予約済み', temporary:'一時保留', pending:'抽選待ち', selected:'当選', done:'当選済み', skipped:'見送り', deferred:'持ち越し', removed:'取り下げ済み'};
 const requestStatusDescriptions = {
- unrequested:'この枠にはまだリクエストしていません。',
- submitted:'この枠のリクエストを受け付けました。',
- reserved:'次回の抽選分として送信された曲です。次の募集枠に切り替わると抽選対象になります。',
+ unrequested:'このカテゴリにはまだリクエストしていません。',
+ submitted:'このカテゴリのリクエストを受け付けました。',
+ reserved:'次の抽選枠にリクエストを予約しています。今の抽選枠の曲の対応がすべて終わると、抽選対象になります。',
  temporary:'配信側で一時保留にしたため、いまは抽選対象に入りません。',
  pending:'受付が完了し、抽選で選ばれるのを待っています。',
- selected:'この曲が今回の抽選で選ばれました。',
+ selected:'この曲が抽選で選ばれました。',
  done:'この曲は抽選で選ばれ、歌唱が済んでいます。',
  skipped:'抽選で選ばれたあと、今回は歌わずに見送りとなりました。',
  deferred:'この曲は次の配信で抽選対象に戻ります。',
@@ -219,7 +219,7 @@ function renderSlotOverview(slot) {
  if (slot.entry) renderStatusTag(status, requestStatusKey(slot.entry, slot.reserved));
  else if (empty && slot.reserved) {
   delete status.dataset.statusTag;
-  status.textContent = '予約する';
+  status.textContent = '次の抽選枠に予約する';
  } else renderStatusTag(status, empty ? 'unrequested' : slot.reserved ? 'reserved' : 'submitted');
  slot.overview.classList.toggle('is-empty', empty);
 }
@@ -764,7 +764,7 @@ for (const slot of currentSlots) {
     };
     choices.append(button);
    }
-   status.textContent = choices.childElementCount ? '' : 'この枠のお気に入りの曲はありません。';
+   status.textContent = choices.childElementCount ? '' : 'このカテゴリのお気に入りの曲はありません。';
   } catch {
    if (version === opening) status.textContent = 'お気に入りを読み込めませんでした。';
   }
@@ -837,7 +837,7 @@ function renderHistory(myRequests){
  $('my-history-more').disabled = Boolean(current?.loading);
  $('my-history-more').textContent = current?.error ? '再読み込み' : 'もっと見る';
  $('my-history-list').replaceChildren();
- for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次回の予約 · ':entry.round===state.round?'今回':'過去のリクエスト'}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲は今回歌唱済み':''}`,entry.createdAt, entry.category, requestStatusKey(entry, entry.round > state.round));
+ for(const entry of [...myRequests].reverse())historyRow($('my-history-list'),entry.song,entry.artist,`${categoryLabel(entry.category)} · ${entry.round>state.round?'次の抽選枠への予約':entry.round===state.round?'今の抽選枠':'過去のリクエスト'}${entry.status!=='done'&&entry.playedThisSession?' · 同じ曲はこの配信で歌唱済み':''}`,entry.createdAt, entry.category, requestStatusKey(entry, entry.round > state.round));
 }
 function renderPlayed(played) {
  $('played-total').textContent = `全${played.length}曲`;
@@ -1122,7 +1122,7 @@ function stopEditing(slot) {
  form.reset();
  form.hidden = !!slot.entry;
  part(slot, '.slot-receipt').hidden = !slot.entry;
- part(slot, '.slot-submit').textContent = slot.reserved ? '予約する' : 'リクエスト';
+ part(slot, '.slot-submit').textContent = slot.reserved ? '次の抽選枠に予約する' : 'リクエストする';
  part(slot, '.slot-cancel').hidden = true;
  hideSuggestions();
 }
@@ -1182,7 +1182,7 @@ for(const slot of slots){
  rejected.textContent = slot.reserved ? 'すでに予約があるため、今入力した曲は予約されませんでした。' : 'すでにリクエストがあるため、今入力した曲は送信されませんでした。';
  const status = document.createElement('p');
  status.className = 'duplicate-label';
- status.textContent = slot.reserved ? 'この枠は予約済みです。' : 'この枠はリクエスト済みです。';
+ status.textContent = slot.reserved ? 'このカテゴリは次の抽選枠に予約済みです。' : 'このカテゴリはリクエスト済みです。';
  duplicate.append(status, rejected);
  slot.root.append(duplicate);
  const box=document.createElement('div');box.className='slot-feedback edit-feedback';box.hidden=true;box.setAttribute('role','status');slot.root.prepend(box);
