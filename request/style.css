@@ -253,21 +253,15 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .entry-welcome-actions button { margin: 0; }
 .request-page #entry-screen .secondary { background: transparent; border: 1px solid var(--border); }
 .request-page #entry-name-help {
-  position: absolute;
-  z-index: 2;
-  inset-inline-start: 0;
-  inset-block-end: calc(100% + 8px);
-  max-inline-size: 100%;
-  margin: 0;
+  display: none;
+  margin: 6px 0 0;
   padding: 8px 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-  box-shadow: 0 4px 16px #0001;
+  border-radius: 6px;
+  background: #fff;
   line-height: 1.5;
-  visibility: hidden;
 }
-.request-page .request-field:focus-within > #entry-name-help { visibility: visible; }
+.request-page .request-field:focus-within > #entry-name-help:not([hidden]) { display: block; }
 .request-page #guest-entry-note { margin: 10px 0 0; color: var(--danger); line-height: 1.55; }
 .request-page #enter-request { margin-top: 16px; }
 .request-page #enter-request:disabled {
