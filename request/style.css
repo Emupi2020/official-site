@@ -70,15 +70,13 @@ body:has(.request-page) { background: #f2f2f7; }
 /* Public wheel occupies the available screen; only the selected song is added. */
 .song-history{list-style:none;margin:0;padding:0}
 .song-history li{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:start;gap:8px;padding:10px 0;overflow-wrap:anywhere;border-top:1px solid var(--border)}
-.history-song{font-size:16px;font-weight:650;line-height:1.5}
+.song-identity-title{display:block;margin:0;font-size:16px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
 .history-art{display:block;width:42px;height:42px;clip-path:inset(8% 7% round 3px)}
 .slot-overview-category{display:block;margin-top:3px;color:var(--muted);font-size:11px}
 .receipt-summary{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:7px}
-.receipt-summary .slot-artist{margin-top:3px}
-.request-page .suggestions .history-artist{display:block}
-.history-artist{font-size:13px;color:var(--muted);margin-top:3px}
+.song-identity-artist{display:block;margin:3px 0 0;font-size:13px;font-weight:400;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
 .history-status{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:3px 12px;color:var(--muted);font-size:12px;margin-top:3px}
-.history-status .history-artist{max-width:100%;margin-top:0}
+.history-status .song-identity-artist{max-width:100%;margin-top:0}
 .history-state{color:var(--muted);font-size:12px;margin-top:3px}
 .history-status time{margin-inline-start:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
 #playable-groups h3{margin:8px 0;font-size:14px}
@@ -166,7 +164,6 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .slot-overview-art { display: block; width: 76px; height: 76px; object-fit: contain; clip-path: inset(8% 7% round 5px); }
 .slot-overview-info { min-width: 0; overflow-wrap: anywhere; }
-.slot-overview-song { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
 .slot-overview-end { display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: var(--muted); font-size: 13px; }
 .slot-overview-status:empty { display: none; }
 .slot-overview-row.is-empty .slot-overview-end { color: var(--accent); }
@@ -254,7 +251,7 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-favorite-dialog .playable-browse { margin-block-start: 12px; }
 .request-page .slot-favorite-dialog .playable-browse button {
   display: grid;
-  gap: 2px;
+  gap: 0;
   justify-content: stretch;
   border-radius: 0;
   padding: 8px 0;
@@ -262,10 +259,8 @@ body:has(.request-page) { background: #f2f2f7; }
 .slot-favorite-dialog .playable-browse button::after { display: none; }
 .slot-favorite-dialog .playable-browse button > span {
   width: auto;
-  color: inherit;
   text-align: start;
 }
-.slot-favorite-dialog .playable-browse button > .history-artist { color: var(--muted); }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
 .request-page #reservation-detail-label { margin: 0 0 3px; }
@@ -395,7 +390,6 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .request-page .request-field:has(input:not([readonly]), select) { border-bottom: 1px solid var(--border); }
 .request-page .request-field input::placeholder { color: var(--muted); opacity: .8; }
-.request-page .slot-receipt .receipt-song { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
 .request-page .next-reservation { margin: 8px 0 0; }
 .request-page .next-reservation > summary { justify-content: center; gap: 9px; color: var(--accent); }
 .next-reservation .request-overview-rows { margin-top: 4px; }
@@ -455,7 +449,6 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page .edit-feedback { margin-block: 8px; color: var(--muted); font-size: 13px; }
 .request-page .edit-feedback.error { color: var(--danger, #a72b2b); }
 
-.request-page .slot-receipt .slot-artist { margin: 3px 0 0; font-size: 14px; overflow-wrap: anywhere; }
 .request-page .slot-receipt-footer {
   display: grid;
   justify-items: start;
@@ -663,7 +656,7 @@ dialog.listener-dialog .buttons .secondary { background: #f5f5f7; }
   overflow-wrap: anywhere;
 }
 .playable-browse button + button { border-top: 1px solid var(--border); }
-.playable-browse button > :is(svg, span) { width: 18px; flex: 0 0 18px; color: var(--muted); text-align: center; }
+.playable-browse button > :is(svg, span):not(.song-identity-title, .song-identity-artist) { width: 18px; flex: 0 0 18px; color: var(--muted); text-align: center; }
 .playable-browse button::after {
   content: '';
   width: 7px;

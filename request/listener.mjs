@@ -107,6 +107,13 @@ function renderArtistLink(container, artist) {
  link.textContent = artist;
  container.append(link);
 }
+function renderSongIdentity(title, subtitle, song, artist, link = true) {
+ title.classList.toggle('song-identity-title', Boolean(artist));
+ subtitle.classList.add('song-identity-artist');
+ title.textContent = song;
+ if (link) renderArtistLink(subtitle, artist);
+ else subtitle.textContent = artist;
+}
 for (const slot of slots) {
  const receipt = part(slot, '.slot-receipt');
  const summary = document.createElement('div');
@@ -141,9 +148,8 @@ function renderUserCurrentRequests() {
   row.hidden = !entry || !['pending', 'selected'].includes(entry.status);
   if (row.hidden) continue;
   count++;
-  row.querySelector('strong').textContent = entry.song;
   const artist = row.querySelector('.slot-overview-song');
-  renderArtistLink(artist, entry.artist);
+  renderSongIdentity(row.querySelector('strong'), artist, entry.song, entry.artist);
   openButton.setAttribute('aria-label', entry.song);
   artist.hidden = !entry.artist;
   renderStatusTag(row.querySelector('.slot-overview-status'), requestStatusKey(entry));
@@ -174,8 +180,7 @@ function renderSlotOverview(slot) {
  const category = slot.overview.querySelector('.slot-overview-category');
  const status = slot.overview.querySelector('.slot-overview-status');
  const empty = !hasSlotRequest(slot);
- title.textContent = slot.entry?.song || categoryLabel(slot.category);
- renderArtistLink(artist, slot.entry?.artist);
+ renderSongIdentity(title, artist, slot.entry?.song || categoryLabel(slot.category), slot.entry?.artist);
  slot.openButton.setAttribute('aria-label', title.textContent);
  artist.hidden = !artist.textContent;
  category.hidden = !slot.entry;
@@ -525,11 +530,8 @@ const japanDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Tokyo', dateS
 function historyRow(list, song, artist, status, timestamp, category = classifyArtist(artist), statusKey) {
  const row = document.createElement('li');
  const title = document.createElement('div');
- title.className = 'history-song';
- title.textContent = song;
  const subtitle = document.createElement('div');
- subtitle.className = 'history-artist';
- renderArtistLink(subtitle, artist);
+ renderSongIdentity(title, subtitle, song, artist);
  const identity = document.createElement('div');
  const meta = document.createElement('div');
  meta.className = 'history-status';
@@ -715,11 +717,8 @@ for (const slot of currentSlots) {
     const button = document.createElement('button');
     button.type = 'button';
     const title = document.createElement('span');
-    title.className = 'history-song';
-    title.textContent = song;
     const subtitle = document.createElement('span');
-    subtitle.className = 'history-artist';
-    subtitle.textContent = artist;
+    renderSongIdentity(title, subtitle, song, artist, false);
     button.append(title, subtitle);
     button.onclick = () => {
      if (busy || slot.entry || slot.editing) return;
@@ -1032,7 +1031,7 @@ function renderRequests() {
   if (slot.editing && (slot.editing.id !== slot.entry?.id || !slot.entry.songEditable)) stopEditing(slot);
   part(slot,'.slot-form').hidden=!!slot.entry && !slot.editing;
   part(slot,'.slot-receipt').hidden=!slot.entry || !!slot.editing;
-  if(slot.entry){const mine=slot.entry;part(slot,'.slot-song').textContent=mine.song;renderArtistLink(part(slot,'.slot-artist'),mine.artist);renderStatusTag(part(slot,'.slot-status'), requestStatusKey(mine, slot.reserved));part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
+  if(slot.entry){const mine=slot.entry;renderSongIdentity(part(slot,'.slot-song'),part(slot,'.slot-artist'),mine.song,mine.artist);renderStatusTag(part(slot,'.slot-status'), requestStatusKey(mine, slot.reserved));part(slot,'.slot-edit').closest('.edit-actions').hidden=!mine.songEditable;}
  }
  renderDuplicateSlots();
  renderUserCurrentRequests();
@@ -1076,10 +1075,8 @@ function suggest(slot,kind){
     : new Set(items.filter(i => artistSearchNames(i).some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&songSearchNames(i).some(v=>normalize(v).includes(value))).map(item=>({item}));}
  for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';if (candidate.item) {
   const song = document.createElement('strong');
-  song.textContent = candidate.item.song;
   const artist = document.createElement('span');
-  artist.className = 'history-artist';
-  artist.textContent = candidate.item.artist;
+  renderSongIdentity(song, artist, candidate.item.song, candidate.item.artist, false);
   button.append(song, artist);
  } else button.textContent = candidate.label;
  button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');lock(busy);input.focus();};box.append(button);}
