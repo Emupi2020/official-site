@@ -360,6 +360,8 @@ function showMenuPage(id, focus = false) {
  if (!activeMenuPage) return;
  const {button,panel} = activeMenuPage;
  menuPageTitle.textContent = button.firstChild.textContent.trim();
+ const playableHeading = panel.id === 'playable-songs' ? showPlayableCategory(window.history.state?.playableCategory) : null;
+ menuPageTitle.hidden = Boolean(playableHeading);
  if (panel === nameSettings && activeMenuPage !== previous) {
   newName.value = lookupName();
   namePasscode.value = '';
@@ -367,17 +369,21 @@ function showMenuPage(id, focus = false) {
  }
  if (focus) {
   window.scrollTo(0, 0);
-  menuPageTitle.focus();
+  (playableHeading || menuPageTitle).focus();
  }
  if (panel.id === 'my-history') void loadArchivedHistory();
  if (panel.id === 'played-history') void refreshPlayed();
- if (panel.id === 'playable-songs') void refreshPlayable();
+ if (panel.id === 'playable-songs' && previous !== activeMenuPage) void refreshPlayable();
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
   closeMenu();
-  if (activeMenuPage?.panel === panel) { menuPageTitle.focus(); return; }
-  const next = {...window.history.state, menuPage:panel.id};
+  if (activeMenuPage?.panel === panel) {
+   if (window.history.state?.playableCategory) window.history.back();
+   else menuPageTitle.focus();
+   return;
+  }
+  const next = {...window.history.state, menuPage:panel.id, playableCategory:null};
   if (activeMenuPage) window.history.replaceState(next, '');
   else window.history.pushState(next, '');
   showMenuPage(panel.id, true);
@@ -392,7 +398,8 @@ function goToRequestTop() {
  };
  if (activeMenuPage || activeSlot) {
   const backToWelcome = !loggedIn && entryMode !== 'welcome' && window.history.state?.fromWelcome;
-  const steps = Number(Boolean(activeMenuPage)) + Number(Boolean(activeSlot || backToWelcome));
+  const steps = Number(Boolean(activeMenuPage)) + Number(Boolean(activeSlot || backToWelcome))
+    + Number(Boolean(window.history.state?.playableDetailStep));
   window.addEventListener('popstate', focusTop, {once:true});
   window.history.go(-steps);
  } else if (!loggedIn && entryMode !== 'welcome') {
@@ -462,7 +469,8 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
   tag.className = 'history-tag';
   identity.append(tag);
  }
- row.append(jacket(category, 'history-art', 42), identity);
+ if (category) row.append(jacket(category, 'history-art', 42));
+ row.append(identity);
  list.append(row);
 }
 function historyOwner() {
@@ -508,13 +516,32 @@ function renderPlayed(played) {
  for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : '歌唱済み',entry.performedAt);
 }
 const playable = $('playable-songs');
+const playableCategories = $('playable-categories');
+const playableGroups = $('playable-groups');
+const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
+function showPlayableCategory(category) {
+ const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
+ playableCategories.hidden = Boolean(selected);
+ playableGroups.hidden = !selected;
+ for (const button of playableCategoryButtons) {
+  $(`playable-${button.dataset.playableCategory}-detail`).hidden = button !== selected;
+ }
+ return selected ? $(`playable-${category}-heading`) : null;
+}
+for (const button of playableCategoryButtons) {
+ button.onclick = () => {
+  window.history.pushState({...window.history.state, playableCategory:button.dataset.playableCategory, playableDetailStep:true}, '');
+  showMenuPage(playable.id, true);
+ };
+}
 const songOrdering = new Intl.Collator('ja');
 let playableLoading = false;
+let playableLoaded = false;
 async function refreshPlayable() {
  if (playable.hidden || document.hidden || playableLoading) return;
  playableLoading = true;
  const feedback = $('playable-feedback');
- if ($('playable-groups').hidden) {
+ if (!playableLoaded) {
   feedback.textContent = '読み込み中…';
   feedback.hidden = false;
  }
@@ -524,10 +551,10 @@ async function refreshPlayable() {
   for (const category of ['yamapi','other']) {
    const list = $(`playable-${category}`);
    list.replaceChildren();
-   for (const song of songs.filter(song => song.category === category)) historyRow(list, song.song, song.artist, undefined, undefined, song.category);
+   for (const song of songs.filter(song => song.category === category)) historyRow(list, song.song, song.artist, undefined, undefined, null);
    $(`playable-${category}-empty`).hidden = Boolean(list.childElementCount);
   }
-  $('playable-groups').hidden = false;
+  playableLoaded = true;
   feedback.hidden = true;
  } catch (error) {
   feedback.textContent = error.message;

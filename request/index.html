@@ -1,6 +1,6 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>歌まねリクエスト（β版） | Emupi</title>
 <!-- Update the request-release value when publishing listener-facing changes. -->
-<meta name="request-release" content="20261126-01">
+<meta name="request-release" content="20261126-02">
 <script>
 (() => {
   const release = document.querySelector('meta[name="request-release"]').content;
@@ -26,7 +26,7 @@
     });
 })();
 </script>
-<meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=logout-style"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=entry-document-scroll"><link rel="stylesheet" href="./bug-reports.css?layout=shared-listener-fields"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=logout-dialog"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
+<meta name="description" content="えむぴーの歌まね配信にリクエスト。"><link rel="stylesheet" href="./style.css?entry=playable-grid"><link rel="stylesheet" href="./site-frame.css"><link rel="stylesheet" href="./site-menu.css?layout=entry-document-scroll"><link rel="stylesheet" href="./bug-reports.css?layout=shared-listener-fields"><script src="./config.js"></script><script type="module" src="./listener.mjs?entry=playable-grid"></script><script type="module" src="./bug-reports.mjs"></script><link rel="icon" href="./favicon.svg"></head><body class="listener-layout">
 <header class="global-nav listener-nav">
   <div class="nav-content">
     <a id="request-home" href="./" class="nav-icon-container" aria-label="リクエストトップ"><svg class="nav-logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="48%" dominant-baseline="central" text-anchor="middle" font-size="17" fill="currentColor" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">🅿︎</text></svg></a>
@@ -192,9 +192,23 @@
   </div>
   <div id="playable-songs" hidden>
 <p id="playable-feedback" class="note" role="status" hidden></p>
+  <div id="playable-categories" class="playable-categories">
+    <button type="button" data-playable-category="yamapi"><img src="./yamapi-white.png" alt=""><span>山Pの歌まね</span></button>
+    <button type="button" data-playable-category="other"><img src="./other-smoke.png?v=brush-cross" alt=""><span>それ以外の歌まね</span></button>
+  </div>
   <div id="playable-groups" hidden>
-    <section aria-labelledby="playable-yamapi-heading"><h3 id="playable-yamapi-heading">山Pの歌まね</h3><ul id="playable-yamapi" class="song-history"></ul><p id="playable-yamapi-empty" class="note" hidden>まだ曲がありません。</p></section>
-    <section aria-labelledby="playable-other-heading"><h3 id="playable-other-heading">それ以外の歌まね</h3><ul id="playable-other" class="song-history"></ul><p id="playable-other-empty" class="note" hidden>まだ曲がありません。</p></section>
+    <section id="playable-yamapi-detail" class="playable-detail" aria-labelledby="playable-yamapi-heading" hidden>
+      <img class="playable-cover" src="./yamapi-white.png" alt="">
+      <h2 id="playable-yamapi-heading" tabindex="-1">山Pの歌まね</h2>
+      <ul id="playable-yamapi" class="song-history"></ul>
+      <p id="playable-yamapi-empty" class="note" hidden>まだ曲がありません。</p>
+    </section>
+    <section id="playable-other-detail" class="playable-detail" aria-labelledby="playable-other-heading" hidden>
+      <img class="playable-cover" src="./other-smoke.png?v=brush-cross" alt="">
+      <h2 id="playable-other-heading" tabindex="-1">それ以外の歌まね</h2>
+      <ul id="playable-other" class="song-history"></ul>
+      <p id="playable-other-empty" class="note" hidden>まだ曲がありません。</p>
+    </section>
   </div>
 
   </div>

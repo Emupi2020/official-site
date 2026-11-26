@@ -506,3 +506,29 @@ body:has(.request-page) { background: #f2f2f7; }
 .request-page #logout-confirmation .buttons { margin-top: 16px; gap: 8px; }
 .request-page #logout-confirmation button { min-height: 44px; padding: 8px 4px; border: 0; border-radius: 8px; }
 .request-page #logout-confirmation .secondary { background: #f5f5f7; }
+.playable-categories {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.playable-categories button {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: start;
+  font-weight: 600;
+}
+.playable-categories img, .playable-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  clip-path: inset(7% round 8px);
+}
+.playable-cover { width: min(76%, 300px); margin: 0 auto; }
+.playable-detail h2 { margin: 8px 0 22px; text-align: center; }
+.playable-detail .song-history li { grid-template-columns: minmax(0, 1fr); }
