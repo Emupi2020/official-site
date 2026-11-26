@@ -575,12 +575,18 @@ const playable = $('playable-songs');
 const playableCategories = $('playable-categories');
 const playableGroups = $('playable-groups');
 const playableSearch = $('playable-search');
+const playableSuggestions = $('playable-suggestions');
+let selectedPlayableSuggestion = null;
 const playableCategoryButtons = [...playableCategories.querySelectorAll('button')];
 let playableSongs = null;
 function showPlayableCategory({playableCategory: category, playableView: view, playableArtist: artist} = {}) {
  playableSearch.value = '';
  const selected = playableCategoryButtons.find(button => button.dataset.playableCategory === category);
  const browsing = Boolean(selected && view);
+ selectedPlayableSuggestion = null;
+ const searchLabel = view === 'artists' && !artist ? '歌手名で検索' : '曲名・歌手名で検索';
+ playableSearch.placeholder = searchLabel;
+ playableSearch.setAttribute('aria-label', searchLabel);
  for (const button of playableCategoryButtons) {
   $(`playable-${button.dataset.playableCategory}-detail`).hidden = button !== selected;
  }
@@ -600,7 +606,36 @@ for (const button of playableCategoryButtons) {
 for (const button of $('playable-browse').querySelectorAll('button')) {
  button.onclick = () => navigatePlayable({playableView:button.dataset.playableView});
 }
-playableSearch.addEventListener('input', renderPlayableResults);
+playableSearch.addEventListener('input', () => {
+ selectedPlayableSuggestion = null;
+ renderPlayableResults();
+});
+playableSearch.addEventListener('keydown', event => {
+ if (!event.isComposing && ['Enter', 'Escape'].includes(event.key) && !playableSuggestions.hidden) {
+  event.preventDefault();
+  playableSuggestions.hidden = true;
+ }
+});
+function renderPlayableSuggestions(options) {
+ playableSuggestions.replaceChildren();
+ playableSuggestions.hidden = options.size === 0;
+ for (const {field, name, artist} of [...options.values()].slice(0, 8)) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = name;
+  const detail = document.createElement('span');
+  detail.className = 'small muted';
+  detail.textContent = field === 'artist' ? '歌手' : artist;
+  button.append(detail);
+  button.onclick = () => {
+   selectedPlayableSuggestion = {field, name, artist};
+   playableSearch.value = name;
+   playableSearch.focus();
+   renderPlayableResults();
+  };
+  playableSuggestions.append(button);
+ }
+}
 function renderPlayableResults() {
  const {playableCategory: category, playableView: view, playableArtist: artist} = window.history.state || {};
  const query = normalize(playableSearch.value);
@@ -610,13 +645,27 @@ function renderPlayableResults() {
  $('playable-results').hidden = !browsing && !query;
  const artists = $('playable-artists');
  const tracks = $('playable-track-list');
- const showArtists = view === 'artists' && !artist && !query;
+ const showArtists = view === 'artists' && !artist;
  const songs = (playableSongs || []).filter(song => (!category || song.category === category) && (!artist || song.artist === artist));
- const matches = query ? songs.filter(song => [...songSearchNames(song), ...artistSearchNames(song)]
-  .some(name => normalize(name).includes(query))) : songs;
+ const suggestions = new Map();
+ const matches = query ? songs.filter(song => {
+  if (selectedPlayableSuggestion) {
+   const {field, name, artist: suggestedArtist} = selectedPlayableSuggestion;
+   return song[field] === name && (!suggestedArtist || song.artist === suggestedArtist);
+  }
+  const artistMatches = artistSearchNames(song).some(name => normalize(name).includes(query));
+  const songMatches = !showArtists && songSearchNames(song).some(name => normalize(name).includes(query));
+  if (artistMatches) suggestions.set('artist:' + song.artist, {field:'artist', name:song.artist});
+  if (songMatches) suggestions.set(JSON.stringify([song.artist, song.song]), {field:'song', name:song.song, artist:song.artist});
+  return artistMatches || songMatches;
+ }) : songs;
+ renderPlayableSuggestions(suggestions);
+ const matchedArtists = new Set(matches.map(song => song.artist));
  const total = $('playable-total');
  total.hidden = !playableSongs;
- total.textContent = query ? `検索結果 ${matches.length}曲` : `全${songs.length}曲`;
+ total.textContent = query
+  ? (showArtists ? `検索結果 ${matchedArtists.size}組` : `検索結果 ${matches.length}曲`)
+  : `全${songs.length}曲`;
  if (!browsing && !query) return;
  artists.hidden = !showArtists;
  tracks.hidden = showArtists;
@@ -624,9 +673,9 @@ function renderPlayableResults() {
  tracks.replaceChildren();
  const empty = $('playable-empty');
  empty.hidden = !playableSongs || matches.length > 0;
- empty.textContent = query ? '該当する曲がありません。' : 'まだ曲がありません。';
+ empty.textContent = query ? (showArtists ? '該当する歌手がいません。' : '該当する曲がありません。') : 'まだ曲がありません。';
  if (showArtists) {
-  for (const name of new Set(songs.map(song => song.artist))) {
+  for (const name of matchedArtists) {
    const button = document.createElement('button');
    button.type = 'button';
    button.textContent = name;
