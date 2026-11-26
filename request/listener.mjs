@@ -1,5 +1,5 @@
 import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=kana';
-import { closeMenu } from './site-menu.mjs?layout=instant-name-settings';
+import { closeMenu } from './site-menu.mjs?layout=menu-overlay';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
 let state, items=[], tokens, busy=false;
@@ -376,7 +376,7 @@ function showMenuPage(id, focus = false) {
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
-  closeMenu({immediate: panel === nameSettings});
+  closeMenu();
   if (activeMenuPage?.panel === panel) {
    const {playableCategory, playableView, playableArtist} = window.history.state || {};
    if (playableCategory) window.history.go(-(1 + Number(Boolean(playableView)) + Number(Boolean(playableArtist))));
@@ -1003,4 +1003,9 @@ try {
  if ($('request-screen').hidden && $('entry-screen').hidden) showRequestScreen(false);
  entryBusy = false;
  updateEntryButton();
+}
+// Compare Safari rendering without opening either overlay menu.
+if (pageUrl.searchParams.get('preview') === 'name-settings' && !$('request-screen').hidden) {
+ window.history.pushState({...window.history.state, menuPage:nameSettings.id}, '');
+ showMenuPage(nameSettings.id, true);
 }
