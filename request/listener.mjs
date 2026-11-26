@@ -199,6 +199,10 @@ document.addEventListener('click', clearLogoutNotice, true);
 document.addEventListener('keydown', clearLogoutNotice, true);
 const entryView = (mode, fromWelcome = false) => ({requestScreen:false, entryMode:mode, fromWelcome});
 function showRequestScreen(open, focus = false) {
+ if (!$('menu-page-loading').hidden) {
+  $('menu-page-loading').hidden = true;
+  menuPage.hidden = true;
+ }
  $('entry-screen').hidden = open;
  $('request-screen').hidden = !open;
  for (const {button} of menuPages) if (button.hasAttribute('data-login-required')) button.hidden = !open;
