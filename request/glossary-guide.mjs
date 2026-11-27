@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=family-kirakome';
+import { guides } from './pococha-glossary-guides.mjs?v=family-steps';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {
@@ -27,9 +27,20 @@ export function showGlossaryGuide(slug, korean, heading) {
       instruction.textContent = guide.steps[0][language];
       steps.before(instruction);
     } else {
-      for (const step of guide.steps) {
+      for (const [index, step] of guide.steps.entries()) {
         const item = document.createElement('li');
-        item.textContent = step[language];
+        const stepImage = guide.stepImages?.[index + 1];
+        if (stepImage) {
+          const figure = document.createElement('figure');
+          figure.hidden = true;
+          const image = document.createElement('img');
+          image.alt = stepImage[language + 1];
+          image.addEventListener('load', () => { figure.hidden = false; }, { once: true });
+          image.src = stepImage[0];
+          figure.append(image);
+          item.append(figure);
+        }
+        item.append(step[language]);
         steps.append(item);
       }
       steps.hidden = false;
