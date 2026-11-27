@@ -29,7 +29,11 @@ function clearRowPress() {
 document.addEventListener('pointerdown', event => {
  if (!event.isPrimary || event.button !== 0) return;
  clearRowPress();
- const control = event.target.closest('.slot-overview-open, .request-menu-link, .playable-browse button');
+ const independent = event.target.closest('button, a');
+ const songRow = event.target.closest('.song-detail-row');
+ const control = songRow && (!independent || independent.matches('.song-detail-trigger'))
+  ? songRow
+  : event.target.closest('.slot-overview-open, .request-menu-link, .playable-browse button');
  if (!control || control.matches(':disabled') || control.closest('[inert]')) return;
  const row = control.closest('.slot-overview-row') || control;
  pressedRow = row;
@@ -590,6 +594,7 @@ function feedback(slot, text, error = true) {
 const japanDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Tokyo', dateStyle:'short'});
 function historyRow(list, song, artist, status, timestamp, category = classifyArtist(artist), statusKey) {
  const row = document.createElement('li');
+ row.classList.add('song-detail-row');
  const title = document.createElement('button');
  title.type = 'button';
  title.className = 'song-detail-trigger';

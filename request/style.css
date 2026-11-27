@@ -840,7 +840,9 @@ dialog.listener-dialog .buttons .secondary { background: #f5f5f7; }
   position: relative;
   z-index: 2;
 }
-.listener-layout .slot-overview-row[data-row-pressed]::after,
+.listener-layout .song-detail-row { position: relative; isolation: isolate; -webkit-tap-highlight-color: transparent; }
+.listener-layout .song-detail-trigger:hover { filter: none; }
+.listener-layout :is(.slot-overview-row, .song-detail-row)[data-row-pressed]::after,
 .listener-layout :is(.request-menu-link, .playable-browse button)[data-row-pressed]::before {
   --pressed-color: color-mix(in srgb, var(--text) 3%, transparent);
   content: '';
