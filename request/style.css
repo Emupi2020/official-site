@@ -333,7 +333,11 @@ body:has(.request-page) { background: #f2f2f7; }
   border-block-end: 1px solid rgba(127, 127, 127, .28);
 }
 .glossary-copy-examples li + li { margin-block-start: 0; }
+.glossary-copy-examples li > span { min-width: 0; overflow-wrap: anywhere; }
 .glossary-copy-examples button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
   flex: none;
   min-height: 44px;
   padding: 0 8px;

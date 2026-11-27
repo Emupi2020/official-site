@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-emupi';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-icon';
 import { $ } from './common.mjs';
 
 function appendCopyExamples(panel, examples, korean) {
@@ -15,7 +15,7 @@ function appendCopyExamples(panel, examples, korean) {
     sample.textContent = example;
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = copyLabel;
+    button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
     button.setAttribute('aria-label', `${example} ${copyLabel}`);
     button.addEventListener('click', async () => {
       status.textContent = '';
