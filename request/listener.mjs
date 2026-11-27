@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=repertoire-request-picker';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=repertoire-request-link';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -836,14 +836,11 @@ async function loadRepertoire() {
 }
 for (const slot of currentSlots) {
  const pickerActions = document.createElement('div');
- const pickerSources = [
-  {label: 'お気に入りから選ぶ', symbol: '☆', favoritesOnly: true},
-  {label: '歌える曲リストから選ぶ', symbol: '♫', favoritesOnly: false}
- ];
  const dialog = document.createElement('dialog');
  dialog.className = 'listener-dialog slot-song-picker-dialog';
  const heading = document.createElement('h2');
  heading.id = slot.id + '-song-picker-heading';
+ heading.textContent = t('お気に入りから選ぶ');
  heading.tabIndex = -1;
  heading.autofocus = true;
  dialog.setAttribute('aria-labelledby', heading.id);
@@ -866,35 +863,48 @@ for (const slot of currentSlots) {
  slot.songPickerActions = pickerActions;
  slot.songPickerDialog = dialog;
  let opening = 0;
- for (const {label, symbol, favoritesOnly} of pickerSources) {
-  const picker = document.createElement('button');
-  picker.type = 'button';
-  picker.className = 'slot-song-picker';
-  picker.setAttribute('aria-haspopup', 'dialog');
-  const icon = document.createElement('span');
-  icon.setAttribute('aria-hidden', 'true');
-  icon.textContent = symbol;
-  picker.append(icon, t(label));
-  pickerActions.append(picker);
-  picker.onclick = () => openPicker(label, favoritesOnly);
- }
- async function openPicker(label, favoritesOnly) {
+ const favoritesPicker = document.createElement('button');
+ favoritesPicker.type = 'button';
+ favoritesPicker.className = 'slot-song-picker';
+ favoritesPicker.setAttribute('aria-haspopup', 'dialog');
+ const star = document.createElement('span');
+ star.setAttribute('aria-hidden', 'true');
+ star.textContent = '☆';
+ favoritesPicker.append(star, t('お気に入りから選ぶ'));
+ const repertoireLink = document.createElement('a');
+ repertoireLink.className = 'slot-song-picker';
+ const icon = document.createElement('span');
+ icon.setAttribute('aria-hidden', 'true');
+ icon.textContent = '♫';
+ repertoireLink.append(icon, t('歌える曲リストから選ぶ'));
+ repertoireLink.href = '?view=playable-songs';
+ repertoireLink.onclick = event => {
+  event.preventDefault();
+  const artist = field(slot, 'artist').value.trim();
+  hideSuggestions();
+  navigatePlayable({
+   menuPage: 'playable-songs',
+   playableCategory: slot.category,
+   playableView: 'artists',
+   playableArtist: artist || undefined,
+   playableSearchValue: ''
+  });
+ };
+ pickerActions.append(favoritesPicker, repertoireLink);
+ favoritesPicker.onclick = async () => {
   const version = ++opening;
-  heading.textContent = t(label);
   choices.replaceChildren();
   status.textContent = t('読み込み中…');
   dialog.showModal();
   try {
-   const favorites = favoritesOnly ? favoritesForListener() : null;
-   if (favorites) {
-    await loadFavorites();
-    if (!favorites.ready) throw new Error();
-   }
-   const songs = favorites && !favorites.keys.size ? [] : await loadRepertoire();
-   if (!dialog.open || version !== opening || (favorites && favoritesForListener() !== favorites)) return;
+   const favorites = favoritesForListener();
+   await loadFavorites();
+   if (!favorites.ready) throw new Error();
+   const songs = favorites.keys.size ? await loadRepertoire() : [];
+   if (!dialog.open || version !== opening || favoritesForListener() !== favorites) return;
    const artistField = field(slot, 'artist');
    for (const {artist, song, category} of songs) {
-    if (category !== slot.category || (favorites && !favorites.keys.has(favoriteSongKey(artist, song)))) continue;
+    if (category !== slot.category || !favorites.keys.has(favoriteSongKey(artist, song))) continue;
     if (artistField instanceof HTMLSelectElement && ![...artistField.options].some(option => option.value === artist)) continue;
     const button = document.createElement('button');
     button.type = 'button';
@@ -910,13 +920,9 @@ for (const slot of currentSlots) {
     };
     choices.append(button);
    }
-   status.textContent = choices.childElementCount ? '' : t(favoritesOnly
-    ? 'このカテゴリのお気に入りの曲はありません。'
-    : 'このカテゴリに歌える曲はまだありません。');
+   status.textContent = choices.childElementCount ? '' : t('このカテゴリのお気に入りの曲はありません。');
   } catch {
-   if (dialog.open && version === opening) status.textContent = t(favoritesOnly
-    ? 'お気に入りを読み込めませんでした。'
-    : '歌える曲リストを読み込めませんでした。');
+   if (dialog.open && version === opening) status.textContent = t('お気に入りを読み込めませんでした。');
   }
  }
 }
@@ -1081,7 +1087,7 @@ function renderPlayableResults() {
  const artists = $('playable-artists');
  const tracks = $('playable-track-list');
  const artistList = view === 'artists' && !artist;
- const songs = (playableSongs || []).filter(song => (!category || song.category === category) && (!artist || song.artist === artist));
+ const songs = (playableSongs || []).filter(song => (!category || song.category === category) && (!artist || normalize(song.artist) === normalize(artist)));
  const matchedArtists = new Map();
  const matchedTracks = [];
  for (const song of songs) {
