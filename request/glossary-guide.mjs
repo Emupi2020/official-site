@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-feature-buttons';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-meter-cutoff';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {
