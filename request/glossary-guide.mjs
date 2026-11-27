@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-follow-item';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-knight-oshinobi';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {
