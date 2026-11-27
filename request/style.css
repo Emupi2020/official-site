@@ -267,7 +267,7 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .glossary-categories {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
   margin-block-end: 12px;
 }
@@ -280,7 +280,7 @@ body:has(.request-page) { background: #f2f2f7; }
   -webkit-backdrop-filter: saturate(150%) blur(6px);
   backdrop-filter: saturate(150%) blur(6px);
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 .glossary-categories button[aria-pressed="true"] {
@@ -290,6 +290,16 @@ body:has(.request-page) { background: #f2f2f7; }
   filter: none;
 }
 #pococha-glossary-terms dl { margin: 0; }
+.glossary-kana-heading {
+  margin: 0;
+  padding-block: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.glossary-kana-section ~ .glossary-kana-section .glossary-kana-heading {
+  margin-block-start: 8px;
+}
 .glossary-term { padding-block: 12px; }
 .glossary-term:not([hidden]) ~ .glossary-term:not([hidden]) { border-block-start: 1px solid var(--border); }
 .glossary-term dt { font-weight: 700; }

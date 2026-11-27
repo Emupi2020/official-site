@@ -2,8 +2,8 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=glossary-categories';
-import { setupPocochaGlossary } from './pococha-glossary.mjs?v=kana-order';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=glossary-topic-tabs';
+import { setupPocochaGlossary } from './pococha-glossary.mjs?v=kana-groups';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
 const languageView = history.state?.restoreLanguageView ? history.state : null;
 localizeListenerPage();
