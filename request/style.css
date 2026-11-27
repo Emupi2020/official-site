@@ -253,8 +253,9 @@ body:has(.request-page) { background: #f2f2f7; }
   font-weight: 600;
 }
 .glossary-categories button[aria-pressed="true"] {
-  background: #f2f2f4;
+  background: #e8e8ed;
   color: var(--text);
+  filter: none;
 }
 .glossary-group:not([hidden]) ~ .glossary-group:not([hidden]) { margin-block-start: 20px; }
 .glossary-group h2 { font-size: 16px; margin: 0 0 4px; }
