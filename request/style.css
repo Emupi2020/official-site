@@ -700,6 +700,23 @@ body:has(.request-page) { background: #f2f2f7; }
 [data-status-tag="removed"] { background: #fbe8e7; color: #8d3235; }
 [data-status-tag="unrequested"] { background: #c62828; color: #fff; }
 .history-tag { margin-block-start: 4px; }
+#favorite-feedback.favorite-hint {
+  position: fixed;
+  z-index: 11;
+  inset-inline: 16px;
+  inset-block-end: calc(16px + env(safe-area-inset-bottom));
+  width: fit-content;
+  max-width: min(420px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 4px 18px #0002;
+  text-align: center;
+  pointer-events: none;
+}
 .played-history-title { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
 .played-history-title > :first-child { min-width: 0; overflow-wrap: anywhere; }
 .played-history-title .history-tag { flex: none; margin-block-start: 0; min-height: 0; border: 0; cursor: pointer; }

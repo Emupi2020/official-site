@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=challenge-explanation';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=first-favorite-song';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -647,10 +647,14 @@ function favoritesForListener() {
  favoriteState = current;
  return current;
 }
-function favoriteFeedback(text) {
+let favoriteFeedbackTimer;
+function favoriteFeedback(text, hint = false) {
  const feedback = $('favorite-feedback');
+ clearTimeout(favoriteFeedbackTimer);
+ feedback.classList.toggle('favorite-hint', hint);
  feedback.textContent = text;
  feedback.hidden = !text;
+ if (hint) favoriteFeedbackTimer = setTimeout(() => favoriteFeedback(''), 6500);
 }
 function updateFavoriteButtons(current) {
  if (favoritesForListener() !== current) return;
@@ -699,11 +703,16 @@ function favoriteButton(key, name) {
   try {
    if (current.synced) {
     await api('/api/listener-favorites', {method:'POST', data:{key,saved}});
-    if (saved) current.keys.add(key);
-    else current.keys.delete(key);
    } else {
     if (!safeSet(favoriteStorageKey, JSON.stringify([...keys]))) throw new Error();
-    current.keys = keys;
+   }
+   const firstSong = saved && key.startsWith('song:') && ![...current.keys].some(item => item.startsWith('song:'));
+   if (saved) current.keys.add(key);
+   else current.keys.delete(key);
+   if (firstSong && favoritesForListener() === current) {
+    favoriteFeedback($('user-menu-toggle').hidden
+     ? t('利用を始めると、右上の人型メニューの「お気に入り」から確認できます。')
+     : t('右上の人型メニューの「お気に入り」から確認できます。'), true);
    }
    if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
   } catch {
