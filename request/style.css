@@ -238,6 +238,13 @@ body:has(.request-page) { background: #f2f2f7; }
   height: 14px;
   color: #808087;
 }
+.glossary-controls {
+  position: sticky;
+  top: calc(var(--header-height) + env(safe-area-inset-top) + 1px);
+  z-index: 2;
+  display: flow-root;
+  background: var(--bg);
+}
 .glossary-categories {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
