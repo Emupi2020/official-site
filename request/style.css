@@ -334,7 +334,9 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .glossary-copy-examples li + li { margin-block-start: 0; }
 .glossary-copy-examples li > span { min-width: 0; overflow-wrap: anywhere; }
-.glossary-copy-examples button {
+.glossary-fan-mark { display: flex; align-items: center; gap: 8px; }
+.glossary-copy-examples button,
+.glossary-fan-mark button {
   display: grid;
   place-items: center;
   min-width: 44px;

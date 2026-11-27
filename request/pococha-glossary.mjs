@@ -1,5 +1,6 @@
 import { normalize } from './common.mjs';
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-centered';
+import { appendCopyControl } from './glossary-guide.mjs?v=glossary-fan-mark';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark';
 
 // List each term's reading first in its search aliases for dictionary order.
 const groups = [
@@ -14,7 +15,7 @@ const groups = [
       ['ナイフォ', 'ないふぉ ナイスフォロー 팔로우', '「ナイスフォロー」の略。えむぴーをフォローした人にかける言葉。', '‘나이스 팔로우’의 줄임말로, えむぴー를 팔로우한 사람에게 하는 말이에요.'],
       ['プチおめ', 'ぷちおめ プチファン 쁘띠 팬 축하', 'プチファンになった人をお祝いする言葉。', '쁘띠 팬이 된 사람에게 축하할 때 쓰는 말이에요.'],
       ['拍手回収', 'はくしゅかいしゅう パチパチ 박수 박수 보내기', 'アイテムが使われたときなどに出る👏ボタンを押して、同じ配信を見ている人に拍手を送ること。', '아이템을 썼을 때 등에 나타나는 👏 버튼을 눌러 같은 방송을 보는 사람에게 박수를 보내는 거예요.'],
-      ['ファンマ', 'ふぁんま ファンマーク 팬마크 팬 이모지', '「ファンマーク」の略。応援している人を表す絵文字などを、目印として名前に付けることがあります。', '‘팬 마크’의 줄임말이에요. 응원하는 사람을 상징하는 이모지 등을 닉네임에 붙이기도 해요.'],
+      ['ファンマ', 'ふぁんま ファンマーク 팬마크 팬 이모지', '「ファンマーク」の略。応援している人を表す絵文字などを、目印として名前に付けることがあります。えむぴーのファンマは「🅿︎」。付けるときは、Pocochaのプロフィール編集で名前の後ろに貼り付けてください。', '‘팬 마크’의 줄임말이에요. 응원하는 사람을 상징하는 이모지 등을 닉네임에 붙이기도 해요. えむぴー의 팬 마크는 「🅿︎」예요. 포코차 프로필 편집에서 닉네임 뒤에 붙여 넣으면 돼요.'],
       ['潜り', 'もぐり 潜る ながら見 채팅 없이 시청 잠수', '配信を開いたまま、コメントせずに聞いたり、別の作業をしたりすること。', '방송을 켜 둔 채 채팅 없이 듣거나 다른 일을 하는 걸 뜻해요.'],
       ['コアおめ', 'こあふぁん おめでとう 코어 팬 축하', 'コアファンになった人や、コアファンの段階が上がった人を祝う言葉。', '코어 팬이 됐거나 코어 팬 등급이 오른 사람에게 축하할 때 쓰는 말이에요.'],
       ['エルおめ', 'えるおめ えーる えーるおめ おめでとう 응원 축하', 'エールの段階が上がった人を祝う言葉。', '에루(응원 지표) 단계가 오른 사람에게 축하할 때 쓰는 말이에요.'],
@@ -101,6 +102,14 @@ export function setupPocochaGlossary(panel, korean) {
         caption.className = 'glossary-example';
         caption.textContent = korean ? `예 “${example[1]}”` : `例「${example[0]}」`;
         row.append(caption);
+      }
+      if (name === 'ファンマ') {
+        const mark = document.createElement('dd');
+        mark.className = 'glossary-fan-mark';
+        const status = document.createElement('dd');
+        status.setAttribute('role', 'status');
+        appendCopyControl(mark, '🅿︎', status, korean);
+        row.append(mark, status);
       }
       const guide = guidesByTerm.get(name);
       if (guide) {

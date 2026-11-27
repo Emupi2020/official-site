@@ -1,5 +1,30 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-centered';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark';
 import { $ } from './common.mjs';
+
+export function appendCopyControl(row, example, status, korean) {
+  const copyLabel = korean ? '복사' : 'コピー';
+  const sample = document.createElement('span');
+  sample.textContent = example;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+  button.setAttribute('aria-label', `${example} ${copyLabel}`);
+  button.addEventListener('click', async () => {
+    status.textContent = '';
+    try {
+      await navigator.clipboard.writeText(example);
+      status.textContent = korean ? '복사했어요.' : 'コピーしました。';
+    } catch {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(sample);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      status.textContent = korean ? '선택한 문구를 길게 눌러 복사해 주세요.' : '選択した文を長押ししてコピーしてください。';
+    }
+  });
+  row.append(sample, button);
+}
 
 function appendCopyExamples(panel, examples, korean) {
   const heading = document.createElement('h2');
@@ -8,30 +33,9 @@ function appendCopyExamples(panel, examples, korean) {
   list.className = 'glossary-copy-examples';
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
-  const copyLabel = korean ? '복사' : 'コピー';
   for (const example of examples) {
     const row = document.createElement('li');
-    const sample = document.createElement('span');
-    sample.textContent = example;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
-    button.setAttribute('aria-label', `${example} ${copyLabel}`);
-    button.addEventListener('click', async () => {
-      status.textContent = '';
-      try {
-        await navigator.clipboard.writeText(example);
-        status.textContent = korean ? '복사했어요.' : 'コピーしました。';
-      } catch {
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(sample);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        status.textContent = korean ? '선택한 문구를 길게 눌러 복사해 주세요.' : '選択した文を長押ししてコピーしてください。';
-      }
-    });
-    row.append(sample, button);
+    appendCopyControl(row, example, status, korean);
     list.append(row);
   }
   panel.append(heading, list, status);
