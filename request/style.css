@@ -238,12 +238,21 @@ body:has(.request-page) { background: #f2f2f7; }
   height: 14px;
   color: #808087;
 }
+#menu-page:has(#pococha-glossary:not([hidden])) {
+  --glossary-controls-inset: 8px;
+}
+#menu-page:has(#pococha-glossary:not([hidden])) .menu-page-heading {
+  margin-block-end: calc(var(--page-title-gap) - var(--glossary-controls-inset));
+}
 .glossary-controls {
   position: sticky;
   top: calc(var(--header-height) + env(safe-area-inset-top) + 1px);
   z-index: 2;
   display: flow-root;
-  background: var(--bg);
+  padding-block-start: var(--glossary-controls-inset);
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 .glossary-categories {
   display: grid;
