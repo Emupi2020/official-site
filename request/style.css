@@ -323,6 +323,13 @@ body:has(.request-page) { background: #f2f2f7; }
   margin: 0 0 var(--page-title-gap);
   font-size: clamp(20px, 6vw, 28px);
 }
+#guide-subtitle {
+  margin-inline-start: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
 .glossary-guide ol { padding-inline-start: 1.5em; }
 .glossary-guide li + li { margin-block-start: 12px; }
 .glossary-guide figure { margin: 16px 0; }

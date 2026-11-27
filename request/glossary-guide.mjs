@@ -18,10 +18,12 @@ const guide = Object.hasOwn(guides, slug) ? guides[slug] : null;
 if (guide) {
   const title = guide.title[language];
   document.title = `${title} | Emupi`;
-  $('guide-title').textContent = title;
-  const term = $('guide-term');
-  term.textContent = guide.term;
-  term.hidden = false;
+  const heading = $('guide-title');
+  heading.lang = 'ja';
+  heading.textContent = guide.term;
+  const subtitle = $('guide-subtitle');
+  subtitle.textContent = title;
+  subtitle.hidden = false;
   const steps = $('guide-steps');
   if (guide.steps.length === 1) {
     const instruction = document.createElement('p');
