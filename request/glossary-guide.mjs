@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=applause-step';
+import { guides } from './pococha-glossary-guides.mjs?v=guide-rules';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {

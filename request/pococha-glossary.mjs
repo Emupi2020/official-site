@@ -1,5 +1,5 @@
 import { normalize } from './common.mjs';
-import { guides } from './pococha-glossary-guides.mjs';
+import { guides } from './pococha-glossary-guides.mjs?v=guide-rules';
 
 // List each term's reading first in its search aliases for dictionary order.
 const groups = [
@@ -74,7 +74,10 @@ export function setupPocochaGlossary(panel, korean) {
   let savedPosition = performance.getEntriesByType('navigation')[0]?.type === 'back_forward'
     ? history.state?.glossaryPosition
     : null;
-  const guidesByTerm = new Map(Object.entries(guides).map(([slug, guide]) => [guide.term, { slug, title: guide.title }]));
+  const guidesByTerm = new Map();
+  for (const [slug, { term, relatedTerms = [], title }] of Object.entries(guides)) {
+    for (const name of [term, ...relatedTerms]) guidesByTerm.set(name, { slug, title });
+  }
 
   const kanaRows = ['あいうえお', 'かきくけこ', 'さしすせそ', 'たちつてと', 'なにぬねの', 'はひふへほ', 'まみむめも', 'やゆよ', 'らりるれろ', 'わをん'];
   const collator = new Intl.Collator('ja');
