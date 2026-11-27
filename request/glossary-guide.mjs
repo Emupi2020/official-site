@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=guide-rules';
+import { guides } from './pococha-glossary-guides.mjs?v=family-kirakome';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {
