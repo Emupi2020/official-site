@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-icon';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-centered';
 import { $ } from './common.mjs';
 
 function appendCopyExamples(panel, examples, korean) {
