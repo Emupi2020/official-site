@@ -155,6 +155,14 @@ html[data-carry-menu] #request-menu-close[hidden] { display: grid !important; po
 #request-menu-official {
   margin-block-start: 16px;
 }
+#request-menu > .request-menu-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+#request-menu [data-menu-page="feedback-page"] {
+  margin-block-start: auto;
+}
 .request-menu-link {
   opacity: 0;
   transform: translateY(-20px);
