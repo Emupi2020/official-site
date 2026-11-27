@@ -36,9 +36,12 @@ export function setupPocochaGlossary(panel, korean) {
   const form = panel.querySelector('form');
   const input = form.querySelector('input');
   const clear = form.querySelector('button');
+  const categories = panel.querySelector('.glossary-categories');
+  const categoryButtons = [...categories.querySelectorAll('button')];
   const results = panel.querySelector('#pococha-glossary-terms');
   const empty = panel.querySelector('#pococha-glossary-empty');
   const language = Number(korean);
+  let selectedCategory = 0;
 
   const sections = groups.map(({ heading, terms }) => {
     const section = document.createElement('section');
@@ -66,19 +69,30 @@ export function setupPocochaGlossary(panel, korean) {
     });
     section.append(title, list);
     results.append(section);
-    return { section, entries };
+    return { section, title, entries };
   });
 
   function filter() {
     const query = normalize(input.value);
     clear.hidden = !input.value;
-    for (const { section, entries } of sections) {
+    categories.hidden = Boolean(query);
+    sections.forEach(({ section, title, entries }, index) => {
       for (const { row, searchable } of entries) row.hidden = !searchable.includes(query);
-      section.hidden = entries.every(({ row }) => row.hidden);
-    }
+      const showAll = Boolean(query) || selectedCategory === 0;
+      title.hidden = !showAll;
+      section.hidden = (showAll ? entries.every(({ row }) => row.hidden) : selectedCategory !== index + 1);
+    });
     empty.hidden = sections.some(({ section }) => !section.hidden);
   }
 
+  categoryButtons.forEach((button, index) => {
+    button.addEventListener('click', () => {
+      categoryButtons[selectedCategory].setAttribute('aria-pressed', 'false');
+      selectedCategory = index;
+      button.setAttribute('aria-pressed', 'true');
+      filter();
+    });
+  });
   input.addEventListener('input', filter);
   form.addEventListener('submit', event => {
     event.preventDefault();

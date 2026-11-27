@@ -238,7 +238,25 @@ body:has(.request-page) { background: #f2f2f7; }
   height: 14px;
   color: #808087;
 }
-.glossary-group { margin-block-start: 20px; }
+.glossary-categories {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin-block-end: 12px;
+}
+.glossary-categories button {
+  min-height: 44px;
+  padding: 6px 2px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.glossary-categories button[aria-pressed="true"] {
+  background: #f2f2f4;
+  color: var(--text);
+}
+.glossary-group:not([hidden]) ~ .glossary-group:not([hidden]) { margin-block-start: 20px; }
 .glossary-group h2 { font-size: 16px; margin: 0 0 4px; }
 .glossary-group dl { margin: 0; }
 .glossary-term { padding-block: 12px; }
