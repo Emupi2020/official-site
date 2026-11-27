@@ -325,6 +325,9 @@ body:has(.request-page) { background: #f2f2f7; }
 }
 .glossary-guide ol { padding-inline-start: 1.5em; }
 .glossary-guide li + li { margin-block-start: 12px; }
+.glossary-guide figure { margin: 16px 0; }
+.glossary-guide figure img { display: block; max-width: 100%; max-height: 460px; height: auto; object-fit: contain; }
+.glossary-guide figcaption { margin-block-start: 6px; font-size: 12px; }
 .menu-page-form { max-width: 380px; }
 .slot-favorite-picker {
   display: flex;

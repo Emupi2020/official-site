@@ -1,8 +1,9 @@
-import { guides } from './pococha-glossary-guides.mjs?v=applause-position';
+import { guides } from './pococha-glossary-guides.mjs?v=images';
 import { $, safeGet } from './common.mjs';
 
 const korean = safeGet('emupi-request-language') === 'ko';
 const language = Number(korean);
+const officialHelp = 'https://pococha-jp.pococha.com/hc/ja/articles/';
 const back = $('glossary-back');
 if (korean) {
   document.documentElement.lang = 'ko';
@@ -35,8 +36,24 @@ if (guide) {
     steps.hidden = false;
   }
   const source = $('guide-source');
-  source.firstElementChild.href = `https://pococha-jp.pococha.com/hc/ja/articles/${guide.source}`;
+  source.firstElementChild.href = officialHelp + guide.source;
   source.hidden = false;
+  if (guide.action) {
+    const action = $('guide-action');
+    action.firstElementChild.href = guide.action[0];
+    action.firstElementChild.textContent = guide.action[language + 1];
+    action.hidden = false;
+  }
+  if (guide.image) {
+    const figure = $('guide-figure');
+    const image = figure.querySelector('img');
+    const credit = figure.querySelector('figcaption a');
+    credit.href = officialHelp + (guide.imageSource ?? guide.source);
+    if (korean) credit.textContent = '이미지 출처: 포코차 공식 도움말';
+    image.alt = guide.image[language + 1];
+    image.addEventListener('load', () => { figure.hidden = false; }, { once: true });
+    image.src = guide.image[0];
+  }
 } else {
   $('guide-missing').hidden = false;
 }
