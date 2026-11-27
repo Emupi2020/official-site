@@ -611,7 +611,14 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
   const tag = document.createElement('span');
   renderStatusTag(tag, statusKey);
   tag.className = 'history-tag';
-  identity.append(tag);
+  if (list.id === 'played-list') {
+   const titleLine = document.createElement('div');
+   titleLine.className = 'played-history-title';
+   title.before(titleLine);
+   titleLine.append(title, tag);
+  } else {
+   identity.append(tag);
+  }
  }
  if (category) row.append(jacket(category, 'history-art', 42));
  row.append(identity);

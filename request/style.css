@@ -700,6 +700,9 @@ body:has(.request-page) { background: #f2f2f7; }
 [data-status-tag="removed"] { background: #fbe8e7; color: #8d3235; }
 [data-status-tag="unrequested"] { background: #c62828; color: #fff; }
 .history-tag { margin-block-start: 4px; }
+.played-history-title { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.played-history-title > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.played-history-title .history-tag { flex: none; margin-block-start: 0; }
 dialog.listener-dialog {
   max-width: none;
   width: min(300px, calc(100% - 32px));
