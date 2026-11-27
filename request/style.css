@@ -733,6 +733,14 @@ dialog.listener-dialog .buttons .secondary { background: #f5f5f7; }
   color: inherit;
   text-align: start;
 }
+:is(.song-detail-row, .song-choice, .slot-overview-row) .song-identity-title {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.song-details-dialog .song-identity-title { overflow-wrap: anywhere; }
 .song-details-dialog { text-align: center; }
 .song-details-jacket { display: block; margin: 0 auto 8px; border-radius: 5px; }
 .song-details-dialog .buttons { flex-direction: column; }
