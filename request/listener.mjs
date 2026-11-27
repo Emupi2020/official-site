@@ -2,10 +2,12 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=ko-copy2';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=pococha-glossary';
+import { setupPocochaGlossary } from './pococha-glossary.mjs';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
 const languageView = history.state?.restoreLanguageView ? history.state : null;
 localizeListenerPage();
+setupPocochaGlossary($('pococha-glossary'), korean);
 const notesButton = $('request-notes-toggle');
 notesButton.onclick = () => {
  const notes = $('request-notes');
