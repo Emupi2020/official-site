@@ -19,6 +19,9 @@ body.listener-layout {
   --border: inherit;
   width: 100%;
 }
+body.listener-layout.glossary-guide-layout {
+  padding-top: env(safe-area-inset-top);
+}
 .listener-layout:has(#request-screen:not([hidden])) .request-page { margin-block: 12px 20px; }
 .listener-content {
   flex: 1;

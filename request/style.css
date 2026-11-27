@@ -309,13 +309,6 @@ body:has(.request-page) { background: #f2f2f7; }
 .glossary-term dt { font-weight: 700; }
 .glossary-term dd { margin: 4px 0 0; font-size: 14px; }
 .glossary-term .glossary-example { color: var(--muted); }
-.listener-nav .glossary-back {
-  display: flex;
-  align-items: center;
-  min-height: var(--header-height);
-  padding-inline: 4px;
-  color: var(--accent);
-}
 .listener-layout .glossary-guide {
   margin: 16px auto;
 }
