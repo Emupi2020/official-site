@@ -741,6 +741,9 @@ dialog.listener-dialog::backdrop { background: #0003; backdrop-filter: none; }
 #request-status-dialog[data-highlight-user-menu]::backdrop {
   background: radial-gradient(circle at var(--user-menu-x) var(--user-menu-y), transparent 27px, #0003 30px);
 }
+body:has(#request-status-dialog[open][data-highlight-user-menu]) #song-details-dialog::backdrop {
+  background: transparent;
+}
 dialog.listener-dialog h2 { margin: 0; font-size: 17px; text-align: center; outline: none; }
 body:has(#request-status-dialog[open][data-highlight-user-menu]) #user-menu-toggle {
   color: #005bb6;
