@@ -290,20 +290,19 @@ body:has(.request-page) { background: #f2f2f7; }
   filter: none;
 }
 #pococha-glossary-terms dl { margin: 0; }
-.glossary-kana-section {
-  position: relative;
-}
 .glossary-kana-section:not([hidden]) ~ .glossary-kana-section:not([hidden]) {
   border-block-start: 1px solid var(--border);
 }
 .glossary-kana-heading {
-  position: absolute;
-  inset-block-start: 16px;
-  inset-inline-end: calc(100% + 3px);
   margin: 0;
+  padding-block-start: 8px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
+  line-height: 1.25;
   font-weight: 600;
+}
+.glossary-kana-heading:not([hidden]) + dl .glossary-term:first-child {
+  padding-block-start: 4px;
 }
 .glossary-term { padding-block: 12px; }
 .glossary-term:not([hidden]) ~ .glossary-term:not([hidden]) { border-block-start: 1px solid var(--border); }
