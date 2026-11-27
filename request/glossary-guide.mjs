@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=emupi-listeners';
+import { guides } from './pococha-glossary-guides.mjs?v=emupi-glossary-copy';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {

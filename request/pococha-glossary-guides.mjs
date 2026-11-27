@@ -7,7 +7,7 @@ export const guides = {
       ['「ファミリー」欄の「P’s」をタップし、「加入申請する」からメッセージを送ります。えむぴーかアシスタントが承認すると参加できます。', '‘ファミリー’(패밀리)에서 ‘P’s’를 누르고 ‘加入申請する’(가입 신청)를 선택해 메시지를 보내요. えむぴー나 어시스턴트가 승인하면 가입돼요.'],
     ],
     source: '31820215192345',
-    image: ['https://pococha-jp.pococha.com/hc/article_attachments/44053246047641', '配信画面のライバーアイコン', '방송 화면의 라이버 아이콘'],
+    image: ['https://pococha-jp.pococha.com/hc/article_attachments/44053246047641', '配信画面の左上にあるプロフィールアイコン', '방송 화면 왼쪽 위에 있는 프로필 아이콘'],
     imageSource: '44053246059929',
     stepImages: {
       2: ['./family-profile-emupi.png', 'えむぴーのプロフィールにある「ファミリー」欄', '에무피 프로필의 ‘ファミリー’(패밀리) 영역'],
