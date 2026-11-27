@@ -222,10 +222,12 @@ function showRequestStatus(key, entry) {
  if (!description) return;
  showListenerExplanation(requestStatusLabels[key], description);
 }
-function showListenerExplanation(title, description) {
+function showListenerExplanation(title, description, highlightUserMenu = false) {
  $('request-status-title').textContent = title;
  $('request-status-description').textContent = description;
- $('request-status-dialog').showModal();
+ const dialog = $('request-status-dialog');
+ dialog.toggleAttribute('data-highlight-user-menu', highlightUserMenu);
+ dialog.showModal();
 }
 function requestStatusKey(entry, reserved = false) {
  if (reserved && entry.status === 'pending') return 'reserved';
@@ -783,9 +785,10 @@ function favoriteButton(key, name, withLabel = false) {
    if (saved) current.keys.add(key);
    else current.keys.delete(key);
    if (firstFavorite && favoritesForListener() === current) {
-    showListenerExplanation(t('お気に入りに追加しました'), $('user-menu-toggle').hidden
+    const menuVisible = !$('user-menu-toggle').hidden;
+    showListenerExplanation(t('お気に入りに追加しました'), !menuVisible
      ? t('利用を始めると、右上の人型メニューの「お気に入り」から確認できます。')
-     : t('右上の人型メニューの「お気に入り」から確認できます。'));
+     : t('右上の人型メニューの「お気に入り」から確認できます。'), menuVisible);
    }
    if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
   } catch {

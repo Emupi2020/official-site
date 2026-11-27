@@ -739,6 +739,19 @@ dialog.listener-dialog {
 }
 dialog.listener-dialog::backdrop { background: #0003; backdrop-filter: none; }
 dialog.listener-dialog h2 { margin: 0; font-size: 17px; text-align: center; outline: none; }
+body:has(#request-status-dialog[open][data-highlight-user-menu]) #user-menu-toggle {
+  color: #005bb6;
+  background-color: #e0efff;
+  border-radius: 50%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body:has(#request-status-dialog[open][data-highlight-user-menu]) #user-menu-toggle {
+    animation: favorite-menu-pulse 1.05s ease-in-out 2;
+  }
+}
+@keyframes favorite-menu-pulse {
+  50% { box-shadow: 0 0 0 5px #0071e366; }
+}
 dialog.listener-dialog .buttons { margin-top: 16px; gap: 8px; }
 dialog.listener-dialog .buttons button { min-height: 44px; padding: 8px 4px; border: 0; border-radius: 8px; }
 dialog.listener-dialog .buttons .secondary { background: #f5f5f7; }
