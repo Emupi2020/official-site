@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=images';
+import { guides } from './pococha-glossary-guides.mjs?v=applause-step';
 import { $, safeGet } from './common.mjs';
 
 const korean = safeGet('emupi-request-language') === 'ko';
