@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-copy';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-emupi';
 import { $ } from './common.mjs';
 
 function appendCopyExamples(panel, examples, korean) {
