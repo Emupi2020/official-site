@@ -749,7 +749,7 @@ body:has(#request-status-dialog[open][data-highlight-user-menu]) #user-menu-togg
 }
 @media (prefers-reduced-motion: no-preference) {
   body:has(#request-status-dialog[open][data-highlight-user-menu]) #user-menu-toggle {
-    animation: favorite-menu-pulse 1.05s ease-in-out 2;
+    animation: favorite-menu-pulse 1.05s ease-in-out infinite;
   }
 }
 @keyframes favorite-menu-pulse {
