@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=first-favorite-dialog';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=song-details-dialog';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -590,9 +590,16 @@ function feedback(slot, text, error = true) {
 const japanDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Asia/Tokyo', dateStyle:'short'});
 function historyRow(list, song, artist, status, timestamp, category = classifyArtist(artist), statusKey) {
  const row = document.createElement('li');
- const title = document.createElement('div');
+ const title = document.createElement('button');
+ title.type = 'button';
+ title.className = 'song-detail-trigger';
+ title.setAttribute('aria-haspopup', 'dialog');
  const subtitle = document.createElement('div');
  renderSongIdentity(title, subtitle, song, artist);
+ title.onclick = () => openSongDetails(artist, song);
+ row.onclick = event => {
+  if (!event.target.closest('button, a')) title.click();
+ };
  const identity = document.createElement('div');
  const meta = document.createElement('div');
  meta.className = 'history-status';
@@ -639,6 +646,46 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
 }
 const favoriteStorageKey = 'emupi-request-favorites';
 const favoriteSongKey = (artist, song) => 'song:' + JSON.stringify([normalize(artist), normalize(song)]);
+const songDetails = $('song-details-dialog');
+function songRequestDraft(artist) {
+ const slot = currentSlots.find(item => item.category === classifyArtist(artist));
+ if (!state || !lookupName() || $('request-screen').hidden || !slot || hasSlotRequest(slot)) return null;
+ const fieldArtist = field(slot, 'artist');
+ const value = fieldArtist instanceof HTMLSelectElement
+  ? [...fieldArtist.options].find(option => normalize(option.value) === normalize(artist))?.value
+  : artist;
+ return value ? {slot, value} : null;
+}
+function openSongDetails(artist, song) {
+ renderSongIdentity($('song-details-title'), $('song-details-artist'), song, artist);
+ $('song-details-art').replaceChildren(jacket(classifyArtist(artist), 'song-details-jacket', 64));
+ const request = $('song-details-request');
+ request.hidden = !songRequestDraft(artist);
+ request.onclick = () => {
+  const draft = songRequestDraft(artist);
+  if (!draft || busy) {
+   request.hidden = !draft;
+   return;
+  }
+  const {slot, value} = draft;
+  songDetails.close();
+  const url = new URL(location.href);
+  for (const key of ['view', 'category', 'artist', 'term', 'preview']) url.searchParams.delete(key);
+  window.history.pushState({requestScreen:true, currentSlot:slot.id}, '', url);
+  showMenuPage(null);
+  showSlot(slot.id, true);
+  slot.draftRound = slot.round;
+  field(slot, 'artist').value = value;
+  field(slot, 'song').value = song;
+  hideSuggestions();
+  lock(busy);
+  window.scrollTo(0, 0);
+ };
+ $('song-details-favorite').replaceChildren(favoriteButton(favoriteSongKey(artist, song), song, true));
+ $('song-details-feedback').textContent = '';
+ songDetails.showModal();
+ loadFavorites();
+}
 let favoriteState;
 function favoritesForListener() {
  const owner = account.signedIn ? historyOwner() : 'browser';
@@ -657,9 +704,12 @@ function favoriteFeedback(text) {
 }
 function updateFavoriteButtons(current) {
  if (favoritesForListener() !== current) return;
- for (const button of menuPage.querySelectorAll('[data-favorite-key]')) {
+ for (const button of document.querySelectorAll('[data-favorite-key]')) {
   const key = button.dataset.favoriteKey;
-  button.setAttribute('aria-pressed', String(current.keys.has(key)));
+  const saved = current.keys.has(key);
+  button.setAttribute('aria-pressed', String(saved));
+  const label = button.querySelector('.song-details-favorite-label');
+  if (label) label.textContent = t(saved ? 'お気に入りから外す' : 'お気に入りに追加');
   button.disabled = !current.ready || current.pending.has(key);
  }
 }
@@ -679,7 +729,7 @@ async function loadFavorites() {
   updateFavoriteButtons(current);
  }
 }
-function favoriteButton(key, name) {
+function favoriteButton(key, name, withLabel = false) {
  const button = document.createElement('button');
  button.type = 'button';
  button.className = 'favorite-star';
@@ -687,6 +737,14 @@ function favoriteButton(key, name) {
  button.setAttribute('aria-label', korean ? name + ' 즐겨찾기' : name + 'のお気に入り');
  button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.6l6.2-.9L12 3Z"/></svg>';
  const initial = favoritesForListener();
+ if (withLabel) {
+  const label = document.createElement('span');
+  label.className = 'song-details-favorite-label';
+  label.textContent = t(initial.keys.has(key) ? 'お気に入りから外す' : 'お気に入りに追加');
+  button.removeAttribute('aria-label');
+  button.classList.add('song-details-favorite-button');
+  button.append(label);
+ }
  button.setAttribute('aria-pressed', String(initial.keys.has(key)));
  button.disabled = !initial.ready || initial.pending.has(key);
  button.onclick = async () => {
@@ -699,6 +757,7 @@ function favoriteButton(key, name) {
   current.pending.add(key);
   updateFavoriteButtons(current);
   favoriteFeedback('');
+  if (withLabel) $('song-details-feedback').textContent = '';
   try {
    if (current.synced) {
     await api('/api/listener-favorites', {method:'POST', data:{key,saved}});
@@ -715,7 +774,11 @@ function favoriteButton(key, name) {
    }
    if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
   } catch {
-   if (favoritesForListener() === current) favoriteFeedback(t('お気に入りを変更できませんでした。'));
+   if (favoritesForListener() === current) {
+    const error = t('お気に入りを変更できませんでした。');
+    if (withLabel && songDetails.open) $('song-details-feedback').textContent = error;
+    else favoriteFeedback(error);
+   }
   } finally {
    current.pending.delete(key);
    updateFavoriteButtons(current);

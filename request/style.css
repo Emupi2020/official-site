@@ -717,6 +717,19 @@ dialog.listener-dialog h2 { margin: 0; font-size: 17px; text-align: center; outl
 dialog.listener-dialog .buttons { margin-top: 16px; gap: 8px; }
 dialog.listener-dialog .buttons button { min-height: 44px; padding: 8px 4px; border: 0; border-radius: 8px; }
 dialog.listener-dialog .buttons .secondary { background: #f5f5f7; }
+.song-history .song-detail-trigger {
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+}
+.song-details-dialog { text-align: center; }
+.song-details-jacket { display: block; margin: 0 auto 8px; border-radius: 5px; }
+.song-details-dialog .buttons { flex-direction: column; }
+.song-details-dialog .buttons button { width: 100%; }
+.song-details-dialog button.song-details-favorite-button { color: var(--accent); }
 .playable-categories {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
