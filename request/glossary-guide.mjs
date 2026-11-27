@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-meter-yell';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-follow-item';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {
@@ -40,6 +40,16 @@ export function showGlossaryGuide(slug, korean, heading) {
           image.addEventListener('load', () => { figure.hidden = false; }, { once: true });
           image.src = stepImage[0];
           figure.append(image);
+          if (stepImage[3]) {
+            const caption = document.createElement('figcaption');
+            const credit = document.createElement('a');
+            credit.href = officialHelp + stepImage[3];
+            credit.target = '_blank';
+            credit.rel = 'noopener';
+            credit.textContent = korean ? '이미지 출처: 포코차 공식 도움말' : '画像出典：ポコチャ公式ヘルプ';
+            caption.append(image.alt, ' ', credit);
+            figure.append(caption);
+          }
           item.append(figure);
         }
         steps.append(item);
