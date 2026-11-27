@@ -1005,8 +1005,8 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
    breadcrumbs.append(button, arrow);
   };
   addCrumb('歌える曲', {});
+  if (browsing) addCrumb(categoryLabel(category), {playableCategory:category});
   if (artist) addCrumb('アーティスト', {playableCategory:category, playableView:'artists'});
-  else if (browsing && view !== 'artists') addCrumb(categoryLabel(category), {playableCategory:category});
   menuPageTitle.textContent = artist || (browsing ? t(view === 'artists' ? 'アーティスト' : '曲') : t(categoryLabel(category)));
   if (artist) {
    const star = favoriteButton('artist:' + normalize(artist), artist);
