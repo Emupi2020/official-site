@@ -1,4 +1,5 @@
 import { normalize } from './common.mjs';
+import { guides } from './pococha-glossary-guides.mjs';
 
 // List each term's reading first in its search aliases for dictionary order.
 const groups = [
@@ -29,7 +30,7 @@ const groups = [
       ['追いハート', 'おいはーと 追加ハート 하트 추가', 'アイテムが送られたタイミングに合わせて、ハートのアイテムを送って一緒に盛り上げること。', '아이템이 올라온 타이밍에 맞춰 하트 아이템을 보내며 함께 분위기를 띄우는 거예요.'],
       ['追いコメ', 'おいこめ 追いコメント おいこめんと 댓글 추가', 'アイテムが送られたタイミングに合わせて、コメントで一緒に盛り上げること。', '아이템이 올라온 타이밍에 맞춰 댓글로 함께 분위기를 띄우는 거예요.'],
       ['プチファン', 'ぷちふぁん プチ 쁘띠 팬', 'コアファンの手前にあるエールの段階。', '코어 팬이 되기 전의 에루 단계예요.'],
-      ['1K', 'いちけー 千エール 1000エール 천 에루 1케이', '1,000エールのこと。1Kに達するとコアファンになります。', '1,000에루를 뜻해요. 1K에 도달하면 코어 팬이 돼요.'],
+      ['1K', 'いちけー 千 1000 천 1케이', '1,000を表す略記。「1Kエール」は1,000エール、「1Kコイン」は1,000コインのことです。', '1,000을 뜻하는 줄임 표기예요. ‘1K 에루’는 1,000에루, ‘1K 코인’은 1,000코인이에요.'],
       ['キリコア', 'きりこあ キリ番コア きりばんこあ 코어 팬 인원', 'その月の10人目・20人目など、きりのいい人数に当たるコアファン。', '그달의 10번째나 20번째처럼 인원수가 딱 떨어지는 순서에 해당하는 코어 팬이에요.'],
       ['ナイト', 'ないと ぽこナイト ポコナイト 포코 나이트 기사', '対象イベントの応援で就任できる「ぽこナイト」のこと。イベント応援用のアイテムがもらえます。', '해당 이벤트를 응원할 때 맡을 수 있는 ‘포코 나이트’를 뜻해요. 이벤트 응원용 아이템을 받을 수 있어요.'],
       ['ロイチャ', 'ろいちゃ ロイヤルチャージ ろいやるちゃーじ WEB課金 로열 차지 웹 결제 코인 구매', '「ロイヤルチャージ」の略。Web版Pocochaでコインを購入する方法。', '‘로열 차지’의 줄임말이에요. 웹 버전 Pococha에서 코인을 구매하는 방법이에요.'],
@@ -70,6 +71,10 @@ export function setupPocochaGlossary(panel, korean) {
   const results = panel.querySelector('#pococha-glossary-terms');
   const empty = panel.querySelector('#pococha-glossary-empty');
   let selectedCategory = 0;
+  let savedPosition = performance.getEntriesByType('navigation')[0]?.type === 'back_forward'
+    ? history.state?.glossaryPosition
+    : null;
+  const guidesByTerm = new Map(Object.entries(guides).map(([slug, guide]) => [guide.term, { slug, title: guide.title }]));
 
   const kanaRows = ['あいうえお', 'かきくけこ', 'さしすせそ', 'たちつてと', 'なにぬねの', 'はひふへほ', 'まみむめも', 'やゆよ', 'らりるれろ', 'わをん'];
   const collator = new Intl.Collator('ja');
@@ -88,6 +93,22 @@ export function setupPocochaGlossary(panel, korean) {
         caption.className = 'glossary-example';
         caption.textContent = korean ? `예 “${example[1]}”` : `例「${example[0]}」`;
         row.append(caption);
+      }
+      const guide = guidesByTerm.get(name);
+      if (guide) {
+        const detail = document.createElement('dd');
+        const link = document.createElement('a');
+        link.href = `./glossary-guide.html?term=${guide.slug}`;
+        link.textContent = guide.title[Number(korean)];
+        link.addEventListener('click', event => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          history.replaceState({
+            ...history.state,
+            glossaryPosition: { category: selectedCategory, query: input.value, top: window.scrollY },
+          }, '');
+        });
+        detail.append(link);
+        row.append(detail);
       }
       const [reading] = aliases.split(' ');
       return { row, reading, category: index + 1, searchable: normalize(`${name} ${aliases}`) };
@@ -129,12 +150,16 @@ export function setupPocochaGlossary(panel, korean) {
     empty.hidden = entries.some(({ row }) => !row.hidden);
   }
 
+  function selectCategory(index) {
+    categoryButtons[selectedCategory].setAttribute('aria-pressed', 'false');
+    selectedCategory = index;
+    categoryButtons[index].setAttribute('aria-pressed', 'true');
+    filter();
+  }
+
   categoryButtons.forEach((button, index) => {
     button.addEventListener('click', () => {
-      categoryButtons[selectedCategory].setAttribute('aria-pressed', 'false');
-      selectedCategory = index;
-      button.setAttribute('aria-pressed', 'true');
-      filter();
+      selectCategory(index);
       window.scrollTo({ top: 0, behavior: 'instant' });
     });
   });
@@ -148,4 +173,13 @@ export function setupPocochaGlossary(panel, korean) {
     filter();
     input.focus();
   });
+
+  return () => {
+    if (!savedPosition) return;
+    const { query, category, top } = savedPosition;
+    savedPosition = null;
+    input.value = query;
+    selectCategory(categoryButtons[category] ? category : 0);
+    requestAnimationFrame(() => window.scrollTo({ top, behavior: 'instant' }));
+  };
 }

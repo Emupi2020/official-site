@@ -3,11 +3,11 @@ import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
 import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=glossary-topic-tabs';
-import { setupPocochaGlossary } from './pococha-glossary.mjs?v=category-headings';
+import { setupPocochaGlossary } from './pococha-glossary.mjs?v=guides';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
 const languageView = history.state?.restoreLanguageView ? history.state : null;
 localizeListenerPage();
-setupPocochaGlossary($('pococha-glossary'), korean);
+const restoreGlossaryPosition = setupPocochaGlossary($('pococha-glossary'), korean);
 const notesButton = $('request-notes-toggle');
 notesButton.onclick = () => {
  const notes = $('request-notes');
@@ -495,6 +495,7 @@ function showMenuPage(id, focus = false) {
   window.scrollTo(0, 0);
   menuPageTitle.focus();
  }
+ if (panel.id === 'pococha-glossary') restoreGlossaryPosition?.();
  if (panel.id === 'my-history') return loadArchivedHistory();
  if (panel.id === 'favorites') return openFavorites();
  if (panel.id === 'played-history') return refreshPlayed();
