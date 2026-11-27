@@ -136,6 +136,15 @@ function renderSongIdentity(title, subtitle, song, artist, link = true) {
  if (link) renderArtistLink(subtitle, artist);
  else subtitle.textContent = artist;
 }
+function renderSongChoice(button, song, artist) {
+ const identity = document.createElement('span');
+ const title = document.createElement('span');
+ const subtitle = document.createElement('span');
+ renderSongIdentity(title, subtitle, song, artist, false);
+ identity.append(title, subtitle);
+ button.classList.add('song-choice');
+ button.append(jacket(classifyArtist(artist), 'history-art', 42), identity);
+}
 for (const slot of slots) {
  const receipt = part(slot, '.slot-receipt');
  const summary = document.createElement('div');
@@ -863,10 +872,7 @@ for (const slot of currentSlots) {
     if (artistField instanceof HTMLSelectElement && ![...artistField.options].some(option => option.value === artist)) continue;
     const button = document.createElement('button');
     button.type = 'button';
-    const title = document.createElement('span');
-    const subtitle = document.createElement('span');
-    renderSongIdentity(title, subtitle, song, artist, false);
-    button.append(title, subtitle);
+    renderSongChoice(button, song, artist);
     button.onclick = () => {
      if (busy || slot.entry || slot.editing) return;
      slot.draftRound ??= slot.round;
@@ -908,7 +914,7 @@ function renderFavorites(current) {
    if (!Array.isArray(identity) || identity.length !== 2 || !identity.every(value => typeof value === 'string')) continue;
    const [artist, song] = identity;
    const metadata = songs.get(key);
-   historyRow(tracks, metadata?.song || song, metadata?.artist || names.get(artist) || artist, undefined, undefined, null);
+   historyRow(tracks, metadata?.song || song, metadata?.artist || names.get(artist) || artist);
   }
  }
  $('favorite-artists').hidden = !artists.childElementCount;
@@ -1062,7 +1068,7 @@ function renderPlayableResults() {
   };
   artists.append(button);
  }
- for (const song of matchedTracks) historyRow(tracks, song.song, song.artist, undefined, undefined, null);
+ for (const song of matchedTracks) historyRow(tracks, song.song, song.artist);
 }
 const songOrdering = new Intl.Collator('ja');
 let playableLoading = false;
@@ -1242,10 +1248,7 @@ function suggest(slot,kind){
     ? new Set([artist])
     : new Set(items.filter(i => artistSearchNames(i).some(v => normalize(v) === artist)).map(i => normalize(i.artist)));candidates=items.filter(i=>classifyArtist(i.artist)===slot.category&&(!artist||artists.has(normalize(i.artist)))&&songSearchNames(i).some(v=>normalize(v).includes(value))).map(item=>({item}));}
  for(const candidate of candidates.slice(0,7)){const button=document.createElement('button');button.type='button';if (candidate.item) {
-  const song = document.createElement('strong');
-  const artist = document.createElement('span');
-  renderSongIdentity(song, artist, candidate.item.song, candidate.item.artist, false);
-  button.append(song, artist);
+  renderSongChoice(button, candidate.item.song, candidate.item.artist);
  } else button.textContent = candidate.label;
  button.onclick=()=>{slot.draftRound??=slot.round;input.value=kind==='artist'?candidate.label:candidate.item.song;if(kind==='song'&&!field(slot,'artist').value)field(slot,'artist').value=candidate.item.artist;box.hidden=true;input.setAttribute('aria-expanded','false');lock(busy);input.focus();};box.append(button);}
  box.hidden=!box.children.length;input.setAttribute('aria-expanded',String(!box.hidden));
