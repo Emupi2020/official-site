@@ -52,7 +52,10 @@ if (guide) {
     if (korean) credit.textContent = '이미지 출처: 포코차 공식 도움말';
     image.alt = guide.image[language + 1];
     figure.querySelector('figcaption span').textContent = image.alt;
-    image.addEventListener('load', () => { figure.hidden = false; }, { once: true });
+    image.addEventListener('load', () => {
+      figure.hidden = false;
+      source.hidden = true;
+    }, { once: true });
     image.src = guide.image[0];
   }
 } else {
