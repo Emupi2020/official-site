@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs';
+import { guides } from './pococha-glossary-guides.mjs?v=concise';
 import { $, safeGet } from './common.mjs';
 
 const korean = safeGet('emupi-request-language') === 'ko';
@@ -22,12 +22,18 @@ if (guide) {
   term.textContent = guide.term;
   term.hidden = false;
   const steps = $('guide-steps');
-  for (const step of guide.steps) {
-    const item = document.createElement('li');
-    item.textContent = step[language];
-    steps.append(item);
+  if (guide.steps.length === 1) {
+    const instruction = document.createElement('p');
+    instruction.textContent = guide.steps[0][language];
+    steps.before(instruction);
+  } else {
+    for (const step of guide.steps) {
+      const item = document.createElement('li');
+      item.textContent = step[language];
+      steps.append(item);
+    }
+    steps.hidden = false;
   }
-  steps.hidden = false;
   const source = $('guide-source');
   source.firstElementChild.href = `https://pococha-jp.pococha.com/hc/ja/articles/${guide.source}`;
   source.hidden = false;
