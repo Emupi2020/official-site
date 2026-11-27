@@ -226,9 +226,19 @@ function showListenerExplanation(title, description, highlightUserMenu = false) 
  $('request-status-title').textContent = title;
  $('request-status-description').textContent = description;
  const dialog = $('request-status-dialog');
+ if (highlightUserMenu) updateUserMenuSpotlight();
  dialog.toggleAttribute('data-highlight-user-menu', highlightUserMenu);
  dialog.showModal();
 }
+function updateUserMenuSpotlight() {
+ const dialog = $('request-status-dialog');
+ const rect = $('user-menu-toggle').getBoundingClientRect();
+ dialog.style.setProperty('--user-menu-x', `${rect.left + rect.width / 2}px`);
+ dialog.style.setProperty('--user-menu-y', `${rect.top + rect.height / 2}px`);
+}
+window.addEventListener('resize', () => {
+ if ($('request-status-dialog').matches('[open][data-highlight-user-menu]')) updateUserMenuSpotlight();
+});
 function requestStatusKey(entry, reserved = false) {
  if (reserved && entry.status === 'pending') return 'reserved';
  if (entry.status === 'deferred' && entry.deferReason === 'temporary') return 'temporary';
