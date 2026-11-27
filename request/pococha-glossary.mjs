@@ -1,5 +1,5 @@
 import { normalize } from './common.mjs';
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-welcome-badge';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-welcome-badge-frame';
 
 // List each term's reading first in its search aliases for dictionary order.
 const groups = [
