@@ -1,5 +1,41 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-meter-cutoff';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-kirakome-copy';
 import { $ } from './common.mjs';
+
+function appendCopyExamples(panel, examples, korean) {
+  const heading = document.createElement('h2');
+  heading.textContent = korean ? '키라코메 예시' : 'キラコメの例';
+  const list = document.createElement('ul');
+  list.className = 'glossary-copy-examples';
+  const status = document.createElement('p');
+  status.setAttribute('role', 'status');
+  const copyLabel = korean ? '복사' : 'コピー';
+  for (const example of examples) {
+    const row = document.createElement('li');
+    const sample = document.createElement('span');
+    sample.textContent = example;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = copyLabel;
+    button.setAttribute('aria-label', `${example} ${copyLabel}`);
+    button.addEventListener('click', async () => {
+      status.textContent = '';
+      try {
+        await navigator.clipboard.writeText(example);
+        status.textContent = korean ? '복사했어요.' : 'コピーしました。';
+      } catch {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(sample);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        status.textContent = korean ? '선택한 문구를 길게 눌러 복사해 주세요.' : '選択した文を長押ししてコピーしてください。';
+      }
+    });
+    row.append(sample, button);
+    list.append(row);
+  }
+  panel.append(heading, list, status);
+}
 
 export function showGlossaryGuide(slug, korean, heading) {
   const panel = $('glossary-guide');
@@ -80,6 +116,7 @@ export function showGlossaryGuide(slug, korean, heading) {
       }, { once: true });
       image.src = guide.image[0];
     }
+    if (guide.copyExamples) appendCopyExamples(panel, guide.copyExamples, korean);
   } else {
     $('guide-missing').hidden = false;
   }
