@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark-steps';
 import { $ } from './common.mjs';
 
 export function appendCopyControl(row, example, status, korean) {

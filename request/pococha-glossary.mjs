@@ -1,6 +1,6 @@
 import { normalize } from './common.mjs';
-import { appendCopyControl } from './glossary-guide.mjs?v=glossary-fan-mark';
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark';
+import { appendCopyControl } from './glossary-guide.mjs?v=glossary-fan-mark-steps';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark-steps';
 
 // List each term's reading first in its search aliases for dictionary order.
 const groups = [
