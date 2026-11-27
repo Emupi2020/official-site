@@ -695,6 +695,7 @@ body:has(.request-page) { background: #f2f2f7; }
 [data-status-tag="pending"], [data-status-tag="submitted"] { background: #e9f2ff; color: #174c83; }
 [data-status-tag="reserved"] { background: #f0eafb; color: #62428d; }
 [data-status-tag="selected"], [data-status-tag="done"] { background: #e4f4eb; color: #206744; }
+[data-status-tag="challenged"] { background: #ffeadb; color: #93400e; }
 [data-status-tag="deferred"], [data-status-tag="temporary"] { background: #fff0d5; color: #774613; }
 [data-status-tag="removed"] { background: #fbe8e7; color: #8d3235; }
 [data-status-tag="unrequested"] { background: #c62828; color: #fff; }

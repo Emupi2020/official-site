@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=request-challenge';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=challenge-tag';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -186,7 +186,7 @@ function renderUserCurrentRequests() {
 }
 const reservation = $('next-reservation');
 let activeSlot = null;
-const requestStatusLabels = {unrequested:t('未リクエスト'), submitted:t('リクエスト済み'), reserved:t('予約済み'), temporary:t('一時保留'), pending:t('抽選待ち'), selected:t('当選'), done:t('当選済み'), challenged:t('チャレンジした'), skipped:t('見送り'), deferred:t('持ち越し'), removed:t('取り下げ済み')};
+const requestStatusLabels = {unrequested:t('未リクエスト'), submitted:t('リクエスト済み'), reserved:t('予約済み'), temporary:t('一時保留'), pending:t('抽選待ち'), selected:t('当選'), done:t('当選済み'), challenged:t('チャレンジ'), skipped:t('見送り'), deferred:t('持ち越し'), removed:t('取り下げ済み')};
 const requestStatusDescriptions = {
  unrequested:t('このカテゴリにはまだリクエストしていません。'),
  submitted:t('このカテゴリのリクエストを受け付けました。'),
