@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=challenge-tag';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=challenge-explanation';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -139,14 +139,7 @@ for (const slot of slots) {
  const identity = document.createElement('div');
  identity.append(part(slot, '.slot-song'), part(slot, '.slot-artist'));
  const status = part(slot, '.slot-status');
- status.onclick = () => {
-  const key = status.dataset.statusTag;
-  const description = describeRequestStatus(key, slot.entry);
-  if (!description) return;
-  $('request-status-title').textContent = requestStatusLabels[key];
-  $('request-status-description').textContent = description;
-  $('request-status-dialog').showModal();
- };
+ status.onclick = () => showRequestStatus(status.dataset.statusTag, slot.entry);
  summary.append(jacket(slot.category, 'slot-overview-art', 76), identity, status);
  receipt.prepend(summary);
 }
@@ -195,7 +188,7 @@ const requestStatusDescriptions = {
  pending:t('受付が完了し、抽選で選ばれるのを待っています。'),
  selected:t('この曲が抽選で選ばれました。'),
  done:t('この曲は抽選で選ばれ、歌唱が済んでいます。'),
- challenged:t('この曲は配信で歌うことにチャレンジしました。'),
+ challenged:t('歌える曲ではありませんでしたが、配信で試しに歌いました。'),
  skipped:t('抽選で選ばれたあと、今回は歌わずに見送りとなりました。'),
  deferred:t('この曲は次の配信で抽選対象に戻ります。'),
  removed:t('この曲のリクエストは取り下げられました。'),
@@ -210,6 +203,13 @@ function describeRequestStatus(key, entry) {
   return (reason ? (korean ? `「${reason}」이라는 이유로 현재 추첨 대상에서 제외됐어요. ` : `「${reason}」という理由で、今回は抽選対象から外れています。`) : t('歌えない理由が登録されたため、今回は抽選対象から外れています。')) + next;
  }
  return next;
+}
+function showRequestStatus(key, entry) {
+ const description = describeRequestStatus(key, entry);
+ if (!description) return;
+ $('request-status-title').textContent = requestStatusLabels[key];
+ $('request-status-description').textContent = description;
+ $('request-status-dialog').showModal();
 }
 function requestStatusKey(entry, reserved = false) {
  if (reserved && entry.status === 'pending') return 'reserved';
@@ -608,7 +608,13 @@ function historyRow(list, song, artist, status, timestamp, category = classifyAr
   identity.append(label);
  }
  if (statusKey) {
-  const tag = document.createElement('span');
+  const interactive = list.id === 'played-list' && statusKey === 'challenged';
+  const tag = document.createElement(interactive ? 'button' : 'span');
+  if (interactive) {
+   tag.type = 'button';
+   tag.setAttribute('aria-haspopup', 'dialog');
+   tag.onclick = () => showRequestStatus(statusKey);
+  }
   renderStatusTag(tag, statusKey);
   tag.className = 'history-tag';
   if (list.id === 'played-list') {
