@@ -779,10 +779,10 @@ function favoriteButton(key, name, withLabel = false) {
    } else {
     if (!safeSet(favoriteStorageKey, JSON.stringify([...keys]))) throw new Error();
    }
-   const firstSong = saved && key.startsWith('song:') && ![...current.keys].some(item => item.startsWith('song:'));
+   const firstFavorite = saved && current.keys.size === 0;
    if (saved) current.keys.add(key);
    else current.keys.delete(key);
-   if (firstSong && favoritesForListener() === current) {
+   if (firstFavorite && favoritesForListener() === current) {
     showListenerExplanation(t('お気に入りに追加しました'), $('user-menu-toggle').hidden
      ? t('利用を始めると、右上の人型メニューの「お気に入り」から確認できます。')
      : t('右上の人型メニューの「お気に入り」から確認できます。'));
