@@ -868,7 +868,12 @@ function renderPlayed(played) {
  $('played-total').textContent = totalTracks(played.length);
  $('played-total').hidden = false;
  $('played-count').textContent=played.length?`${played.length}${korean ? '곡' : '曲'}`:'';$('played-empty').hidden=!!played.length;$('played-list').replaceChildren();
- for(const entry of [...played].reverse())historyRow($('played-list'),entry.song,entry.artist,entry.performedAt ? '' : (korean ? '노래 완료' : '歌唱済み'),entry.performedAt);
+ for (const entry of [...played].reverse()) {
+  const challenged = entry.status === 'challenged';
+  const label = challenged || entry.performedAt ? '' : (korean ? '노래 완료' : '歌唱済み');
+  historyRow($('played-list'), entry.song, entry.artist, label, entry.performedAt,
+   classifyArtist(entry.artist), challenged ? 'challenged' : undefined);
+ }
 }
 const playable = $('playable-songs');
 const playableCategories = $('playable-categories');

@@ -119,6 +119,11 @@ function playedForRound(state, current) {
       played.push({ song:entry.song, artist:entry.artist, performedAt:entry.revealedAt ?? null });
     }
   }
+  for (const entry of state.entries) {
+    if (entry.round === state.round && entry.status === 'challenged') {
+      played.push({ song:entry.song, artist:entry.artist, performedAt:entry.revealedAt ?? entry.drawnAt ?? null, status:'challenged' });
+    }
+  }
   if (current?.status === 'selected' && current.round === state.round && current.revealedAt) {
     played.push({ song:current.song, artist:current.artist, performedAt:current.revealedAt });
   }
