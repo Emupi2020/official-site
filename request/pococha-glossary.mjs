@@ -97,7 +97,7 @@ export function setupPocochaGlossary(panel, korean) {
   for (const entry of entries) {
     const initial = entry.reading.normalize('NFD')[0];
     const kanaRow = kanaRows.find(row => row.includes(initial));
-    const label = kanaRow ? `${kanaRow[0]}行` : 'その他';
+    const label = kanaRow?.[0] ?? '他';
     if (!sections.has(label)) {
       const section = document.createElement('section');
       section.className = 'glossary-kana-section';
