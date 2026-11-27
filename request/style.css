@@ -195,6 +195,21 @@ body:has(.request-page) { background: #f2f2f7; }
   margin-block-start: 0;
 }
 #menu-page:has(#playable-songs:not([hidden])) .menu-page-heading { justify-content: flex-start; }
+.playable-breadcrumbs {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.playable-breadcrumbs button {
+  display: inline;
+  min-height: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+}
 .song-page-total { color: var(--muted); font-size: 14px; white-space: nowrap; }
 #menu-page:has(#played-history[hidden]) #played-total,
 #menu-page:has(#playable-songs[hidden]) #playable-total { display: none; }

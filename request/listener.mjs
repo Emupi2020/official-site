@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=song-details-dialog';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=playable-path';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -494,6 +494,7 @@ window.addEventListener('popstate', event => {
 });
 function showMenuPage(id, focus = false) {
  const previous = activeMenuPage;
+ $('playable-breadcrumbs').hidden = true;
  activeMenuPage = menuPages.find(({button,panel}) => panel.id === id && !button.hidden) || null;
  if (previous?.panel === nameSettings && previous !== activeMenuPage) namePasscode.value = '';
  menuPage.hidden = !activeMenuPage;
@@ -988,8 +989,25 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
  for (const button of playableCategoryButtons) {
   $(`playable-${button.dataset.playableCategory}-detail`).hidden = button !== selected;
  }
- if (browsing) {
-  menuPageTitle.textContent = artist || (view === 'artists' ? t('アーティスト') : t('曲'));
+ const breadcrumbs = $('playable-breadcrumbs');
+ breadcrumbs.setAttribute('aria-label', t('歌える曲の階層'));
+ breadcrumbs.replaceChildren();
+ breadcrumbs.hidden = !selected;
+ if (selected) {
+  const addCrumb = (label, route) => {
+   const button = document.createElement('button');
+   button.type = 'button';
+   button.textContent = t(label);
+   button.onclick = () => navigatePlayable({playableCategory:undefined, playableView:undefined, playableArtist:undefined, playableSearchValue:'', ...route});
+   const arrow = document.createElement('span');
+   arrow.textContent = '›';
+   arrow.setAttribute('aria-hidden', 'true');
+   breadcrumbs.append(button, arrow);
+  };
+  addCrumb('歌える曲', {});
+  if (artist) addCrumb('アーティスト', {playableCategory:category, playableView:'artists'});
+  else if (browsing && view !== 'artists') addCrumb(categoryLabel(category), {playableCategory:category});
+  menuPageTitle.textContent = artist || (browsing ? t(view === 'artists' ? 'アーティスト' : '曲') : t(categoryLabel(category)));
   if (artist) {
    const star = favoriteButton('artist:' + normalize(artist), artist);
    star.classList.add('artist-favorite');
@@ -1000,7 +1018,9 @@ function showPlayableCategory({playableCategory: category, playableView: view, p
 }
 function navigatePlayable(next) {
  const current = window.history.state;
- window.history.pushState({...current, ...next, playableDepth:(current.playableDepth || 0) + 1}, '');
+ const url = new URL(location.href);
+ if (Object.hasOwn(next, 'playableArtist') && !next.playableArtist) url.searchParams.delete('artist');
+ window.history.pushState({...current, ...next, playableDepth:(current?.playableDepth || 0) + 1}, '', url);
  showMenuPage(playable.id, true);
 }
 for (const button of playableCategoryButtons) {
@@ -1057,7 +1077,9 @@ function renderPlayableResults() {
  tracks.replaceChildren();
  const empty = $('playable-empty');
  empty.hidden = !playableSongs || matchedArtists.size > 0 || matchedTracks.length > 0;
- empty.textContent = query ? t('該当する結果がありません。') : t('まだ曲がありません。');
+ empty.textContent = query ? t('該当する結果がありません。') : artist
+  ? t('このアーティストの曲は、まだ「歌える曲」に登録されていません。')
+  : t('まだ曲がありません。');
  for (const [name, artistCategory] of matchedArtists) {
   const button = document.createElement('button');
   button.type = 'button';
