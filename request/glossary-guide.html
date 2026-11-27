@@ -2,25 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>ポコチャ用語集 | Emupi</title>
-  <link rel="stylesheet" href="./style.css?entry=glossary-browser-back">
-  <link rel="stylesheet" href="./site-frame.css">
-  <link rel="stylesheet" href="./site-menu.css?layout=glossary-browser-back">
-  <link rel="icon" href="./favicon.svg">
-  <script type="module" src="./glossary-guide.mjs?v=browser-back"></script>
+  <script>
+    const term = new URLSearchParams(location.search).get('term');
+    const url = new URL('./?view=pococha-glossary', location.href);
+    if (term) url.searchParams.set('term', term);
+    location.replace(url);
+  </script>
 </head>
-<body class="listener-layout glossary-guide-layout">
-  <main class="request-page glossary-guide">
-    <h1><span id="guide-title">ポコチャ用語集</span> <span id="guide-subtitle" hidden></span></h1>
-    <figure id="guide-figure" hidden>
-      <img alt="" decoding="async">
-      <figcaption><span></span> <a>画像出典：ポコチャ公式ヘルプ</a></figcaption>
-    </figure>
-    <ol id="guide-steps" hidden></ol>
-    <p id="guide-action" hidden><a></a></p>
-    <p id="guide-source" hidden><a>ポコチャ公式ヘルプ</a></p>
-    <p id="guide-missing" hidden>ガイドが見つかりませんでした。</p>
-  </main>
-</body>
+<body><a href="./?view=pococha-glossary">ポコチャ用語集</a></body>
 </html>

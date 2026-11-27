@@ -98,7 +98,7 @@ export function setupPocochaGlossary(panel, korean) {
       if (guide) {
         const detail = document.createElement('dd');
         const link = document.createElement('a');
-        link.href = `./glossary-guide.html?term=${guide.slug}`;
+        link.href = `./?view=pococha-glossary&term=${guide.slug}`;
         link.textContent = guide.title[Number(korean)];
         link.addEventListener('click', event => {
           if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;

@@ -3,7 +3,8 @@ import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
 import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=glossary-topic-tabs';
-import { setupPocochaGlossary } from './pococha-glossary.mjs?v=guides';
+import { setupPocochaGlossary } from './pococha-glossary.mjs?v=shared-layout';
+import { showGlossaryGuide } from './glossary-guide.mjs?v=shared-layout';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
 const languageView = history.state?.restoreLanguageView ? history.state : null;
 localizeListenerPage();
@@ -286,6 +287,7 @@ const menuPageTitle = $('menu-page-title');
 const menuPages = [...document.querySelectorAll('[data-menu-page]')].map(button => ({button, panel:$(button.dataset.menuPage)}));
 const initialParams = new URLSearchParams(location.search);
 const initialView = initialParams.get('view') ?? initialParams.get('preview');
+const glossaryTerm = initialView === 'pococha-glossary' ? initialParams.get('term') : null;
 let initialMenuPage = initialView === 'name-settings' ? nameSettings.id : initialView;
 let activeMenuPage = null;
 const greeting = $('listener-greeting');
@@ -482,6 +484,7 @@ function showMenuPage(id, focus = false) {
  if (!activeMenuPage) return;
  const {button,panel} = activeMenuPage;
  menuPageTitle.textContent = button.firstChild.textContent.trim();
+ if (panel.id === 'pococha-glossary' && glossaryTerm) showGlossaryGuide(glossaryTerm, korean, menuPageTitle);
  $('favorite-feedback').hidden = true;
  menuPage.querySelector('.artist-favorite')?.remove();
  if (panel.id === 'playable-songs') showPlayableCategory(window.history.state);
@@ -495,7 +498,7 @@ function showMenuPage(id, focus = false) {
   window.scrollTo(0, 0);
   menuPageTitle.focus();
  }
- if (panel.id === 'pococha-glossary') restoreGlossaryPosition?.();
+ if (panel.id === 'pococha-glossary' && !glossaryTerm) restoreGlossaryPosition?.();
  if (panel.id === 'my-history') return loadArchivedHistory();
  if (panel.id === 'favorites') return openFavorites();
  if (panel.id === 'played-history') return refreshPlayed();
@@ -503,7 +506,7 @@ function showMenuPage(id, focus = false) {
 }
 for (const {button,panel} of menuPages) {
  button.onclick = () => {
-  if (activeMenuPage?.panel === panel) {
+  if (activeMenuPage?.panel === panel && !(panel.id === 'pococha-glossary' && glossaryTerm)) {
    closeMenu();
    const {playableDepth = 0} = window.history.state || {};
    if (playableDepth) window.history.go(-(1 + playableDepth));
@@ -513,6 +516,7 @@ for (const {button,panel} of menuPages) {
   const url = new URL(location.href);
   url.searchParams.delete('preview');
   url.searchParams.delete('artist');
+  url.searchParams.delete('term');
   url.searchParams.set('view', panel.id === nameSettings.id ? 'name-settings' : panel.id);
   try { sessionStorage.setItem('emupi-menu-destination', url.href); } catch {}
   location.assign(url);
@@ -524,6 +528,7 @@ function goToRequestTop() {
   url.searchParams.delete('view');
   url.searchParams.delete('preview');
   url.searchParams.delete('artist');
+  url.searchParams.delete('term');
   location.replace(url);
   return;
  }
