@@ -289,9 +289,7 @@ body:has(.request-page) { background: #f2f2f7; }
   color: var(--text);
   filter: none;
 }
-.glossary-group:not([hidden]) ~ .glossary-group:not([hidden]) { margin-block-start: 20px; }
-.glossary-group h2 { font-size: 16px; margin: 0 0 4px; }
-.glossary-group dl { margin: 0; }
+#pococha-glossary-terms dl { margin: 0; }
 .glossary-term { padding-block: 12px; }
 .glossary-term:not([hidden]) ~ .glossary-term:not([hidden]) { border-block-start: 1px solid var(--border); }
 .glossary-term dt { font-weight: 700; }

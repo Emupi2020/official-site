@@ -1,8 +1,8 @@
 import { normalize } from './common.mjs';
 
+// List each term's reading first in its search aliases for dictionary order.
 const groups = [
   {
-    heading: ['配信でよく聞く言葉', '방송에서 자주 쓰는 말'],
     terms: [
       ['枠', 'わく 配信枠 방송 방송방', 'ライバーが配信している場所のこと。', '라이버가 방송하는 방을 뜻해요.', ['えむぴーの枠に遊びに行く', '에무피 방송에 놀러 가요']],
       ['初見', 'しょけん 처음 첫 방문', 'その配信に初めて来た人のこと。', '그 방송에 처음 온 사람을 뜻해요.', ['初見です！', '처음 왔어요!']],
@@ -16,12 +16,11 @@ const groups = [
       ['潜り', 'もぐり 潜る ながら見 채팅 없이 시청 잠수', '配信を開いたまま、コメントせずに聞いたり、別の作業をしたりすること。', '방송을 켜 둔 채 채팅 없이 듣거나 다른 일을 하는 걸 뜻해요.'],
       ['コメ禁', 'こめきん コメント禁止 댓글 금지 채팅 제한', '「コメント禁止」の略。ライバーやアシスタントが、特定の人のコメントを一時的に制限する機能。', '‘댓글 금지’의 줄임말이에요. 라이버나 어시스턴트가 특정 사용자의 채팅을 일시적으로 제한하는 기능이에요.'],
       ['コアおめ', 'こあふぁん おめでとう 코어 팬 축하', 'コアファンになった人や、コアファンの段階が上がった人を祝う言葉。', '코어 팬이 됐거나 코어 팬 등급이 오른 사람에게 축하할 때 쓰는 말이에요.'],
-      ['エルおめ', 'えーる えーるおめ おめでとう 응원 축하', 'エールの段階が上がった人を祝う言葉。', '에루(응원 지표) 단계가 오른 사람에게 축하할 때 쓰는 말이에요.'],
+      ['エルおめ', 'えるおめ えーる えーるおめ おめでとう 응원 축하', 'エールの段階が上がった人を祝う言葉。', '에루(응원 지표) 단계가 오른 사람에게 축하할 때 쓰는 말이에요.'],
       ['レベおめ', 'れべる おめでとう 레벨 레벨업 축하', 'ポコチャでレベルが上がった人を祝う言葉。', '포코차에서 레벨이 오른 사람에게 축하할 때 쓰는 말이에요.'],
     ],
   },
   {
-    heading: ['応援にまつわる言葉', '응원에 관한 말'],
     terms: [
       ['コイン', 'こいん 코인', '配信でアイテムを使うときに消費する、ポコチャ内の通貨。', '방송에서 아이템을 쓸 때 사용하는 포코차의 재화예요.'],
       ['アイテム', 'あいてむ ギフト 아이템 선물', 'コインを使って配信中のライバーに送れる応援。送ると配信画面に演出が出ます。', '코인을 사용해 방송 중인 라이버에게 보낼 수 있어요. 보내면 방송 화면에 효과가 나타나요.'],
@@ -40,7 +39,6 @@ const groups = [
     ],
   },
   {
-    heading: ['配信の仕組み', '방송 시스템'],
     terms: [
       ['ランク', 'らんく 応援ランク 랭크 등급', 'ライバーの応援ランクのこと。ランクメーターの結果などに応じて上下します。', '라이버의 응원 등급이에요. 랭크 미터 결과 등에 따라 오르거나 내려가요.'],
       ['メーター', 'めーたー ランクメーター 미터 랭크미터', '同じランク帯のライバーの応援ポイントをもとに、締め時間までの順位やボーダーを示すもの。', '같은 랭크 구간의 라이버가 받은 응원 포인트를 바탕으로 순위와 마감 기준선을 보여 줘요.'],
@@ -67,16 +65,12 @@ export function setupPocochaGlossary(panel, korean) {
   const categoryButtons = [...categories.querySelectorAll('button')];
   const results = panel.querySelector('#pococha-glossary-terms');
   const empty = panel.querySelector('#pococha-glossary-empty');
-  const language = Number(korean);
   let selectedCategory = 0;
 
-  const sections = groups.map(({ heading, terms }) => {
-    const section = document.createElement('section');
-    section.className = 'glossary-group';
-    const title = document.createElement('h2');
-    title.textContent = heading[language];
-    const list = document.createElement('dl');
-    const entries = terms.map(([name, aliases, ja, ko, example]) => {
+  const list = document.createElement('dl');
+  const collator = new Intl.Collator('ja');
+  const entries = groups.flatMap(({ terms }, index) =>
+    terms.map(([name, aliases, ja, ko, example]) => {
       const row = document.createElement('div');
       row.className = 'glossary-term';
       const term = document.createElement('dt');
@@ -91,25 +85,21 @@ export function setupPocochaGlossary(panel, korean) {
         caption.textContent = korean ? `예 “${example[1]}”` : `例「${example[0]}」`;
         row.append(caption);
       }
-      list.append(row);
-      return { row, searchable: normalize(`${name} ${aliases}`) };
-    });
-    section.append(title, list);
-    results.append(section);
-    return { section, title, entries };
-  });
+      const [reading] = aliases.split(' ');
+      return { row, reading, category: index + 1, searchable: normalize(`${name} ${aliases}`) };
+    })
+  ).sort((first, second) => collator.compare(first.reading, second.reading));
+  list.append(...entries.map(({ row }) => row));
+  results.append(list);
 
   function filter() {
     const query = normalize(input.value);
     clear.hidden = !input.value;
     categories.hidden = Boolean(query);
-    sections.forEach(({ section, title, entries }, index) => {
-      for (const { row, searchable } of entries) row.hidden = !searchable.includes(query);
-      const showAll = Boolean(query) || selectedCategory === 0;
-      title.hidden = !showAll;
-      section.hidden = (showAll ? entries.every(({ row }) => row.hidden) : selectedCategory !== index + 1);
-    });
-    empty.hidden = sections.some(({ section }) => !section.hidden);
+    for (const { row, category, searchable } of entries) {
+      row.hidden = query ? !searchable.includes(query) : selectedCategory !== 0 && selectedCategory !== category;
+    }
+    empty.hidden = entries.some(({ row }) => !row.hidden);
   }
 
   categoryButtons.forEach((button, index) => {
