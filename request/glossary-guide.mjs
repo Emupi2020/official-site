@@ -1,4 +1,4 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-welcome-badge-frame';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-viewer-buttons';
 import { $ } from './common.mjs';
 
 export function showGlossaryGuide(slug, korean, heading) {
