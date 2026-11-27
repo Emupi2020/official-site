@@ -1,6 +1,5 @@
 import { normalize } from './common.mjs';
-import { appendCopyControl } from './glossary-guide.mjs?v=glossary-fan-mark-steps';
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark-steps';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark-copy-step';
 
 // List each term's reading first in its search aliases for dictionary order.
 const groups = [
@@ -102,14 +101,6 @@ export function setupPocochaGlossary(panel, korean) {
         caption.className = 'glossary-example';
         caption.textContent = korean ? `예 “${example[1]}”` : `例「${example[0]}」`;
         row.append(caption);
-      }
-      if (name === 'ファンマ') {
-        const mark = document.createElement('dd');
-        mark.className = 'glossary-fan-mark';
-        const status = document.createElement('dd');
-        status.setAttribute('role', 'status');
-        appendCopyControl(mark, '🅿︎', status, korean);
-        row.append(mark, status);
       }
       const guide = guidesByTerm.get(name);
       if (guide) {

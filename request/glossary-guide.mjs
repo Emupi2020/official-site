@@ -1,7 +1,7 @@
-import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark-steps';
+import { guides } from './pococha-glossary-guides.mjs?v=glossary-fan-mark-copy-step';
 import { $ } from './common.mjs';
 
-export function appendCopyControl(row, example, status, korean) {
+function appendCopyControl(row, example, status, korean) {
   const copyLabel = korean ? '복사' : 'コピー';
   const sample = document.createElement('span');
   sample.textContent = example;
@@ -70,6 +70,15 @@ export function showGlossaryGuide(slug, korean, heading) {
       for (const [index, step] of guide.steps.entries()) {
         const item = document.createElement('li');
         item.append(step[language]);
+        const copyText = guide.stepCopy?.[index + 1];
+        if (copyText) {
+          const mark = document.createElement('div');
+          mark.className = 'glossary-fan-mark';
+          const status = document.createElement('div');
+          status.setAttribute('role', 'status');
+          appendCopyControl(mark, copyText, status, korean);
+          item.append(mark, status);
+        }
         if (index === 0 && guide.stepImages && guide.image) item.append($('guide-figure'));
         const stepImage = guide.stepImages?.[index + 1];
         if (stepImage) {
