@@ -522,6 +522,7 @@ function goToRequestTop() {
   const url = new URL(location.href);
   url.searchParams.delete('view');
   url.searchParams.delete('preview');
+  url.searchParams.delete('artist');
   location.replace(url);
   return;
  }
