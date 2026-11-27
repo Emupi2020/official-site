@@ -795,6 +795,7 @@ function favoriteButton(key, name, withLabel = false) {
    if (saved) current.keys.add(key);
    else current.keys.delete(key);
    if (firstFavorite && favoritesForListener() === current) {
+    if (withLabel && songDetails.open) songDetails.close();
     const menuVisible = !$('user-menu-toggle').hidden;
     showListenerExplanation(t('お気に入りに追加しました'), !menuVisible
      ? t('利用を始めると、右上の人型メニューの「お気に入り」から確認できます。')
