@@ -250,9 +250,9 @@ body:has(.request-page) { background: #f2f2f7; }
   z-index: 2;
   display: flow-root;
   padding-block-start: var(--glossary-controls-inset);
-  background: var(--nav-bg);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  background: rgb(255 255 255 / 45%);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 .glossary-categories {
   display: grid;
