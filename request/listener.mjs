@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=playable-path';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=repertoire-request-picker';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-fan-mark-copy-step';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-fan-mark-copy-step';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -280,7 +280,7 @@ function showSlot(id, focus = false) {
  $('reservation-detail-label').hidden = !activeSlot?.reserved;
  for (const slot of slots) slot.detail.hidden = slot !== activeSlot;
  const previousRow = previous && (!previous.reserved || !reservation.hidden) && previous.openButton;
- if (previous !== activeSlot) previous?.favoriteDialog?.close();
+ if (previous !== activeSlot) previous?.songPickerDialog?.close();
  if (focus) (activeSlot?.detail || previousRow || $('request-title')).focus();
 }
 function closeSlot() {
@@ -600,8 +600,8 @@ function lock(value) {
  newName.readOnly = namePasscode.readOnly = busy;
  for (const slot of slots) part(slot, '.slot-submit').disabled = !canSubmit(slot);
  for (const slot of currentSlots) {
-  slot.favoritePicker.hidden = Boolean(slot.entry || slot.editing);
-  if (slot.favoritePicker.hidden) slot.favoriteDialog.close();
+  slot.songPickerActions.hidden = Boolean(slot.entry || slot.editing);
+  if (slot.songPickerActions.hidden) slot.songPickerDialog.close();
  }
 }
 function feedback(slot, text, error = true) {
@@ -820,14 +820,14 @@ async function openFavorites() {
  await loadFavorites();
  if (!current.ready || $('favorites').hidden || favoritesForListener() !== current) return;
  if (current.keys.size && !playableSongs) {
-  try { await loadFavoriteRepertoire(); }
+  try { await loadRepertoire(); }
   catch {
    if (!$('favorites').hidden) favoriteFeedback(t('お気に入りの曲名を読み込めませんでした。'));
   }
  }
  if (!$('favorites').hidden && favoritesForListener() === current) renderFavorites(current);
 }
-async function loadFavoriteRepertoire() {
+async function loadRepertoire() {
  if (!playableSongs) {
   const {songs} = await api('/api/repertoire');
   playableSongs = songs.sort((a,b) => songOrdering.compare(a.artist,b.artist) || songOrdering.compare(a.song,b.song));
@@ -835,19 +835,15 @@ async function loadFavoriteRepertoire() {
  return playableSongs;
 }
 for (const slot of currentSlots) {
- const picker = document.createElement('button');
- picker.type = 'button';
- picker.className = 'slot-favorite-picker';
- picker.setAttribute('aria-haspopup', 'dialog');
- const icon = document.createElement('span');
- icon.setAttribute('aria-hidden', 'true');
- icon.textContent = '☆';
- picker.append(icon, t('お気に入りから選ぶ'));
+ const pickerActions = document.createElement('div');
+ const pickerSources = [
+  {label: 'お気に入りから選ぶ', symbol: '☆', favoritesOnly: true},
+  {label: '歌える曲リストから選ぶ', symbol: '♫', favoritesOnly: false}
+ ];
  const dialog = document.createElement('dialog');
- dialog.className = 'listener-dialog slot-favorite-dialog';
+ dialog.className = 'listener-dialog slot-song-picker-dialog';
  const heading = document.createElement('h2');
- heading.id = slot.id + '-favorites-heading';
- heading.textContent = t('お気に入りから選ぶ');
+ heading.id = slot.id + '-song-picker-heading';
  heading.tabIndex = -1;
  heading.autofocus = true;
  dialog.setAttribute('aria-labelledby', heading.id);
@@ -865,25 +861,40 @@ for (const slot of currentSlots) {
  actions.className = 'buttons';
  actions.append(close);
  dialog.append(heading, status, choices, actions);
- part(slot, '.slot-actions').before(picker);
+ part(slot, '.slot-actions').before(pickerActions);
  slot.detail.append(dialog);
- slot.favoritePicker = picker;
- slot.favoriteDialog = dialog;
+ slot.songPickerActions = pickerActions;
+ slot.songPickerDialog = dialog;
  let opening = 0;
- picker.addEventListener('click', async () => {
+ for (const {label, symbol, favoritesOnly} of pickerSources) {
+  const picker = document.createElement('button');
+  picker.type = 'button';
+  picker.className = 'slot-song-picker';
+  picker.setAttribute('aria-haspopup', 'dialog');
+  const icon = document.createElement('span');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = symbol;
+  picker.append(icon, t(label));
+  pickerActions.append(picker);
+  picker.onclick = () => openPicker(label, favoritesOnly);
+ }
+ async function openPicker(label, favoritesOnly) {
   const version = ++opening;
+  heading.textContent = t(label);
   choices.replaceChildren();
   status.textContent = t('読み込み中…');
   dialog.showModal();
-  const favorites = favoritesForListener();
-  await loadFavorites();
   try {
-   if (!favorites.ready) throw new Error();
-   const songs = favorites.keys.size ? await loadFavoriteRepertoire() : [];
-   if (!dialog.open || version !== opening || favoritesForListener() !== favorites) return;
+   const favorites = favoritesOnly ? favoritesForListener() : null;
+   if (favorites) {
+    await loadFavorites();
+    if (!favorites.ready) throw new Error();
+   }
+   const songs = favorites && !favorites.keys.size ? [] : await loadRepertoire();
+   if (!dialog.open || version !== opening || (favorites && favoritesForListener() !== favorites)) return;
    const artistField = field(slot, 'artist');
    for (const {artist, song, category} of songs) {
-    if (category !== slot.category || !favorites.keys.has(favoriteSongKey(artist, song))) continue;
+    if (category !== slot.category || (favorites && !favorites.keys.has(favoriteSongKey(artist, song)))) continue;
     if (artistField instanceof HTMLSelectElement && ![...artistField.options].some(option => option.value === artist)) continue;
     const button = document.createElement('button');
     button.type = 'button';
@@ -899,11 +910,15 @@ for (const slot of currentSlots) {
     };
     choices.append(button);
    }
-   status.textContent = choices.childElementCount ? '' : t('このカテゴリのお気に入りの曲はありません。');
+   status.textContent = choices.childElementCount ? '' : t(favoritesOnly
+    ? 'このカテゴリのお気に入りの曲はありません。'
+    : 'このカテゴリに歌える曲はまだありません。');
   } catch {
-   if (version === opening) status.textContent = t('お気に入りを読み込めませんでした。');
+   if (dialog.open && version === opening) status.textContent = t(favoritesOnly
+    ? 'お気に入りを読み込めませんでした。'
+    : '歌える曲リストを読み込めませんでした。');
   }
- });
+ }
 }
 function renderFavorites(current) {
  const artists = $('favorite-artist-list');

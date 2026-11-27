@@ -366,7 +366,7 @@ body:has(.request-page) { background: #f2f2f7; }
   border: 0;
 }
 .menu-page-form { max-width: 380px; }
-.slot-favorite-picker {
+.slot-song-picker {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -377,32 +377,32 @@ body:has(.request-page) { background: #f2f2f7; }
   background: transparent;
   color: var(--accent);
 }
-.slot-favorite-picker span { font-size: 16px; }
-.request-page .slot-favorite-dialog {
+.slot-song-picker span { width: 16px; font-size: 16px; text-align: center; }
+.request-page .slot-song-picker-dialog {
   max-height: min(70dvh, 520px);
 }
-.slot-favorite-dialog p:empty { display: none; }
-.slot-favorite-dialog .playable-browse { margin-block-start: 12px; }
-.request-page .slot-favorite-dialog .playable-browse button {
+.slot-song-picker-dialog p:empty { display: none; }
+.slot-song-picker-dialog .playable-browse { margin-block-start: 12px; }
+.request-page .slot-song-picker-dialog .playable-browse button {
   display: grid;
   gap: 0;
   justify-content: stretch;
   border-radius: 0;
   padding: 8px 0;
 }
-.slot-favorite-dialog .playable-browse button::after { display: none; }
-.slot-favorite-dialog .playable-browse button > span {
+.slot-song-picker-dialog .playable-browse button::after { display: none; }
+.slot-song-picker-dialog .playable-browse button > span {
   width: auto;
   text-align: start;
 }
-.request-page .slot-favorite-dialog .playable-browse button.song-choice,
+.request-page .slot-song-picker-dialog .playable-browse button.song-choice,
 .suggestions button.song-choice {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
-.slot-favorite-dialog .playable-browse button.song-choice > span { width: auto; }
+.slot-song-picker-dialog .playable-browse button.song-choice > span { width: auto; }
 .menu-page-form #name-feedback { margin: 8px 0 0; }
 .menu-page-form #name-feedback.danger { color: var(--danger); }
 .request-page #reservation-detail-label { margin: 0 0 3px; }
