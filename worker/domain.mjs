@@ -135,7 +135,7 @@ export function publicState(state) {
   if (current?.status === 'selected' && current.revealedAt) {
     played.push({ song: current.song, artist: current.artist, performedAt: current.revealedAt });
   }
-  return { round: state.round, session: state.session, open: true, nextRound: state.round + 1, reserved: state.entries.filter(e => e.round === state.round + 1 && !['done','removed','skipped'].includes(e.status)).length, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, roundPlayed:playedForRound(state, current), result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
+  return { round: state.round, session: state.session, open: true, nextRound: state.round + 1, reserved: state.entries.filter(e => e.round === state.round + 1 && !['done','removed','skipped','challenged'].includes(e.status)).length, remaining: eligible(state).length, candidates: eligible(state).map(e => ({ song: e.song })), played, roundPlayed:playedForRound(state, current), result: current ? { id: current.id, song: current.song, artist: current.artist, status: current.status, drawnAt: current.drawnAt } : null };
 }
 export function ownRequests(state, hashes) {
   const allowed = new Set(hashes);
@@ -294,7 +294,7 @@ export function adminAction(state, input, now = Date.now()) {
   const current = state.entries.find(e => e.id === state.current);
   const category = input.category ?? 'all';
   if (['draw','advance'].includes(input.action) && !['all','yamapi','other'].includes(category)) throw new Problem('抽選対象を選んでください。');
-  const overridesWinner = input.action === 'cantSing' || (input.action === 'defer' && input.selected);
+  const overridesWinner = ['cantSing', 'challenge'].includes(input.action) || (input.action === 'defer' && input.selected);
   if (overridesWinner && current?.status === 'done' && current.autoDone) {
     if (input.id !== current.id || (input.drawnAt !== undefined && input.drawnAt !== current.drawnAt)) {
       throw new Problem('当選曲が変わりました。確認してから操作してください。', 409);
@@ -390,6 +390,14 @@ export function adminAction(state, input, now = Date.now()) {
       state.unknown[key] = { at, reasons, artist: current.artist, song: current.song };
       if (!state.held.includes(key)) state.held.push(key);
       for (const e of state.entries) if (affected.some(a => a.id === e.id)) { e.status = 'deferred'; e.deferReason = 'unknown'; }
+      break;
+    }
+    case 'challenge': {
+      if (current?.status !== 'selected' || input.id !== current.id || input.drawnAt !== current.drawnAt) {
+        throw new Problem('当選曲が変わりました。確認してから操作してください。', 409);
+      }
+      rememberQueueChange(state, [current]);
+      current.status = 'challenged';
       break;
     }
     case 'skip':
@@ -542,7 +550,7 @@ export function adminAction(state, input, now = Date.now()) {
       const entry = byId(state, input.id);
       const moving = input.action === 'bringForward';
       const allowed = moving ? entry.status === 'pending' && entry.round === state.round + 1
-        : ['deferred','skipped','removed'].includes(entry.status);
+        : ['deferred','skipped','removed','challenged'].includes(entry.status);
       if (!allowed) throw new Problem('リクエストの状態が変わりました。', 409);
       const replaced = destinationConflict(state, entry, input);
       rememberQueueChange(state, replaced ? [entry, replaced] : [entry]);
@@ -572,10 +580,12 @@ export function adminAction(state, input, now = Date.now()) {
       state.unknown[entry.songKey] = { ...previous, at:Math.max(Date.now(), previous.at + 1), reasons };
       break;
     }
+    case 'recordChallenge':
     case 'cancelPerformance': {
       const entry = byId(state, input.id);
       if (entry.status !== 'done') throw new Problem('歌唱済みの曲を選んでください。', 409);
-      const replaced = destinationConflict(state, entry, input);
+      const challenge = input.action === 'recordChallenge';
+      const replaced = challenge ? null : destinationConflict(state, entry, input);
       const performance = performanceFor(state, entry);
       const otherPerformances = state.history.filter(item => item !== performance
         && (item.songKey ?? songIdentity(item.artist, item.song, state.suggestions)) === entry.songKey);
@@ -602,6 +612,10 @@ export function adminAction(state, input, now = Date.now()) {
           item.deferReason = drawBlock(state, item);
           item.status = item.deferReason ? 'deferred' : 'pending';
         }
+      }
+      if (challenge) {
+        entry.status = 'challenged';
+        break;
       }
       if (state.sung.includes(entry.songKey)) entry.allowRepeat = true;
       if (state.held.includes(entry.songKey)) entry.retryHeld = true;

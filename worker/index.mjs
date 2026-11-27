@@ -36,7 +36,7 @@ async function saveState(env, revision, state, metadata) {
   const undo = JSON.stringify(state.undo);
   const expired = state.entries.filter(entry => entry.createdAt < cutoff && entry.round < state.round
     && !undo?.includes(JSON.stringify(entry.id))
-    && ['done', 'removed', 'skipped'].includes(entry.status));
+    && ['done', 'removed', 'skipped', 'challenged'].includes(entry.status));
   const { repertoire = [], suggestions, unknown, ...liveState } = state;
   const statements = songMetadataChanges(env, revision, metadata, [
     new Map(suggestions.map(record => [record.id, JSON.stringify(record)])),

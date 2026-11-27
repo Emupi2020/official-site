@@ -161,10 +161,11 @@ function queueChoices(entry) {
     return choices;
   }
   if (entry.status === 'done') return [
+    command('チャレンジしたに変更', 'recordChallenge'),
     command('歌唱済みを取り消す', 'cancelPerformance', '歌唱済み一覧からこの記録を外し、今の抽選枠の抽選に戻しますか？'),
     command('再演用に抽選へ追加', 'encore', '歌唱済みの記録を残して、もう一度抽選に入れますか？'),
   ];
-  if (['skipped','removed'].includes(entry.status)) return [command('リクエストを復活', 'restoreRequest')];
+  if (['skipped','removed','challenged'].includes(entry.status)) return [command('リクエストを復活', 'restoreRequest')];
   if (entry.status !== 'deferred') return [];
   const repeat = entry.deferReason === 'sung';
   const choices = [command('今の抽選枠の抽選に戻す', 'restoreRequest', repeat ? 'この配信ですでに歌った曲です。もう一度抽選に入れますか？' : undefined)];
@@ -286,6 +287,8 @@ function render() {
   $('undo').disabled = busy || !state.undo;
   $('cant-sing').hidden = !selected;
   $('cant-sing').disabled = busy || !selected;
+  $('challenge').hidden = !selected;
+  $('challenge').disabled = busy || !selected;
   const currentLabel = $('current-song-label');
   if (currentLabel) currentLabel.textContent = current?.manualPick ? '手動選択中の曲' : '当選中の曲';
   if(!current){$('result-name').textContent='';$('selected-song').textContent='';$('selected-artist').textContent='';}
@@ -298,7 +301,7 @@ function render() {
   for(const e of [...state.entries].reverse()){
     const row=node('tr','','request-row'), songCell=node('td'),nameCell=node('td',e.name),statusCell=node('td'),actionCell=node('td');
     songCell.append(node('div',e.song,'entry-title'),node('div',e.artist,'small muted'));
-    statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',deferred:e.deferReason==='temporary'?'一時保留':'持ち越し',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
+    statusCell.append(node('span',({pending:'抽選待ち',selected:'選択中',done:'歌唱済み',challenged:'チャレンジした',deferred:e.deferReason==='temporary'?'一時保留':'持ち越し',skipped:'見送り',removed:'取り下げ'})[e.status]||e.status,'entry-status'),node('div',`第${e.round}回`,'small muted'));
     if(e.round>state.round)statusCell.prepend(node('div','予約','entry-status'));
     if(e.encoreOf)statusCell.prepend(node('div','再演用','entry-status'));
     row.append(songCell,nameCell,statusCell,actionCell);
@@ -444,6 +447,12 @@ async function cantSing() {
 }
 $('cant-sing').onclick = cantSing;
 $('result-cant-sing').onclick = cantSing;
+function recordWinnerChallenge() {
+  const entry = state.entries.find(item => item.id === state.current);
+  if (hasWinner(entry)) return resolveWinner('challenge', { id:entry.id, drawnAt:entry.drawnAt });
+}
+$('challenge').onclick = recordWinnerChallenge;
+$('result-challenge').onclick = recordWinnerChallenge;
 $('result-defer').onclick = () => resolveWinner('defer', { id:state.current, selected:true });
 $('undo').onclick=()=>action('undo');
 $('next-session').onclick=()=>{if(confirm('次の配信を開始しますか？歌唱履歴を区切り、持ち越したリクエストを抽選に戻します。\n\n配信は毎日15:00（日本時間）に自動で切り替わります。')){adminMenu.open=false;action('session');}};

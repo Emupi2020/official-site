@@ -2,7 +2,7 @@ import { artistSearchNames, songSearchNames } from './suggestion-readings.mjs?v=
 import { closeMenu } from './site-menu.mjs?layout=keep-menu';
 import { classifyArtist, categoryLabel } from './categories.mjs';
 import { api, $, message, safeGet, safeSet, normalize } from './common.mjs';
-import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=glossary-topic-tabs';
+import { korean, t, listenerError, localizeListenerPage } from './listener-language.mjs?v=request-challenge';
 import { setupPocochaGlossary } from './pococha-glossary.mjs?v=glossary-kirakome-centered';
 import { showGlossaryGuide } from './glossary-guide.mjs?v=glossary-kirakome-centered';
 const totalTracks = count => korean ? `총 ${count}곡` : `全${count}曲`;
@@ -186,7 +186,7 @@ function renderUserCurrentRequests() {
 }
 const reservation = $('next-reservation');
 let activeSlot = null;
-const requestStatusLabels = {unrequested:t('未リクエスト'), submitted:t('リクエスト済み'), reserved:t('予約済み'), temporary:t('一時保留'), pending:t('抽選待ち'), selected:t('当選'), done:t('当選済み'), skipped:t('見送り'), deferred:t('持ち越し'), removed:t('取り下げ済み')};
+const requestStatusLabels = {unrequested:t('未リクエスト'), submitted:t('リクエスト済み'), reserved:t('予約済み'), temporary:t('一時保留'), pending:t('抽選待ち'), selected:t('当選'), done:t('当選済み'), challenged:t('チャレンジした'), skipped:t('見送り'), deferred:t('持ち越し'), removed:t('取り下げ済み')};
 const requestStatusDescriptions = {
  unrequested:t('このカテゴリにはまだリクエストしていません。'),
  submitted:t('このカテゴリのリクエストを受け付けました。'),
@@ -195,6 +195,7 @@ const requestStatusDescriptions = {
  pending:t('受付が完了し、抽選で選ばれるのを待っています。'),
  selected:t('この曲が抽選で選ばれました。'),
  done:t('この曲は抽選で選ばれ、歌唱が済んでいます。'),
+ challenged:t('この曲は配信で歌うことにチャレンジしました。'),
  skipped:t('抽選で選ばれたあと、今回は歌わずに見送りとなりました。'),
  deferred:t('この曲は次の配信で抽選対象に戻ります。'),
  removed:t('この曲のリクエストは取り下げられました。'),

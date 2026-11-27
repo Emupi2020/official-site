@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=menu-pages"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=user-list"></script><script type="module" src="/bug-reports.mjs?v=admin-page"></script><link rel="icon" href="/favicon.svg"></head><body>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>リクエスト管理 | Emupi</title><link rel="stylesheet" href="/style.css?admin=menu-pages"><link rel="stylesheet" href="/bug-reports.css"><link rel="stylesheet" href="/roulette-tabs.css?spin=preview"><script src="/config.js"></script><script type="module" src="/admin.mjs?view=challenge"></script><script type="module" src="/bug-reports.mjs?v=admin-page"></script><link rel="icon" href="/favicon.svg"></head><body>
 <header>
   <a class="brand" href="https://emupi2020.github.io/official-site/">Emupi</a>
   <div class="admin-header-tools">
@@ -54,6 +54,7 @@
   </div>
   <div class="current-song-actions">
     <button id="cant-sing" class="secondary" type="button" hidden>歌えない</button>
+    <button id="challenge" class="secondary" type="button" hidden>チャレンジした</button>
     <button id="undo" class="text-button" type="button">戻す</button>
   </div>
   <p id="undo-feedback" class="small muted" role="status" hidden></p>
@@ -116,6 +117,7 @@
 </div><div id="roulette-message" class="message" role="status" hidden></div><div id="result" class="winner-overlay" hidden aria-live="polite"><section class="winner-card" aria-label="抽選結果"><button id="dismiss-result" class="winner-dismiss" aria-label="抽選結果を閉じる">×</button><div id="result-song" class="result-song"></div><div id="result-artist" class="result-artist"></div>
   <div class="winner-actions buttons">
     <button id="result-cant-sing" class="secondary" type="button">歌えない</button>
+    <button id="result-challenge" class="secondary" type="button">チャレンジした</button>
     <button id="result-defer" class="secondary" type="button">次の配信に持ち越す</button>
   </div>
 </section></div></dialog>
