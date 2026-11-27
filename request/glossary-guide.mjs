@@ -29,6 +29,8 @@ export function showGlossaryGuide(slug, korean, heading) {
     } else {
       for (const [index, step] of guide.steps.entries()) {
         const item = document.createElement('li');
+        item.append(step[language]);
+        if (index === 0 && guide.stepImages && guide.image) item.append($('guide-figure'));
         const stepImage = guide.stepImages?.[index + 1];
         if (stepImage) {
           const figure = document.createElement('figure');
@@ -40,7 +42,6 @@ export function showGlossaryGuide(slug, korean, heading) {
           figure.append(image);
           item.append(figure);
         }
-        item.append(step[language]);
         steps.append(item);
       }
       steps.hidden = false;
