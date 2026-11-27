@@ -880,13 +880,12 @@ for (const slot of currentSlots) {
  repertoireLink.href = '?view=playable-songs';
  repertoireLink.onclick = event => {
   event.preventDefault();
-  const artist = field(slot, 'artist').value.trim();
   hideSuggestions();
   navigatePlayable({
    menuPage: 'playable-songs',
    playableCategory: slot.category,
    playableView: 'artists',
-   playableArtist: artist || undefined,
+   playableArtist: undefined,
    playableSearchValue: ''
   });
  };
