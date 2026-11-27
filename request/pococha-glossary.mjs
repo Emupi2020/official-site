@@ -124,7 +124,7 @@ export function setupPocochaGlossary(panel, korean) {
     }
     for (const { section, heading, entries: groupEntries } of sections.values()) {
       section.hidden = groupEntries.every(({ row }) => row.hidden);
-      heading.hidden = Boolean(query) || selectedCategory !== 0;
+      heading.hidden = Boolean(query);
     }
     empty.hidden = entries.some(({ row }) => !row.hidden);
   }

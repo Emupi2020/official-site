@@ -301,7 +301,7 @@ body:has(.request-page) { background: #f2f2f7; }
   line-height: 1.25;
   font-weight: 600;
 }
-.glossary-kana-heading:not([hidden]) + dl .glossary-term:first-child {
+.glossary-kana-heading:not([hidden]) + dl .glossary-term:nth-child(1 of :not([hidden])) {
   padding-block-start: 4px;
 }
 .glossary-term { padding-block: 12px; }
