@@ -118,6 +118,7 @@ export function setupPocochaGlossary(panel, korean) {
       selectedCategory = index;
       button.setAttribute('aria-pressed', 'true');
       filter();
+      window.scrollTo({ top: 0, behavior: 'instant' });
     });
   });
   input.addEventListener('input', filter);
